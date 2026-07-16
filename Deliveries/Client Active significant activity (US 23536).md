@@ -4,8 +4,14 @@ status: shipped-prod
 env: both
 delivered: 2026-07-10
 tags: [feature, contact, relationships, kforce]
-prs: [1803, 1804, 1805, 1806, 1807]
-tickets: [23536]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1803"
+  - "https://github.com/taller-projects/echo-backend/pull/1804"
+  - "https://github.com/taller-projects/echo-backend/pull/1805"
+  - "https://github.com/taller-projects/echo-backend/pull/1806"
+  - "https://github.com/taller-projects/echo-backend/pull/1807"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23536"
 ---
 
 # Client Active requires recent significant activity (US 23536)

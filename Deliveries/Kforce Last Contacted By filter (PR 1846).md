@@ -4,7 +4,8 @@ status: merged
 env: kforce
 delivered: 2026-07-16
 tags: [bugfix, kforce, filters, performance, contact]
-prs: [1846]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1846"
 tickets: []
 ---
 

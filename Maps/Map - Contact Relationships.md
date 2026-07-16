@@ -27,11 +27,11 @@ The longest-running saga: generalizing the contact relationship model to **label
 - [[Contact bulk_track IntegrityError (Bug 23251)]] · [[Future-dated interactions fix (Bug 23383)]] · [[Kforce contacts custom sorts (23546)]] · [[Kforce Last Contacted By filter (PR 1846)]]
 
 ## Standing gotchas for this area
-- Smart-search views/matviews (`view_smart_search_contacts_info`, `mv_smart_search_*`) are **owner-managed out-of-band** (ticket 19757) on BOTH envs — never `CREATE OR REPLACE` them without the `_view_is_repo_shaped` guard.
+- Smart-search views/matviews (`view_smart_search_contacts_info`, `mv_smart_search_*`) are **owner-managed out-of-band** ([ticket 19757](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/19757)) on BOTH envs — never `CREATE OR REPLACE` them without the `_view_is_repo_shaped` guard.
 - The Client Active rule lives in `_relationship_is_active_expr` (contact/models.py) on both envs, but the **implementations have drifted differently** — always verify against the branch you're on.
 - `current_company_id` / `current_relationship` feed the TrackerRMS outbox — do not break when touching relationship logic.
 
 ## Still pending in this saga
-- Taller: QA/PROD matview recreation gate for migration `mx7qkw9n2r4v`; dashboard counts reshape (#4); FE US 23259 (Alumni chrome).
-- Kforce: Task 23375 physical column DROP (per-env owner gate); M5 FE (Alumni flip + dashboard key rename).
+- Taller: QA/PROD matview recreation gate for migration `mx7qkw9n2r4v`; dashboard counts reshape (#4); FE [US 23259](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23259) (Alumni chrome).
+- Kforce: [Task 23375](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23375) physical column DROP (per-env owner gate); M5 FE (Alumni flip + dashboard key rename).
 - Moved-away `company_id`-exact edge case.

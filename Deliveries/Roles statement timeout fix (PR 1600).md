@@ -4,7 +4,8 @@ status: merged
 env: taller
 delivered: 2026-06-22
 tags: [bugfix, performance, roles]
-prs: [1600]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1600"
 tickets: []
 ---
 

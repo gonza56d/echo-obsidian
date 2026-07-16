@@ -4,8 +4,13 @@ status: merged
 env: both
 delivered: 2026-07-07
 tags: [chore, security, dependencies]
-prs: [1750, 1751]
-tickets: [23479, 23480, 23481]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1750"
+  - "https://github.com/taller-projects/echo-backend/pull/1751"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23479"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23480"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23481"
 ---
 
 # WeasyPrint 62.3 → 68.1 upgrade (US 23479)
@@ -13,7 +18,7 @@ tickets: [23479, 23480, 23481]
 Dependency bump driven by an **SSRF CVE** in WeasyPrint (PDF generation: proposals, CV exports).
 
 ## Azure
-- US 23479 → M1 Task 23480 (Taller) · M2 Task 23481 (Kforce). Tickets → Ready to Test.
+- [US 23479](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23479) → M1 [Task 23480](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23480) (Taller) · M2 [Task 23481](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23481) (Kforce). Tickets → Ready to Test.
 
 ## PRs
 - [#1750](https://github.com/taller-projects/echo-backend/pull/1750) → dev · [#1751](https://github.com/taller-projects/echo-backend/pull/1751) → kforce-dev — both merged 2026-07-07

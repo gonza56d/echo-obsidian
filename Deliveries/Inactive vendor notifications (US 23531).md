@@ -4,13 +4,16 @@ status: merged
 env: taller
 delivered: 2026-07-10
 tags: [bugfix, notifications, vendors]
-prs: [1802]
-tickets: [23531, 23293]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1802"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23531"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23293"
 ---
 
 # Exclude users of inactive vendors from all notifications (US 23531)
 
-Deactivating a vendor sets `vendor.is_active=False` but not its users' `user.is_active`, and recipient queries filtered on raw `user.is_active` → inactive-vendor users kept receiving notifications. Harmless while notification emails are off by default, but a real leak the moment they're enabled. Detected during QA of #23293.
+Deactivating a vendor sets `vendor.is_active=False` but not its users' `user.is_active`, and recipient queries filtered on raw `user.is_active` → inactive-vendor users kept receiving notifications. Harmless while notification emails are off by default, but a real leak the moment they're enabled. Detected during QA of [#23293](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23293).
 
 ## PRs
 - [#1802](https://github.com/taller-projects/echo-backend/pull/1802) → dev — merged 2026-07-10 (+ review follow-up commit `ad7dc557`)

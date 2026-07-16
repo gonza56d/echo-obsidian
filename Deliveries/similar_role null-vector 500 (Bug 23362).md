@@ -4,8 +4,12 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-01
 tags: [bugfix, hotfix, roles, pgvector, sentry]
-prs: [1693, 1695, 1696]
-tickets: [23362]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1693"
+  - "https://github.com/taller-projects/echo-backend/pull/1695"
+  - "https://github.com/taller-projects/echo-backend/pull/1696"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23362"
 ---
 
 # similar_role null-embedding 500 (Bug 23362)

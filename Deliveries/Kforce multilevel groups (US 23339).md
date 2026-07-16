@@ -4,8 +4,18 @@ status: merged
 env: kforce
 delivered: 2026-07-03
 tags: [feature, kforce, groups, reporting]
-prs: [1673, 1675, 1678, 1713, 1714]
-tickets: [23287, 23339, 23340, 23341, 23342]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1673"
+  - "https://github.com/taller-projects/echo-backend/pull/1675"
+  - "https://github.com/taller-projects/echo-backend/pull/1678"
+  - "https://github.com/taller-projects/echo-backend/pull/1713"
+  - "https://github.com/taller-projects/echo-backend/pull/1714"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23287"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23339"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23340"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23341"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23342"
 prd: "Notion 38eaedca…daca24 — Echo Usage multilevel groups (Kforce)"
 ---
 
@@ -14,7 +24,7 @@ prd: "Notion 38eaedca…daca24 — Echo Usage multilevel groups (Kforce)"
 Echo Usage reporting needed **DAG layers (Region → Market → Office)** over the flat `user_group` table on Kforce. New `group_hierarchy` module: hierarchy nodes + edges, node→leaf resolution, metrics aggregation per node.
 
 ## Azure / docs
-- Feature 23287 → US 23339 → Tasks 23340 (M1) / 23341 (M2) / 23342 (M3). M4 (FE) skipped.
+- [Feature 23287](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23287) → [US 23339](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23339) → [Tasks 23340](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23340) (M1) / [23341](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23341) (M2) / [23342](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23342) (M3). M4 (FE) skipped.
 
 ## PRs (all → kforce-dev)
 - [#1673](https://github.com/taller-projects/echo-backend/pull/1673) **M1** — hierarchy model + node→leaf resolution + levels endpoint (merged 2026-06-30)

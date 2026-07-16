@@ -4,9 +4,11 @@ status: in-progress   # in-progress | in-review | merged | shipped-prod
 env: taller           # taller | kforce | both | infra
 delivered:            # date of last merge (YYYY-MM-DD)
 tags: []              # feature | bugfix | hotfix | security | chore + domain tags
-prs: []               # echo-backend PR numbers
-fe_prs: []            # echo-frontend PR numbers, if any
-tickets: []           # Azure work item ids (US/Task/Bug/Feature)
+prs: []               # FULL PR URLs (clickable in Properties), e.g.
+                      #   - "https://github.com/taller-projects/echo-backend/pull/NNNN"
+fe_prs: []            # echo-frontend PR URLs, if any
+tickets: []           # FULL Azure work-item URLs, e.g.
+                      #   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/NNNNN"
 prd: ""               # Notion PRD id/title, if any
 ---
 
@@ -15,7 +17,7 @@ prd: ""               # Notion PRD id/title, if any
 One-paragraph summary: the problem/need, and what shipped. Written so that in 3 months "oh, THAT thing" clicks immediately.
 
 ## Azure / docs
-- US … → Tasks …
+- [US NNNNN](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/NNNNN) → Tasks …
 - PRD: Notion `…`
 
 ## PRs

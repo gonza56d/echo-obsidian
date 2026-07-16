@@ -16,9 +16,9 @@ Never `git merge dev → kforce-dev`. Always verify claims against `origin/kforc
 
 ## Drift bites from this window (cautionary tales)
 - [[Kforce Last Contacted By filter (PR 1846)]] — dev fix `00fdc79e` never ported; resurfaced as a 500 a month later.
-- [[Kforce Client Active no-job gate (Bug 23545)]] — Taller gate fixes #1745/#1793 never ported; wrong states in kforce prod.
+- [[Kforce Client Active no-job gate (Bug 23545)]] — Taller gate fixes [#1745](https://github.com/taller-projects/echo-backend/pull/1745)/[#1793](https://github.com/taller-projects/echo-backend/pull/1793) never ported; wrong states in kforce prod.
 - [[Kforce contacts custom sorts (23546)]] — kforce lacks dev's `validate_order_by` override.
-- [[Deep pagination selectin fix (23553)]] — planner is a separate copy; needed its own PR (#1820).
+- [[Deep pagination selectin fix (23553)]] — planner is a separate copy; needed its own PR ([#1820](https://github.com/taller-projects/echo-backend/pull/1820)).
 
 ## Kforce-native deliveries
 - [[Kforce multilevel groups (US 23339)]] — group hierarchy for Echo Usage
@@ -31,6 +31,6 @@ Never `git merge dev → kforce-dev`. Always verify claims against `origin/kforc
 - Deploy artifacts: Helm `values-kforce-{dev,prod}.yaml`, Vault `secret-echo-backend-kforce-*`, ArgoCD `kforce-{dev,prod}` — all separate from the echo-* ones.
 
 ## Standing kforce debt
-- Task 23375 — gated physical `last_relationship_type` column DROP (owner must recreate views inline per env first).
+- [Task 23375](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23375) — gated physical `last_relationship_type` column DROP (owner must recreate views inline per env first).
 - Group-hierarchy seed: 3 latent bugs + prod seed pending.
 - M5 FE for contact relationships (Alumni flip, dashboard key rename).

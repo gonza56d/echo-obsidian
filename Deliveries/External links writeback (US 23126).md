@@ -4,8 +4,12 @@ status: merged
 env: taller
 delivered: 2026-06-18
 tags: [feature, trackerrms, outbox]
-prs: [1574]
-tickets: [23126, 23127, 23128]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1574"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23126"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23127"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23128"
 prd: "Notion 383aedca — App/Talent external_links (writeback + backfill only)"
 ---
 
@@ -14,8 +18,8 @@ prd: "Notion 383aedca — App/Talent external_links (writeback + backfill only)"
 Track **application** and **talent** TrackerRMS ids in `entity_external_links`, so Echo knows which TrackerRMS object each entity maps to. Scope was deliberately **writeback + backfill only** — no user-facing exposure (that came later with [[ATS deep-links Open in ATS (US 23507)]]).
 
 ## Azure / docs
-- US 23126 — parent story
-- Task 23127 (T1, writeback) · Task 23128 (T2, backfill)
+- [US 23126](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23126) — parent story
+- [Task 23127](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23127) (T1, writeback) · [Task 23128](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23128) (T2, backfill)
 - PRD: Notion `383aedca…` (App/Talent external_links)
 
 ## PRs
