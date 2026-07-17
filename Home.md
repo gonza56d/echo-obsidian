@@ -13,7 +13,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 🚧 In flight (open PRs / gated work)
 
-- [[Interview assessment change history (US 22248)]] — Melina's [#1848](https://github.com/taller-projects/echo-backend/pull/1848) **open**; my pipeline + migration-order fixes pushed 2026-07-17, CI re-run pending; FE [#2970](https://github.com/taller-projects/echo-frontend/pull/2970) merges after
+- [[Interview assessment change history (US 22248)]] — Melina's [#1848](https://github.com/taller-projects/echo-backend/pull/1848) **open**; reviewed 2026-07-17 (READY WITH NITS, 0 blockers) + nit fixes pushed (`cd3c0c80`/`4cae3e48`); 3 open questions for Melina; FE [#2970](https://github.com/taller-projects/echo-frontend/pull/2970) merges after
 - [[Pentest 4.1.7 input validation (23018)]] — PRs [#1625](https://github.com/taller-projects/echo-backend/pull/1625) (dev) + [#1626](https://github.com/taller-projects/echo-backend/pull/1626) (kforce-dev) **still open**
 - [[Pentest 4.3.1 CORS allowlist (23024)]] — PRs [#1632](https://github.com/taller-projects/echo-backend/pull/1632) + [#1633](https://github.com/taller-projects/echo-backend/pull/1633) **still open**; live re-test pending post-merge
 - OpenAPI 500 via `partial_model` (Sentry `7600828395`) — fix verified, **PRs to dev + kforce-dev not created yet** → [[Map - Observability & Reliability]]
@@ -27,7 +27,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 📌 Recent activity
 
-- **2026-07-17** — [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op
+- **2026-07-17** — [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op; full review (0 blockers) + nit fixes pushed (jsonb-null NULLIF, marker-collision skip, repo-level scoping)
 - **2026-07-16** — [[Case studies per-card management (US 23613)]] merged ([#1842](https://github.com/taller-projects/echo-backend/pull/1842) + [#1843](https://github.com/taller-projects/echo-backend/pull/1843)) · [[Kforce Last Contacted By filter (PR 1846)]] merged
 - **2026-07-15** — [[Outbox flat payload fix (PR 1838)]] → dev/qa/main
 - **2026-07-13/14** — [[Industry-agnostic Echo (PRD 398aedca)]] M1–M5 + /users/me merged; dev QA passed · [[Deep pagination selectin fix (23553)]] both envs · [[Project creation consumer_id 422 (Bug 23571)]]
