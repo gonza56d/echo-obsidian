@@ -63,14 +63,13 @@ pipeline and found + fixed a real ordering bug in the backfill migration.
   statement ORDER load-bearing; keep order in one tuple that tests import.
 
 ## Pending
-- CI re-run on [#1848](https://github.com/taller-projects/echo-backend/pull/1848) after my push — confirm green.
-- Local `test.sh all` showed 30 unrelated local failures (e.g.
-  `test_application_process_status_filter`) — baseline comparison vs the
-  pre-fix branch still running; suspected known local-only TestClient
-  artifacts (green in CI).
 - Before running the backfill in prod: re-confirm divergence COUNT with a
   read-only SELECT (~51 expected, per PR description).
 - Merge order: BE [#1848](https://github.com/taller-projects/echo-backend/pull/1848) first, then FE [#2970](https://github.com/taller-projects/echo-frontend/pull/2970).
+
+(Closed 2026-07-17: CI green on both check runs after the fix push; the 30
+local `test_application_*` failures were confirmed pre-existing local-only
+artifacts — identical test-by-test in a pre-fix baseline run, green in CI.)
 
 ## Related
 - [[Pending interview notifications (US 23321)]] — same interviews module
