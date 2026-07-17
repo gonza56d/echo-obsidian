@@ -68,9 +68,19 @@ All in echo-backend, Taller (`dev`), no migration:
 - Local test gotcha: the TestClient success-path tests in `test_organization_jobs.py` (get list/single, bulk-patch, cluster-vector) **404 locally** — pre-existing (verified: identical failing set on clean `origin/dev` baseline), green in CI. Do NOT read them as an M1 regression. M1 logic is unit-tested via `_build_service` (MagicMock, no TestClient) + system tests (real Postgres, no TestClient).
 - M1 unit tests reused the existing `_build_service` helper (constructor DI, not `__new__`), so no `__new__`-fixture breakage. `match_talents` now returns `OrganizationJobResponse` → the pre-existing `test_match_talents_vectorizes_with_tenant_industry` needed a complete job stub (switched to `_job_ns`).
 
+## Contract update — 2026-07-17 (2nd commit on PR #1854)
+
+Team decision: **send the full open job + curated talent data inline** to Data (not just `organization_job_id` + `talent_ids`), so Data **never calls back to Echo** (no ping-pong: no JD lookup, no `GET /talents`). See PRD **section 8** for the full request/response.
+
+- Path finalized: `OPEN_JOB_MATCH_ENDPOINT = /candidate_matching/evaluate_open_job_match` (was placeholder `/candidate_matching/evaluate_open_job`).
+- Request: `{ organization_job_id (tracking), open_job:{id,title,description,location,work_model,employment_type,posted_at,is_tech,top_tech,url,apply_url,source}, talents:[{talent_id,first_name,last_name,title,summary,seniority,country_code,skills[core+additional],experiences[{title,company,description,start_date,end_date}]}], tenant_id?, industry?, instructions? }`.
+- Talents = **curated matching fields** (chosen over full TalentResponse) → no email/phone/rates/ATS ids to Data. Built from the cosine-selected `Talent` ORM; repo `match_talents` now `joinedload(experiences).joinedload(organization)` to get company without N+1.
+- New schemas in job `schemas.py`: `OpenJobMatchExperience`, `OpenJobMatchTalent`, `OpenJobMatchJobPayload` (OrmBaseModel, `model_validate(job)`). Service builds them → `model_dump(mode="json")` → passes dicts to `VectorizerService.evaluate_open_job_match(organization_job_id, open_job, talents, tenant_id, industry, instructions)` (vectorizer stays decoupled from job schemas).
+- Response gained `error_message` (per-talent; backend logs only, FE never shows). Data status codes: 200 (ok, incl. per-talent errors) / 422 (validation) / **503** systemic (OpenAI down) → Echo maps to **502** + toast / timeout → **504**.
+
 ## As built (M1, PR #1854)
 
-- Settings in `CommonSettings` (next to Roles `MATCH_*`): `OPEN_JOB_MATCH_BATCH_SIZE=5`, `OPEN_JOB_MATCH_MAX_CANDIDATES=30`, `OPEN_JOB_MATCH_READ_TIMEOUT=60` (placeholder, align w/ Data P95), `OPEN_JOB_MATCH_ENDPOINT="/candidate_matching/evaluate_open_job"` (**placeholder path** — config swap once US 23610 finalizes).
+- Settings in `CommonSettings` (next to Roles `MATCH_*`): `OPEN_JOB_MATCH_BATCH_SIZE=5`, `OPEN_JOB_MATCH_MAX_CANDIDATES=30`, `OPEN_JOB_MATCH_READ_TIMEOUT=60` (placeholder, align w/ Data P95), `OPEN_JOB_MATCH_ENDPOINT="/candidate_matching/evaluate_open_job_match"`.
 - `ExternalApiService.__send_request` gained per-call `read_timeout` + `max_retries` overrides; `requests.Timeout` now maps to **504**. `evaluate_open_job_match` calls with `read_timeout=setting, max_retries=0`.
 - `highest_match_score` column_property → `MAX((value->>'matching_score')::int)` **scoped by `current_setting('request.tenant_id', true)`** (+ legacy null-tenant entries). GUC confirmed set per request in `app/database/base.py` after_begin. **Decision confirmed: tenant-aware SQL** (not plain MAX) so the "Highest Match" column AND `order_by` stay tenant-correct.
 - Tenant read-filtering done via dedicated **`get_job_for_tenant` / `get_jobs_for_tenant`** service methods used only by the **public** router; internal routers (`internal_routers.py`, API-key, may lack tenant ctx) left unfiltered on purpose. `tenant_id` is stored inside each JSONB entry but is **absent from `MatchedCandidate`** so it never serializes out.
