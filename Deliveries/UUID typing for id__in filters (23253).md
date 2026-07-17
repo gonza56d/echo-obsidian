@@ -4,10 +4,8 @@ status: merged
 env: taller
 delivered: 2026-06-25
 tags: [bugfix, filters, validation]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1652"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23253"
+prs: [1652]
+tickets: [23253]
 ---
 
 # id__in filters typed as UUID (23253)

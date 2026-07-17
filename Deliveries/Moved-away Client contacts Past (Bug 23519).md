@@ -4,12 +4,8 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-09
 tags: [bugfix, contact, relationships, navitec]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1793"
-  - "https://github.com/taller-projects/echo-backend/pull/1797"
-  - "https://github.com/taller-projects/echo-backend/pull/1798"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23519"
+prs: [1793, 1797, 1798]
+tickets: [23519]
 ---
 
 # Moved-away Client contacts read Past, not Active (Bug 23519)

@@ -4,15 +4,9 @@ status: merged
 env: taller
 delivered: 2026-06-29
 tags: [feature, notifications, interviews, talent]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1637"
-  - "https://github.com/taller-projects/echo-backend/pull/1671"
-fe_prs:
-  - "https://github.com/taller-projects/echo-frontend/pull/2850"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23180"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23321"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23224"
+prs: [1637, 1671]
+fe_prs: [2850]
+tickets: [23180, 23321, 23224]
 prd: "Notion 389aedca11f081c3802decf0b16ea601 — Manual re-send of pending interview Slack notifications"
 ---
 
@@ -32,7 +26,8 @@ Two-step arc around "Interview Needed" Slack notifications for candidates withou
 
 ## Decisions
 - **No server-side cooldown, no new permission** — re-sends always allowed (PRD AC4); FE gates softly.
-- FE contract PRD: Notion `38eaedca…` (FE contract addendum).
+- Main PRD: [Manual re-send of pending interview Slack notifications (US 23180)](https://app.notion.com/p/389aedca11f081c3802decf0b16ea601).
+- FE contract PRD: [FE Contract: Pending-interview notification signals (US 23321)](https://app.notion.com/p/38eaedca11f0812ba1a6d1057a37bdfb).
 
 ## Related
 - [[Inactive vendor notifications (US 23531)]] — the notification-recipient gating that followed

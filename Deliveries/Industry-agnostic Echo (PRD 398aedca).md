@@ -4,25 +4,16 @@ status: merged
 env: taller
 delivered: 2026-07-14
 tags: [feature, ai, tenants, matching]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1816"
-  - "https://github.com/taller-projects/echo-backend/pull/1818"
-  - "https://github.com/taller-projects/echo-backend/pull/1819"
-  - "https://github.com/taller-projects/echo-backend/pull/1821"
-  - "https://github.com/taller-projects/echo-backend/pull/1834"
-  - "https://github.com/taller-projects/echo-backend/pull/1835"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23548"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23549"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23571"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23576"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23583"
+prs: [1816, 1818, 1819, 1821, 1834, 1835]
+tickets: [23548, 23549, 23571, 23576, 23583]
 prd: "Notion 398aedca — Industry-agnostic Echo"
 ---
 
 # Industry-agnostic Echo (PRD 398aedca)
 
 Make Echo's AI services work for non-tech tenants: a single **tenant industry signal** resolved once and propagated to the 5 matching-products calls plus the other AI services. Contract guarantee: `tech`/null tenants keep emitting **byte-identical requests** (zero behavior change for existing tenants).
+
+**Docs:** [Echo agnóstico a la industria — PRD Técnico Backend](https://app.notion.com/p/398aedca11f08188af14cacacdf19060)
 
 ## PRs (all → dev)
 - [#1816](https://github.com/taller-projects/echo-backend/pull/1816) **M1** (2026-07-13) — resolution point: `Tenant.industry` property (`null ⇒ "tech"`), `TenantService.get_industry()/get_current_industry()`, `industry_resolved` structured log; propagate to `vectorize_talent/job_description/text`, `evaluate_application(_batch)`; `industry` added to the `@lru_cache` keys (no cross-industry vector collisions).

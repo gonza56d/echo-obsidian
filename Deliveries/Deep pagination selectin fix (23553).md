@@ -4,11 +4,8 @@ status: merged
 env: both
 delivered: 2026-07-13
 tags: [bugfix, performance, orm-planner]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1817"
-  - "https://github.com/taller-projects/echo-backend/pull/1820"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23553"
+prs: [1817, 1820]
+tickets: [23553]
 ---
 
 # Deep pagination timeout — selectin-load to-one relationships (23553)

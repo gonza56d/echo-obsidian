@@ -29,13 +29,20 @@ CLAUDE.md        — this file
   Decisions / Gotchas / Pending / Related.
 - `status`: `in-progress` → `in-review` → `merged` → `shipped-prod`.
   `env`: `taller | kforce | both | infra`.
-- **Everything clickable**: `prs`/`fe_prs`/`tickets` frontmatter entries are
-  FULL URLs (Obsidian renders them as links in the Properties panel), and
-  every PR/ticket mention in the body is a markdown link. URL patterns:
+- **Everything clickable, as short text, in the BODY**: every PR, Azure
+  ticket, and PRD mention in a note body is a markdown link with short
+  display text — `[#1799](…)`, `[US 23240](…)`, `[<PRD title>](…)`.
+  Frontmatter `prs`/`fe_prs`/`tickets` stay PLAIN NUMBERS: Obsidian's
+  Properties panel cannot render aliased links (only bare URLs), so the
+  metadata stays compact there and the click-through lives in the body.
+  URL patterns:
   - echo-backend PR: `https://github.com/taller-projects/echo-backend/pull/<n>`
   - echo-frontend PR: `https://github.com/taller-projects/echo-frontend/pull/<n>`
   - Azure work item: `https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/<id>`
   - Infra PR (taller-ttit-kubernetes): `https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/<n>`
+  - Notion PRD: `https://app.notion.com/p/<32-hex-page-id>` — link the PRD
+    TITLE as display text; resolve the full page id via Notion search if
+    only a truncated id is known.
 - **Link liberally** (`[[...]]`): every delivery links its Map(s) and its
   sibling deliveries (ports, follow-ups, superseded rules). Maps link back.
   A broken `[[link]]` marks a note worth writing, not an error.

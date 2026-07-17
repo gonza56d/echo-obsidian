@@ -4,10 +4,8 @@ status: merged
 env: kforce
 delivered: 2026-07-10
 tags: [bugfix, kforce, contact, relationships]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1811"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23545"
+prs: [1811]
+tickets: [23545]
 ---
 
 # Kforce: relax Client Active account gate for unscraped contacts (Bug 23545)

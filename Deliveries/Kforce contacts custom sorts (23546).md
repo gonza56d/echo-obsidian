@@ -4,10 +4,8 @@ status: merged
 env: kforce
 delivered: 2026-07-10
 tags: [bugfix, kforce, filters, contact]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1813"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23546"
+prs: [1813]
+tickets: [23546]
 ---
 
 # Kforce: current_job_title & alias sorts on /contacts (23546)

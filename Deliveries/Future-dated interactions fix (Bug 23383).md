@@ -4,10 +4,8 @@ status: merged
 env: taller
 delivered: 2026-07-02
 tags: [bugfix, contact, navitec]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1711"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23383"
+prs: [1711]
+tickets: [23383]
 ---
 
 # Future-dated interactions excluded from last_interaction (Bug 23383)

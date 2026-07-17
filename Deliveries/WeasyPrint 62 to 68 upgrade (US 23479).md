@@ -4,13 +4,8 @@ status: merged
 env: both
 delivered: 2026-07-07
 tags: [chore, security, dependencies]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1750"
-  - "https://github.com/taller-projects/echo-backend/pull/1751"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23479"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23480"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23481"
+prs: [1750, 1751]
+tickets: [23479, 23480, 23481]
 ---
 
 # WeasyPrint 62.3 → 68.1 upgrade (US 23479)

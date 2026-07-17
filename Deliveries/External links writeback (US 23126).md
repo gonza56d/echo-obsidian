@@ -4,12 +4,8 @@ status: merged
 env: taller
 delivered: 2026-06-18
 tags: [feature, trackerrms, outbox]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1574"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23126"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23127"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23128"
+prs: [1574]
+tickets: [23126, 23127, 23128]
 prd: "Notion 383aedca — App/Talent external_links (writeback + backfill only)"
 ---
 
@@ -20,7 +16,7 @@ Track **application** and **talent** TrackerRMS ids in `entity_external_links`, 
 ## Azure / docs
 - [US 23126](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23126) — parent story
 - [Task 23127](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23127) (T1, writeback) · [Task 23128](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23128) (T2, backfill)
-- PRD: Notion `383aedca…` (App/Talent external_links)
+- PRD: [Tracking de external ids de Application y Talent en entity_external_links — PRD Técnico](https://app.notion.com/p/383aedca11f0812c8c52cee6d9852d4b)
 
 ## PRs
 - [#1574](https://github.com/taller-projects/echo-backend/pull/1574) → dev — merged 2026-06-18

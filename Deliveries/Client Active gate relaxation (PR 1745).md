@@ -4,10 +4,7 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-07
 tags: [bugfix, contact, relationships, navitec]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1745"
-  - "https://github.com/taller-projects/echo-backend/pull/1746"
-  - "https://github.com/taller-projects/echo-backend/pull/1747"
+prs: [1745, 1746, 1747]
 tickets: []
 ---
 

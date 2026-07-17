@@ -4,21 +4,16 @@ status: merged
 env: kforce
 delivered: 2026-07-08
 tags: [feature, kforce, contact]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1725"
-  - "https://github.com/taller-projects/echo-backend/pull/1726"
-  - "https://github.com/taller-projects/echo-backend/pull/1727"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23424"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23425"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23426"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23427"
+prs: [1725, 1726, 1727]
+tickets: [23424, 23425, 23426, 23427]
 prd: "Tech PRD Notion 38faedca §7 (People Involved + contact-level totals)"
 ---
 
 # Kforce relationship card aggregates M6 (US 23424)
 
 Follow-up to [[Kforce Contact Relationships port (US 23370)]] covering 3 business-PRD sections M1–M4 didn't: People Involved by role, and contact-level Total Placements / Total Client Visits. All additive/on-read, no enum or column changes.
+
+**Docs:** [Tech PRD §7 — People Involved + contact-level totals](https://app.notion.com/p/38faedca11f0811d9ae4f0a5a2f4e76f)
 
 ## PRs (all → kforce-dev, merged 2026-07-08 — merge commits, not squash)
 - [#1725](https://github.com/taller-projects/echo-backend/pull/1725) **M6.1** ([23425](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23425)) — `people_involved` JSONB column_property on `Relationship` (sales_reps/recruiters/consultants/client by role). Gap documented: Sales Rep has no source field → falls back to `contacted_by`.

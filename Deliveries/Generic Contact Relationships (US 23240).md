@@ -4,25 +4,16 @@ status: merged
 env: taller
 delivered: 2026-06-30
 tags: [feature, contact, relationships]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1648"
-  - "https://github.com/taller-projects/echo-backend/pull/1657"
-  - "https://github.com/taller-projects/echo-backend/pull/1669"
-  - "https://github.com/taller-projects/echo-backend/pull/1670"
-  - "https://github.com/taller-projects/echo-backend/pull/1680"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23240"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23241"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23242"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23243"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23264"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23292"
+prs: [1648, 1657, 1669, 1670, 1680]
+tickets: [23240, 23241, 23242, 23243, 23264, 23292]
 prd: "Tech PRD Notion 38aaedca (Tier A) · Business PRD 387aedca · FE US 23259"
 ---
 
 # Generic Contact Relationships (US 23240) — Taller
 
 The foundational refactor of the whole [[Map - Contact Relationships]] saga: relationship = **label** (Client/Consultant) ⟂ **state** (Active/Past), all computed **on-read** (nothing derived is persisted — kills the trigger-staleness bug). Contact rollup: any Active → Active; all Past → Past; no relationships → Prospect. "Alumni" ≡ Past Consultant.
+
+**Docs:** [Tech PRD (Tier A) — Generic Contact Relationships](https://app.notion.com/p/38aaedca11f08131a858c66aaea49da0) · [Business PRD — Generic Contact & Relationship Definitions](https://app.notion.com/p/387aedca11f080c69d3ff978748be7a1)
 
 ## PRs / milestones
 - [#1648](https://github.com/taller-projects/echo-backend/pull/1648) **M1** ([Task 23241](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23241), 2026-06-25) — `last_relationship_type`/`current_relationship`/`previous_relationship` become on-read `column_property`; behavior-preserving (expr reproduces the trigger exactly, incl. "Alumni"). Physical column+trigger **retained** (smart-search matview read it — Leo blocked the original drop).

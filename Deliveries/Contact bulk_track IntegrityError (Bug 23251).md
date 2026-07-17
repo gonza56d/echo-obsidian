@@ -4,10 +4,8 @@ status: merged
 env: taller
 delivered: 2026-06-25
 tags: [bugfix, contact]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1651"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23251"
+prs: [1651]
+tickets: [23251]
 ---
 
 # Contact bulk_track duplicate-linkedin IntegrityError (Bug 23251)

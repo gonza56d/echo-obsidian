@@ -4,10 +4,8 @@ status: merged
 env: taller
 delivered: 2026-07-14
 tags: [bugfix, validation, projects]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1833"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23571"
+prs: [1833]
+tickets: [23571]
 ---
 
 # POST /projects without consumer_id → 422 instead of 500 (Bug 23571)

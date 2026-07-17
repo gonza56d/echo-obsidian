@@ -4,13 +4,8 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-07
 tags: [bugfix, contact, relationships]
-prs:
-  - "https://github.com/taller-projects/echo-backend/pull/1742"
-  - "https://github.com/taller-projects/echo-backend/pull/1743"
-  - "https://github.com/taller-projects/echo-backend/pull/1744"
-tickets:
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23259"
-  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/19757"
+prs: [1742, 1743, 1744]
+tickets: [23259, 19757]
 ---
 
 # Legacy "Alumni" label removal — backend (PR 1742)
