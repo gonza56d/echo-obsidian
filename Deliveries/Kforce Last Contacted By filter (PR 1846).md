@@ -1,14 +1,16 @@
 ---
 type: delivery
 status: in-review
-env: kforce
+env: both
 delivered: 2026-07-16
 tags: [bugfix, kforce, filters, performance, contact]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1846"
   - "https://github.com/taller-projects/echo-backend/pull/1850"
+  - "https://github.com/taller-projects/echo-backend/pull/1851"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639"
 ---
 
 # Kforce "Last Contacted By" filter 500s (PR 1846 + PR 1850)
@@ -46,10 +48,14 @@ Root cause was dual:
 
 - Dropdown options: `GET /users?has_contact_interaction=true(&organization_id&full_name__ilike)`; applied filter: `last_interaction__created_by_id__in`; hydration: per-id `GET /users/{id}`. Unchanged by both rounds.
 
+## Taller port — [#1851](https://github.com/taller-projects/echo-backend/pull/1851) → dev ([Bug 23639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639), in review)
+
+Preventive port of the round-2 shape (2026-07-17): dev still ran the ORIGINAL `row_number()` window and was closer to the cliff than assumed — the count query already took **11.8s of the ~20s timeout budget on dev data** (82k contacts / 544k interactions / 830 users). Ported: nested EXISTS + `contact_last_interaction_id_idx` (migration `51r81g9s8arp`, new random id — separate alembic chain) + the full regression test suite adapted to Taller tenancy (`mocked_tenant`, `tenant_id` on Interaction, no `organization_id` in Taller's `UserFilter`). Validated same rolled-back-index method: **11.8s → 41ms**. Also a deliberate semantic alignment: the window ranked by interaction date independently of the `last_interaction_id` pointer, so dropdown and applied filter could disagree; now both join through the pointer.
+
 ## Pending
 
 - **[#1850](https://github.com/taller-projects/echo-backend/pull/1850) merge + kforce-dev deploy + live re-test** of the dropdown.
-- **Taller port**: dev/main still run the original `row_number()` implementation — survives only on volume (82k contacts / 544k interactions / 830 users on dev). Port the **round-2 shape** (nested EXISTS + `last_interaction_id` index), not the round-1 IN form.
+- **[#1851](https://github.com/taller-projects/echo-backend/pull/1851) merge** (Taller dev), then qa/main promotion via release flow.
 - kforce-master promotion via normal release flow.
 
 ## Related
