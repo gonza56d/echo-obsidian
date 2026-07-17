@@ -35,7 +35,7 @@ Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine dis
 ## PRs
 
 - **BE M1**: [#1854](https://github.com/taller-projects/echo-backend/pull/1854) — branch `23640/open-jobs-matching-1-5` → `dev` (OPEN). Covers tasks 23641/23642/23643 in one PR. Developed vs the mock; **merge gated on Data endpoint US 23610**.
-- FE M2: (branched from M1; see Pending) — will note "M1 PR #1854 must merge first".
+- FE M2 (US 23644): **frontend milestone — not backend scope**, needs an FE owner. Its PR must note BE M1 #1854 merges first.
 
 ## How (the shape of the implementation)
 
@@ -82,7 +82,7 @@ All in echo-backend, Taller (`dev`), no migration:
 - [ ] Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610)): final path + staging availability; then validate real contract end-to-end (PRD "Verificación" §4) + set `OPEN_JOB_MATCH_ENDPOINT`/`READ_TIMEOUT`.
 - [ ] Latency target (P95) to agree with Data → drives the timeout setting value.
 - [ ] Merge #1854 (blocked on US 23610).
-- [ ] M2 FE (US 23644) — in progress this session; PR notes M1 #1854 must merge first.
+- [ ] M2 FE (US 23644) — frontend milestone, needs FE owner (**not backend scope**); PR should note M1 #1854 must merge first.
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
 - [ ] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — confirm with Pedro at review time.
 
