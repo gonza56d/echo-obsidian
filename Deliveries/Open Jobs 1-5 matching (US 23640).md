@@ -4,7 +4,7 @@ status: in-progress
 env: taller
 delivered:
 tags: [feature, matching, open-jobs, battle-tested]
-prs: []
+prs: ["https://github.com/taller-projects/echo-backend/pull/1854"]
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23494"
@@ -19,7 +19,7 @@ prd: "https://app.notion.com/p/39eaedca11f081ff95f4c0b20b6b3aab"
 
 # Open Jobs 1-5 matching (US 23640)
 
-Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended, **no migration**); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **planned, tickets created, no code yet** — everything below is the handoff to execute.
+Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended, **no migration**); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
 
 ## Azure / docs
 
@@ -34,7 +34,8 @@ Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine dis
 
 ## PRs
 
-- (none yet) BE: one PR from branch `23640/open-jobs-matching-1-5` → `dev`.
+- **BE M1**: [#1854](https://github.com/taller-projects/echo-backend/pull/1854) — branch `23640/open-jobs-matching-1-5` → `dev` (OPEN). Covers tasks 23641/23642/23643 in one PR. Developed vs the mock; **merge gated on Data endpoint US 23610**.
+- FE M2: (branched from M1; see Pending) — will note "M1 PR #1854 must merge first".
 
 ## How (the shape of the implementation)
 
@@ -63,16 +64,27 @@ All in echo-backend, Taller (`dev`), no migration:
 - `matched_talents` mixes old-shape entries (`percentage` + `match_description`, no score) with new — sorting with `None` scores crashes naive `sorted(key=x["matching_score"])`; handle explicitly. FE also needs to render legacy entries sanely (flagged in US FE).
 - `ExternalApiService` retries 502/503/504 — with a sync LLM call, retries × long timeout could hang the user's request for minutes; tighten both.
 - Old flow's `MatchingDiffService.get_technologies` in `create()` stays (top_tech column is used elsewhere) — only the per-match skills-diff dies.
-- Azure REST from non-interactive shells: org is `TallerInternTools`, project `Echo Core`; PAT via `sed -n 's/^export AZURE_DEVOPS_EXT_PAT=//p' ~/.zshrc` (plain `source ~/.zshrc` doesn't work in Claude's bash).
+- Azure REST from non-interactive shells: org is `TallerInternTools`, project `Echo Core`; use the **already-exported** `$AZURE_DEVOPS_EXT_PAT` env var (the `sed` extraction from `~/.zshrc` grabbed 2 extra chars → 302/redirect; the env var, 84 chars, auth'd fine). `base64` on macOS wraps — pipe through `tr -d '\n'`.
+- Local test gotcha: the TestClient success-path tests in `test_organization_jobs.py` (get list/single, bulk-patch, cluster-vector) **404 locally** — pre-existing (verified: identical failing set on clean `origin/dev` baseline), green in CI. Do NOT read them as an M1 regression. M1 logic is unit-tested via `_build_service` (MagicMock, no TestClient) + system tests (real Postgres, no TestClient).
+- M1 unit tests reused the existing `_build_service` helper (constructor DI, not `__new__`), so no `__new__`-fixture breakage. `match_talents` now returns `OrganizationJobResponse` → the pre-existing `test_match_talents_vectorizes_with_tenant_industry` needed a complete job stub (switched to `_job_ns`).
+
+## As built (M1, PR #1854)
+
+- Settings in `CommonSettings` (next to Roles `MATCH_*`): `OPEN_JOB_MATCH_BATCH_SIZE=5`, `OPEN_JOB_MATCH_MAX_CANDIDATES=30`, `OPEN_JOB_MATCH_READ_TIMEOUT=60` (placeholder, align w/ Data P95), `OPEN_JOB_MATCH_ENDPOINT="/candidate_matching/evaluate_open_job"` (**placeholder path** — config swap once US 23610 finalizes).
+- `ExternalApiService.__send_request` gained per-call `read_timeout` + `max_retries` overrides; `requests.Timeout` now maps to **504**. `evaluate_open_job_match` calls with `read_timeout=setting, max_retries=0`.
+- `highest_match_score` column_property → `MAX((value->>'matching_score')::int)` **scoped by `current_setting('request.tenant_id', true)`** (+ legacy null-tenant entries). GUC confirmed set per request in `app/database/base.py` after_begin. **Decision confirmed: tenant-aware SQL** (not plain MAX) so the "Highest Match" column AND `order_by` stay tenant-correct.
+- Tenant read-filtering done via dedicated **`get_job_for_tenant` / `get_jobs_for_tenant`** service methods used only by the **public** router; internal routers (`internal_routers.py`, API-key, may lack tenant ctx) left unfiltered on purpose. `tenant_id` is stored inside each JSONB entry but is **absent from `MatchedCandidate`** so it never serializes out.
+- Concurrency: `repo.get_matched_talents_for_update` (SELECT … FOR UPDATE) + RMW in `_persist_new_matches`; cap-overflow truncation sorts by score first (keeps the best), cap-hit commits to release the lock and returns a no-op.
 
 ## Pending
 
-- [ ] Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610)): final path + staging availability; then validate real contract end-to-end (PRD "Verificación" §4).
+- [x] M1 BE implementation (tasks 23641/42/43) → single PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** → `dev` (open).
+- [ ] Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610)): final path + staging availability; then validate real contract end-to-end (PRD "Verificación" §4) + set `OPEN_JOB_MATCH_ENDPOINT`/`READ_TIMEOUT`.
 - [ ] Latency target (P95) to agree with Data → drives the timeout setting value.
-- [ ] M1 BE implementation (tasks 23641/42/43) → single PR → `dev`.
-- [ ] M2 FE (US 23644) — needs an owner; blocked on M1 contract.
+- [ ] Merge #1854 (blocked on US 23610).
+- [ ] M2 FE (US 23644) — in progress this session; PR notes M1 #1854 must merge first.
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
-- [ ] Tenant-isolation decision (per-entry tag) taken by gonza 2026-07-17 — confirm with Pedro at review time.
+- [ ] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — confirm with Pedro at review time.
 
 ## Related
 
