@@ -17,7 +17,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - [[Pentest 4.1.7 input validation (23018)]] — PRs [#1625](https://github.com/taller-projects/echo-backend/pull/1625) (dev) + [#1626](https://github.com/taller-projects/echo-backend/pull/1626) (kforce-dev) **still open**
 - [[Pentest 4.3.1 CORS allowlist (23024)]] — PRs [#1632](https://github.com/taller-projects/echo-backend/pull/1632) + [#1633](https://github.com/taller-projects/echo-backend/pull/1633) **still open**; live re-test pending post-merge
 - OpenAPI 500 via `partial_model` (Sentry `7600828395`) — fix verified, **PRs to dev + kforce-dev not created yet** → [[Map - Observability & Reliability]]
-- Taller port of the `has_contact_interaction` pointer rewrite → [[Kforce Last Contacted By filter (PR 1846)]]
+- [[Kforce Last Contacted By filter (PR 1846)]] — round 2 [#1850](https://github.com/taller-projects/echo-backend/pull/1850) **open** ([Bug 23638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638): count-query timeout survived #1846); Taller port of the round-2 EXISTS shape also pending
 - Kforce [Task 23375](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23375) — gated `last_relationship_type` column DROP → [[Kforce Contact Relationships port (US 23370)]]
 - Taller QA/PROD matview gate for migration `mx7qkw9n2r4v` → [[Generic Contact Relationships (US 23240)]]
 - Kforce group-hierarchy: 3 latent seed bugs + prod seed → [[Kforce multilevel groups (US 23339)]]
@@ -27,7 +27,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 📌 Recent activity
 
-- **2026-07-17** — [[Case studies per-card management (US 23613)]] — dev e2e vs real TB **PASSED** (all 6 endpoints; Navitec-only QA, company-name dedup nuance); US → Ready to Test · [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op; full review (0 blockers) + nit fixes pushed (jsonb-null NULLIF, marker-collision skip, repo-level scoping)
+- **2026-07-17** — [[Kforce Last Contacted By filter (PR 1846)]] — #1846 proved insufficient (pagination COUNT still timed out); round-2 fix [#1850](https://github.com/taller-projects/echo-backend/pull/1850) (nested EXISTS + `contact_last_interaction_id_idx`, >2min→201ms) + [Bug 23638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638) · [[Case studies per-card management (US 23613)]] — dev e2e vs real TB **PASSED** (all 6 endpoints; Navitec-only QA, company-name dedup nuance); US → Ready to Test · [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op; full review (0 blockers) + nit fixes pushed (jsonb-null NULLIF, marker-collision skip, repo-level scoping)
 - **2026-07-16** — [[Case studies per-card management (US 23613)]] merged ([#1842](https://github.com/taller-projects/echo-backend/pull/1842) + [#1843](https://github.com/taller-projects/echo-backend/pull/1843)) · [[Kforce Last Contacted By filter (PR 1846)]] merged
 - **2026-07-15** — [[Outbox flat payload fix (PR 1838)]] → dev/qa/main
 - **2026-07-13/14** — [[Industry-agnostic Echo (PRD 398aedca)]] M1–M5 + /users/me merged; dev QA passed · [[Deep pagination selectin fix (23553)]] both envs · [[Project creation consumer_id 422 (Bug 23571)]]
