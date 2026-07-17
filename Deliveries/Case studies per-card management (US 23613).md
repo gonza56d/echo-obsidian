@@ -37,3 +37,24 @@ Per-item management for generated case-study cards: edit, delete, regenerate, an
 
 ## Merge coordination note
 - [#1843](https://github.com/taller-projects/echo-backend/pull/1843) stacked on [#1842](https://github.com/taller-projects/echo-backend/pull/1842) — the rule was: merge [#1842](https://github.com/taller-projects/echo-backend/pull/1842) first; re-merge into [#1843](https://github.com/taller-projects/echo-backend/pull/1843) if [#1842](https://github.com/taller-projects/echo-backend/pull/1842) moved. Both landed 2026-07-16 in order.
+
+## Dev e2e QA vs real Team Builder (2026-07-17) — PASSED ✅
+
+Data team (Rodri) deployed `/case_studies/regenerate` + `/case_studies/find_similar` to TB dev; ran the full e2e the same day. Results documented in a comment on [US 23613](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23613) (moved **In development → Ready to Test**) and in the PRD's M2 milestone.
+
+- **Tenant**: e2e must run on **Navitec** (`a0329c9a`) — the only TB-registered tenant in dev. The Taller dev tenant (`9541a5d4`) is NOT registered in TB CaseStudies (`generate`/`regenerate`/`find-similar` → external 404 "tenant not registered"). Project used: *QA Test Proposal* (`ab6c6a9e`), plus a Taller project for negative paths.
+- **All 6 endpoints passed**: GET (empty+populated) · generate (atomic replace, ~20s) · PATCH (exclude_unset, whitespace strip, `tech_stack: null`→`[]`, `{}` no-op, explicit-null revert) · DELETE (204 empty body, re-delete 404) · regenerate (same id/pos, content+consultant swapped, siblings byte-identical, ~23s) · find-similar (×4, each appends exactly one card at max+1, no cap).
+- **Negative paths**: 404 bogus/cross-project/cross-tenant on all card ops, 422 oversized field, 401 no-auth, TB transport error → soft-fail with previous set intact (observed live via the unregistered Taller tenant).
+- **TB contract validated directly** (X-Echo-internal, Forma B payload): single `StructuredCaseStudy` with nested `provenance` | `null`, always 200; `mode=vectorize` → 422.
+
+### Gotchas found (no blockers)
+- **`inspired`/`application` dedups by `source_talent_id` only** → regenerate/find-similar can return a card with the same `company_name` as an existing one (saw two "Walmart" + two "John Deere" cards live). Per contract; FE/product should be aware.
+- **`null` (no-candidate) path not reproducible** on Navitec — pool too large even after 4 find-similars. Covered by unit tests + TB contract only.
+- **Pre-existing generate quirk** (unchanged endpoint, NOT this US): project without `tech_stack` → TB 422 (`project.tech_stack` null rejected; echo sends `tech_stack: null` via `build_proposal_request`). Candidate for a tiny follow-up (send `[]` instead of null, or TB accepts null).
+- Grafana API key expired during QA → `case_study.generation` structured-log verification pending (unit-tested; needs new key in `~/.zshrc`).
+
+## Pending
+- FE overlay integration (remove Regenerate All + Lock; per-card Edit/Delete/Regenerate/Find Similar; message the `null` "no result" state).
+- Feature-level QA gate before promoting to QA env / PROD.
+- Decide whether Data should register the **Taller dev tenant** in TB CaseStudies so QA isn't Navitec-only.
+- Optional follow-up: `tech_stack: null` 422 on generate for projects without tech stack (pre-existing).

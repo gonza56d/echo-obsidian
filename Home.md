@@ -27,7 +27,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 📌 Recent activity
 
-- **2026-07-17** — [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op; full review (0 blockers) + nit fixes pushed (jsonb-null NULLIF, marker-collision skip, repo-level scoping)
+- **2026-07-17** — [[Case studies per-card management (US 23613)]] — dev e2e vs real TB **PASSED** (all 6 endpoints; Navitec-only QA, company-name dedup nuance); US → Ready to Test · [[Interview assessment change history (US 22248)]] — fixed PR #1848 CI (polyfactory FK pins) + backfill-migration ordering no-op; full review (0 blockers) + nit fixes pushed (jsonb-null NULLIF, marker-collision skip, repo-level scoping)
 - **2026-07-16** — [[Case studies per-card management (US 23613)]] merged ([#1842](https://github.com/taller-projects/echo-backend/pull/1842) + [#1843](https://github.com/taller-projects/echo-backend/pull/1843)) · [[Kforce Last Contacted By filter (PR 1846)]] merged
 - **2026-07-15** — [[Outbox flat payload fix (PR 1838)]] → dev/qa/main
 - **2026-07-13/14** — [[Industry-agnostic Echo (PRD 398aedca)]] M1–M5 + /users/me merged; dev QA passed · [[Deep pagination selectin fix (23553)]] both envs · [[Project creation consumer_id 422 (Bug 23571)]]
