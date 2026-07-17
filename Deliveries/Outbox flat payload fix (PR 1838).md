@@ -8,7 +8,8 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/1838"
   - "https://github.com/taller-projects/echo-backend/pull/1839"
   - "https://github.com/taller-projects/echo-backend/pull/1840"
-tickets: []
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23648"
 ---
 
 # Outbox dispatcher: flat TrackerRMS payload, not an envelope (PR 1838)
@@ -16,6 +17,9 @@ tickets: []
 After the outbox dispatcher was **enabled in prod** (infra PR [#9981](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/9981) in taller-ttit-kubernetes), every delivery to the TrackerRMS sync service failed `HTTP 422` and was **dead-lettered immediately** (422 = client error). The dispatcher sent the event envelope (`{event_id, event_type, data: {…}}`) but the sync service validates the **flat entity at the body root** — the contract the manual-sync `TrackerRMSHttpClient` already used.
 
 **Why dev never caught it**: dev points at MockServer, which matches on path only and reads the id from either shape (`b.data.id ?? b.id`) → canned 200 regardless of body. Classic mock-too-lenient trap.
+
+## Azure
+- [Bug 23648](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23648) — created retroactively 2026-07-17 (the hotfix shipped ticketless); repro/root-cause/fix + all 3 PRs recorded, set **Closed** (already in prod).
 
 ## PRs
 - [#1838](https://github.com/taller-projects/echo-backend/pull/1838) → dev · [#1839](https://github.com/taller-projects/echo-backend/pull/1839) → qa · [#1840](https://github.com/taller-projects/echo-backend/pull/1840) → main — merged 2026-07-15

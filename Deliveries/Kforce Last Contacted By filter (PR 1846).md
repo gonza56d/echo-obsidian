@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered: 2026-07-16
+delivered: 2026-07-17
 tags: [bugfix, kforce, filters, performance, contact]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1846"
@@ -26,7 +26,7 @@ Root cause was dual:
 
 **Why it wasn't enough**: the 0.26s benchmark only covered the **page query** (LIMIT 50 → ~67 user rows evaluated). fastapi-pagination also runs a **count query over all 11,393 org users**; the planner estimates the IN subquery at ~1.5M rows (contact count), refuses a hashed subplan (`work_mem`), and rescans a materialized subplan per user row → count exceeds even a 2-min timeout. The `(expr) = true` wrapper emitted by `fastapi_filter` also blocks semi-join conversion. Confirmed live post-deploy (build `24619_kforce-dev`): still 500 at ~20.5s, Grafana traceback dies in `fastapi_pagination ... _total_flow`.
 
-## Round 2 — [#1850](https://github.com/taller-projects/echo-backend/pull/1850) → kforce-dev ([Bug 23638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638), in review)
+## Round 2 — [#1850](https://github.com/taller-projects/echo-backend/pull/1850) → kforce-dev ([Bug 23638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638), merged 2026-07-17, Bug **Closed**)
 
 - `has_contact_interaction` reshaped to **nested EXISTS** (`EXISTS(ci WHERE created_by_id=u.id AND EXISTS(contact WHERE last_interaction_id=ci.id))`) → planner keeps per-user index probes.
 - New index **`contact_last_interaction_id_idx`** on `contact(last_interaction_id)` (migration `d829nrzr6hik`) — the existing composite `(tenant_id, last_interaction_id)` leads with `tenant_id` and can't serve the probe.
@@ -48,7 +48,7 @@ Root cause was dual:
 
 - Dropdown options: `GET /users?has_contact_interaction=true(&organization_id&full_name__ilike)`; applied filter: `last_interaction__created_by_id__in`; hydration: per-id `GET /users/{id}`. Unchanged by both rounds.
 
-## Taller port — [#1851](https://github.com/taller-projects/echo-backend/pull/1851) → dev ([Bug 23639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639), in review)
+## Taller port — [#1851](https://github.com/taller-projects/echo-backend/pull/1851) → dev ([Bug 23639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639), merged 2026-07-17, Bug **Closed**)
 
 Preventive port of the round-2 shape (2026-07-17): dev still ran the ORIGINAL `row_number()` window and was closer to the cliff than assumed — the count query already took **11.8s of the ~20s timeout budget on dev data** (82k contacts / 544k interactions / 830 users). Ported: nested EXISTS + `contact_last_interaction_id_idx` (migration `51r81g9s8arp`, chained onto the current dev head `3gufg5ykw01g` — see Review + fixes) + the full regression test suite adapted to Taller tenancy (`mocked_tenant`, `tenant_id` on Interaction, no `organization_id` in Taller's `UserFilter`). Validated same rolled-back-index method: **11.8s → 41ms**. Also a deliberate semantic alignment: the window ranked by interaction date independently of the `last_interaction_id` pointer, so dropdown and applied filter could disagree; now both join through the pointer.
 
@@ -66,9 +66,11 @@ Verified: 7 ported + 150 user/filter tests green; ruff clean; single alembic hea
 
 ## Pending
 
-- **[#1850](https://github.com/taller-projects/echo-backend/pull/1850) merge + kforce-dev deploy + live re-test** of the dropdown.
-- **[#1851](https://github.com/taller-projects/echo-backend/pull/1851) merge** (Taller dev) — review fixes pushed (`fc5876cf`), awaiting merge; then qa/main promotion via release flow.
-- kforce-master promotion via normal release flow.
+- **kforce-dev deploy + live re-test** of the dropdown ([#1850](https://github.com/taller-projects/echo-backend/pull/1850) merged 2026-07-17).
+- **kforce-master promotion** of the round-2 fix via normal release flow.
+- **Taller qa/main promotion** of [#1851](https://github.com/taller-projects/echo-backend/pull/1851) (merged to dev 2026-07-17) via release flow.
+
+_Both bugs [23638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23638) (kforce) + [23639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639) (Taller) set to **Closed** on dev merge (2026-07-17), matching the sibling-bug convention._
 
 ## Related
 
