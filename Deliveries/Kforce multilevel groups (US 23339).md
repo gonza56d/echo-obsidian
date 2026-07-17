@@ -4,9 +4,19 @@ status: merged
 env: kforce
 delivered: 2026-07-03
 tags: [feature, kforce, groups, reporting]
-prs: [1673, 1675, 1678, 1713, 1714]
-tickets: [23287, 23339, 23340, 23341, 23342]
-prd: "Notion 38eaedca…daca24 — Echo Usage multilevel groups (Kforce)"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1673"
+  - "https://github.com/taller-projects/echo-backend/pull/1675"
+  - "https://github.com/taller-projects/echo-backend/pull/1678"
+  - "https://github.com/taller-projects/echo-backend/pull/1713"
+  - "https://github.com/taller-projects/echo-backend/pull/1714"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23287"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23339"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23340"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23341"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23342"
+prd: "https://app.notion.com/p/38eaedca11f08162a681eacb66daca24"
 ---
 
 # Kforce multilevel groups / group hierarchy (US 23339)

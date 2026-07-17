@@ -4,9 +4,20 @@ status: merged
 env: taller
 delivered: 2026-07-14
 tags: [feature, ai, tenants, matching]
-prs: [1816, 1818, 1819, 1821, 1834, 1835]
-tickets: [23548, 23549, 23571, 23576, 23583]
-prd: "Notion 398aedca — Industry-agnostic Echo"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1816"
+  - "https://github.com/taller-projects/echo-backend/pull/1818"
+  - "https://github.com/taller-projects/echo-backend/pull/1819"
+  - "https://github.com/taller-projects/echo-backend/pull/1821"
+  - "https://github.com/taller-projects/echo-backend/pull/1834"
+  - "https://github.com/taller-projects/echo-backend/pull/1835"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23548"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23549"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23571"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23576"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23583"
+prd: "https://app.notion.com/p/398aedca11f08188af14cacacdf19060"
 ---
 
 # Industry-agnostic Echo (PRD 398aedca)

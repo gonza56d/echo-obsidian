@@ -4,8 +4,19 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-09
 tags: [feature, trackerrms, navitec]
-prs: [1757, 1758, 1789, 1791]
-tickets: [23507, 23508, 23509, 23510, 23493, 23515, 23516]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1757"
+  - "https://github.com/taller-projects/echo-backend/pull/1758"
+  - "https://github.com/taller-projects/echo-backend/pull/1789"
+  - "https://github.com/taller-projects/echo-backend/pull/1791"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23507"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23508"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23509"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23510"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23493"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23515"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23516"
 ---
 
 # ATS deep-links — "Abrir en ATS" (US 23507 + US 23493)

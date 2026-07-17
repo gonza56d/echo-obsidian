@@ -29,12 +29,13 @@ CLAUDE.md        — this file
   Decisions / Gotchas / Pending / Related.
 - `status`: `in-progress` → `in-review` → `merged` → `shipped-prod`.
   `env`: `taller | kforce | both | infra`.
-- **Everything clickable, as short text, in the BODY**: every PR, Azure
-  ticket, and PRD mention in a note body is a markdown link with short
-  display text — `[#1799](…)`, `[US 23240](…)`, `[<PRD title>](…)`.
-  Frontmatter `prs`/`fe_prs`/`tickets` stay PLAIN NUMBERS: Obsidian's
-  Properties panel cannot render aliased links (only bare URLs), so the
-  metadata stays compact there and the click-through lives in the body.
+- **Everything clickable, everywhere — two forms.** Obsidian's Properties
+  panel cannot render aliased links; the ONLY clickable form there is a
+  bare URL. So: frontmatter `prs`/`fe_prs`/`tickets`/`prd` hold FULL URLs
+  (one per list item), while every mention in the body is a markdown link
+  with short display text — `[#1799](…)`, `[US 23240](…)`, `[<PRD title>](…)`.
+  Never put plain numbers in those frontmatter fields (not clickable) and
+  never put naked URLs in the body (use short text).
   URL patterns:
   - echo-backend PR: `https://github.com/taller-projects/echo-backend/pull/<n>`
   - echo-frontend PR: `https://github.com/taller-projects/echo-frontend/pull/<n>`

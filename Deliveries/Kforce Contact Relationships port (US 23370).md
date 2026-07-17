@@ -4,9 +4,21 @@ status: merged
 env: kforce
 delivered: 2026-07-07
 tags: [feature, kforce, contact, relationships]
-prs: [1700, 1701, 1709, 1710, 1732]
-tickets: [23369, 23370, 23371, 23372, 23373, 23374, 23375]
-prd: "Tech PRD Notion 38faedca (mine) · Business PRD 380aedca (Kforce)"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1700"
+  - "https://github.com/taller-projects/echo-backend/pull/1701"
+  - "https://github.com/taller-projects/echo-backend/pull/1709"
+  - "https://github.com/taller-projects/echo-backend/pull/1710"
+  - "https://github.com/taller-projects/echo-backend/pull/1732"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23369"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23370"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23371"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23372"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23373"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23374"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23375"
+prd: "https://app.notion.com/p/38faedca11f0811d9ae4f0a5a2f4e76f"
 ---
 
 # Kforce Contact Relationships port M1–M4 (US 23370)

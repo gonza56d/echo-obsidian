@@ -4,8 +4,10 @@ status: merged
 env: taller
 delivered: 2026-07-09
 tags: [bugfix, outbox, sentry, resilience]
-prs: [1799]
-tickets: [23522]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1799"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23522"
 ---
 
 # Outbox dispatcher poll backoff + Sentry dedupe (Bug 23522)

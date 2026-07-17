@@ -4,8 +4,11 @@ status: merged
 env: taller
 delivered: 2026-07-10
 tags: [bugfix, notifications, vendors]
-prs: [1802]
-tickets: [23531, 23293]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1802"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23531"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23293"
 ---
 
 # Exclude users of inactive vendors from all notifications (US 23531)

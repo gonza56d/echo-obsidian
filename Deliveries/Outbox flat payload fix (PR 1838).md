@@ -4,7 +4,10 @@ status: shipped-prod
 env: taller
 delivered: 2026-07-15
 tags: [bugfix, outbox, trackerrms]
-prs: [1838, 1839, 1840]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1838"
+  - "https://github.com/taller-projects/echo-backend/pull/1839"
+  - "https://github.com/taller-projects/echo-backend/pull/1840"
 tickets: []
 ---
 

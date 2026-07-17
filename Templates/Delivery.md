@@ -4,10 +4,12 @@ status: in-progress   # in-progress | in-review | merged | shipped-prod
 env: taller           # taller | kforce | both | infra
 delivered:            # date of last merge (YYYY-MM-DD)
 tags: []              # feature | bugfix | hotfix | security | chore + domain tags
-prs: []               # PR numbers, plain (e.g. [1799]) — clickable links go in the BODY
-fe_prs: []            # echo-frontend PR numbers, if any
-tickets: []           # Azure work item ids (US/Task/Bug/Feature), plain numbers
-prd: ""               # short Notion PRD id/title — titled clickable link goes in the BODY
+prs: []               # FULL PR URLs — bare URLs are the only clickable form in Properties
+                      #   - "https://github.com/taller-projects/echo-backend/pull/NNNN"
+fe_prs: []            # echo-frontend PR URLs, if any
+tickets: []           # FULL Azure work-item URLs
+                      #   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/NNNNN"
+prd: ""               # bare Notion page URL: "https://app.notion.com/p/<32-hex-page-id>"
 ---
 
 # <Short title> (<US/Bug/PR ref>)

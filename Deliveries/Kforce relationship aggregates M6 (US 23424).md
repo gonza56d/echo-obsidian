@@ -4,9 +4,16 @@ status: merged
 env: kforce
 delivered: 2026-07-08
 tags: [feature, kforce, contact]
-prs: [1725, 1726, 1727]
-tickets: [23424, 23425, 23426, 23427]
-prd: "Tech PRD Notion 38faedca §7 (People Involved + contact-level totals)"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1725"
+  - "https://github.com/taller-projects/echo-backend/pull/1726"
+  - "https://github.com/taller-projects/echo-backend/pull/1727"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23424"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23425"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23426"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23427"
+prd: "https://app.notion.com/p/38faedca11f0811d9ae4f0a5a2f4e76f"
 ---
 
 # Kforce relationship card aggregates M6 (US 23424)

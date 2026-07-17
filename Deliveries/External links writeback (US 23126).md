@@ -4,9 +4,13 @@ status: merged
 env: taller
 delivered: 2026-06-18
 tags: [feature, trackerrms, outbox]
-prs: [1574]
-tickets: [23126, 23127, 23128]
-prd: "Notion 383aedca — App/Talent external_links (writeback + backfill only)"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1574"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23126"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23127"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23128"
+prd: "https://app.notion.com/p/383aedca11f0812c8c52cee6d9852d4b"
 ---
 
 # External links writeback (US 23126)

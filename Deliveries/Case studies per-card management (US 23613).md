@@ -4,9 +4,18 @@ status: merged
 env: taller
 delivered: 2026-07-16
 tags: [feature, case-studies, ai]
-prs: [1842, 1843]
-tickets: [23613, 23619, 23620, 23621, 23622, 23623, 23624]
-prd: "Notion 39daedca — Case Studies edit/regenerate (In Development)"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1842"
+  - "https://github.com/taller-projects/echo-backend/pull/1843"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23613"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23619"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23620"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23621"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23622"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23623"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23624"
+prd: "https://app.notion.com/p/39daedca11f08140819ccec08e77dafb"
 ---
 
 # Case studies per-card management (US 23613)

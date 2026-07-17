@@ -4,8 +4,15 @@ status: merged
 env: taller
 delivered: 2026-06-19
 tags: [observability, sentry]
-prs: [1578, 1579, 1590, 1595, 1597]
-tickets: [22295, 23141]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1578"
+  - "https://github.com/taller-projects/echo-backend/pull/1579"
+  - "https://github.com/taller-projects/echo-backend/pull/1590"
+  - "https://github.com/taller-projects/echo-backend/pull/1595"
+  - "https://github.com/taller-projects/echo-backend/pull/1597"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22295"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23141"
 ---
 
 # Sentry observability rollout (US 22295)

@@ -4,9 +4,20 @@ status: merged
 env: taller
 delivered: 2026-06-30
 tags: [feature, contact, relationships]
-prs: [1648, 1657, 1669, 1670, 1680]
-tickets: [23240, 23241, 23242, 23243, 23264, 23292]
-prd: "Tech PRD Notion 38aaedca (Tier A) · Business PRD 387aedca · FE US 23259"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1648"
+  - "https://github.com/taller-projects/echo-backend/pull/1657"
+  - "https://github.com/taller-projects/echo-backend/pull/1669"
+  - "https://github.com/taller-projects/echo-backend/pull/1670"
+  - "https://github.com/taller-projects/echo-backend/pull/1680"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23240"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23241"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23242"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23243"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23264"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23292"
+prd: "https://app.notion.com/p/38aaedca11f08131a858c66aaea49da0"
 ---
 
 # Generic Contact Relationships (US 23240) — Taller

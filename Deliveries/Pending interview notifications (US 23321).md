@@ -4,10 +4,16 @@ status: merged
 env: taller
 delivered: 2026-06-29
 tags: [feature, notifications, interviews, talent]
-prs: [1637, 1671]
-fe_prs: [2850]
-tickets: [23180, 23321, 23224]
-prd: "Notion 389aedca11f081c3802decf0b16ea601 — Manual re-send of pending interview Slack notifications"
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1637"
+  - "https://github.com/taller-projects/echo-backend/pull/1671"
+fe_prs:
+  - "https://github.com/taller-projects/echo-frontend/pull/2850"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23180"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23321"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23224"
+prd: "https://app.notion.com/p/389aedca11f081c3802decf0b16ea601"
 ---
 
 # Pending interview notifications (23180 → US 23321)

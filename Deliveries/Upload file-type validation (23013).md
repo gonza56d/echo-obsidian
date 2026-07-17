@@ -4,8 +4,10 @@ status: merged
 env: taller
 delivered: 2026-06-19
 tags: [security, pentest]
-prs: [1582]
-tickets: [23013]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1582"
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23013"
 ---
 
 # Upload file-type validation (23013)
