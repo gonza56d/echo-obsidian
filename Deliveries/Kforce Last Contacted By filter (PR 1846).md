@@ -50,12 +50,24 @@ Root cause was dual:
 
 ## Taller port — [#1851](https://github.com/taller-projects/echo-backend/pull/1851) → dev ([Bug 23639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23639), in review)
 
-Preventive port of the round-2 shape (2026-07-17): dev still ran the ORIGINAL `row_number()` window and was closer to the cliff than assumed — the count query already took **11.8s of the ~20s timeout budget on dev data** (82k contacts / 544k interactions / 830 users). Ported: nested EXISTS + `contact_last_interaction_id_idx` (migration `51r81g9s8arp`, new random id — separate alembic chain) + the full regression test suite adapted to Taller tenancy (`mocked_tenant`, `tenant_id` on Interaction, no `organization_id` in Taller's `UserFilter`). Validated same rolled-back-index method: **11.8s → 41ms**. Also a deliberate semantic alignment: the window ranked by interaction date independently of the `last_interaction_id` pointer, so dropdown and applied filter could disagree; now both join through the pointer.
+Preventive port of the round-2 shape (2026-07-17): dev still ran the ORIGINAL `row_number()` window and was closer to the cliff than assumed — the count query already took **11.8s of the ~20s timeout budget on dev data** (82k contacts / 544k interactions / 830 users). Ported: nested EXISTS + `contact_last_interaction_id_idx` (migration `51r81g9s8arp`, chained onto the current dev head `3gufg5ykw01g` — see Review + fixes) + the full regression test suite adapted to Taller tenancy (`mocked_tenant`, `tenant_id` on Interaction, no `organization_id` in Taller's `UserFilter`). Validated same rolled-back-index method: **11.8s → 41ms**. Also a deliberate semantic alignment: the window ranked by interaction date independently of the `last_interaction_id` pointer, so dropdown and applied filter could disagree; now both join through the pointer.
+
+### Review + fixes (2026-07-17)
+
+`/pr-review 1851` (architecture + prd + tests-security) caught a **latent alembic multi-head**: `51r81g9s8arp` was cut off `q8vd3mzk7w2p`, but dev's head had since advanced to `3gufg5ykw01g` (interview change-history backfill, [[Interview assessment change history (US 22248)]]). CI was green only because the PR branch predated `3gufg5ykw01g`, so its chain looked single-headed in isolation — merged into dev it would leave **two heads** and break `alembic upgrade head` (same class of pipeline break as the contact-relationship column-drop). Fixes pushed as commit `fc5876cf`:
+
+- **Rebased** the migration `down_revision` `q8vd3mzk7w2p` → `3gufg5ykw01g` (merged `origin/dev` into the branch; single head re-verified with `alembic heads`).
+- **Concurrent index build**: wrapped `create_index`/`drop_index` in `op.get_context().autocommit_block()` + `postgresql_concurrently=True`. `contact` is large/write-hot and a plain in-tx CREATE INDEX holds ACCESS EXCLUSIVE — self-defeating for a prod-safety fix. Matches the `add_tags_to_contact` (`fqjptb8sl7vh`) precedent. NB: only 3 of ~146 index migrations use CONCURRENTLY — emerging convention for big tables, not universal.
+- **Nit — explicit tenant scoping**: added `Interaction.tenant_id == cls.tenant_id` to the outer EXISTS (defense-in-depth alongside RLS, matching the `is_owner` column_property; redundant with RLS but the house idiom).
+- **Nit — test page-1 robustness**: pinned `size=100` on the `has_contact_interaction=false` requests (module-scoped DB accumulates users; default page 50 could push the target off page 1).
+- Deliberately **skipped** the "add RLS DDL-assertion test" nit — the RLS policies on `contact`/`contact_interaction` are pre-existing and unchanged by this PR, so out of scope.
+
+Verified: 7 ported + 150 user/filter tests green; ruff clean; single alembic head. Review verdict CHANGES REQUESTED → now addressed.
 
 ## Pending
 
 - **[#1850](https://github.com/taller-projects/echo-backend/pull/1850) merge + kforce-dev deploy + live re-test** of the dropdown.
-- **[#1851](https://github.com/taller-projects/echo-backend/pull/1851) merge** (Taller dev), then qa/main promotion via release flow.
+- **[#1851](https://github.com/taller-projects/echo-backend/pull/1851) merge** (Taller dev) — review fixes pushed (`fc5876cf`), awaiting merge; then qa/main promotion via release flow.
 - kforce-master promotion via normal release flow.
 
 ## Related
