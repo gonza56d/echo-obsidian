@@ -19,7 +19,7 @@ prd: "https://app.notion.com/p/39eaedca11f081ff95f4c0b20b6b3aab"
 
 # Open Jobs 1-5 matching (US 23640)
 
-Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended, **no migration**); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented + review round 1 fixed (commit `614aa7ab`) — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
+Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended, **no migration**); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented + review rounds 1 (`614aa7ab`) & 2 (`e2171b0e`) fixed — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
 
 ## Azure / docs
 
@@ -99,7 +99,37 @@ Team decision: **send the full open job + curated talent data inline** to Data (
 - **NIT — typing (architecture A14).** Widened `get_job_for_tenant`/`get_jobs_for_tenant`/`_tenant_filtered_response`/`_visible_entries` `tenant_id` to `uuid.UUID | None` (internal path can pass `None`); tightened `talent_by_id: dict[uuid.UUID, tuple]` and `_get_ats_notes_by_talent -> dict[uuid.UUID, list]`.
 - **Contract change (user request, coordinated with Data US 23610): split talent `skills`.** The talent payload now sends **separate `core_skills` + `additional_skills` lists** instead of one merged `skills` list. `OpenJobMatchTalent` gains both fields; `_build_talent_payload` sets each from `Talent.core_skills`/`Talent.additional_skills`. **PRD §8 request example + this note (line above) updated to match** so Data implements the split shape.
 - Tests: added `test_score_candidates_maps_malformed_response_to_502`; updated skills-split assertions (`core_skills`/`additional_skills`) and `repo.commit` assertion. All 14 open-job matching unit tests pass; lint clean. The ~10 `assert 404` TestClient failures are the known local-only issue (verified identical failing set on clean baseline — no regressions).
-- **Not fixed (noted for follow-up, out of tight scope):** system "full-flow with mocked sync endpoint" test (PRD §5) still missing → row-lock RMW unverified vs real Postgres, and CI runs `tests/unit` only anyway; `ExternalApiService` DEBUG body-log now carries talent email/notes PII if DEBUG ever enabled in a shared env; smart-search view `smart_search_companies_open_jobs.sql` exposes `matched_talents` as a column but has **no downstream consumer** (pre-existing, untouched).
+- **Deferred to round 2 (all now DONE in `e2171b0e`):** the PRD §5 full-flow system test, the `ExternalApiService` DEBUG-log PII leak, plus the round-2 blockers below. The smart-search view `smart_search_companies_open_jobs.sql` `matched_talents` exposure stays untouched (still no downstream consumer).
+
+## Review round 2 fixes — 2026-07-17 (commit `e2171b0e`)
+
+Pedro's review (CHANGES REQUESTED: 4 blockers + nits + 4 questions). All blockers + nits in one commit `e2171b0e`. Verified: 16 new tests green + all pre-existing service-level unit tests green; **4/4 system tests green vs real Postgres**; lint clean.
+
+**Blockers**
+
+- **B1 — vectorize leg violated the error contract + timeout.** The lazy `if job.vector is None` re-vectorize ran with the shared 300s×3 default and its `ExternalApiException` escaped the 502/504 normalization (raw 500/503 to the client — exactly what Task 23641 was meant to prevent). Extracted `OrganizationJobService._ensure_vectorized(job, industry)`: calls `vectorize_job_description(..., read_timeout=OPEN_JOB_MATCH_READ_TIMEOUT, max_retries=0)` inside try/except → shared `_external_error(exc)` helper (504 on timeout, else 502). Threaded `read_timeout`/`max_retries` passthrough into `VectorizerService.vectorize_job_description` (+ the mock) — background ingest callers keep the 300s default (params default `None`). **422 decision: implemented, not declared vestigial** — new `OpenJobNotVectorizableError` (group 1, 422) when a job has neither title nor description (the only genuinely non-vectorizable case; title is normally non-null so it's rare, but it gives the documented contract a real code path).
+- **B2 — Data-response validation.** (a) intra-batch dedup by `talent_id` when building `ok_results` (a repeated `ok` would double-append + double-consume the per-tenant cap; `_persist_new_matches` only dedups vs *stored*). (b) `OpenJobMatchResult` `model_validator` rejects `ok` with a null score → `OpenJobMatchResponse.model_validate` raises → existing malformed-200→502 path. Chose Pedro's "whole batch → 502" over partial-trust (a contract-violating body isn't partially trusted).
+- **B3 — PII in DEBUG logs.** `ExternalApiService.__send_request` gained a per-call `log_body: bool = True` guarding both the request- and response-body `logger.debug`; `evaluate_open_job_match` sends `log_body=False`. Default behavior unchanged for every other consumer.
+- **B4 — full-flow system test.** Added match → 5 scored (1-5) → Get More → grow to cap → idempotent no-op, + not-found. **Driven through the service, NOT the HTTP client:** the local TestClient 404s all `/company/jobs/*` success paths (documented quirk — green in CI) AND system tests never run in CI, so a `client`-based test would be red locally and unverifiable anywhere. Service-level exercises the real gap the round-1 note flagged (real cosine selection, `SELECT … FOR UPDATE` row-locked RMW, per-tenant cap, JSONB tenant tagging) against real Postgres. Small batch(5)/cap(6) + 8 seeded matchable talents avoid seeding 30.
+
+**Nits**
+
+- `OrganizationJobResponse.highest_match_score` `float`→`int` (matches `Mapped[int|None]`; aligns before FE M2 consumes it — was serializing `5.0`).
+- `matched_talents` moved OUT of `OrganizationJobBase` INTO `OrganizationJobResponse` only → the create/update **write** schemas no longer accept it (closes the "internal caller overwrites/injects tagged entries on the shared row" hole; verified no code/test writes it via the schemas — ingest uses a raw dict). Read shape unchanged.
+- Type hints on `_ensure_vectorized`/`_score_candidates`/`_build_talent_payload`/`_persist_new_matches`/`_tenant_filtered_response` (foreign ORM objects typed `Any` to avoid importing `Talent`/`ATSNote` into the service). Stale "no email" docstring (`OpenJobMatchTalent`) + `test_build_talent_payload` comment corrected.
+- Extra unit coverage: new `tests/unit/test_external_api_service.py` (Timeout→504, `max_retries=0` = one attempt, `read_timeout` override reaches `requests`, `log_body` suppresses/logs bodies); Page-branch of `get_jobs_for_tenant`; unknown-`talent_id` drop.
+
+**Questions (answered in the PR reply, no code change)**
+
+1. Legacy entries consuming a tenant's cap-30 — **intended** per PRD §7 (legacy keeps current behavior, no conversion/backfill); a job with ≥30 legacy % matches is a pre-existing edge.
+2. Smart-search view exposing raw `matched_talents` — pre-existing, still **no downstream consumer**; untouched.
+3. `Timeout`→504 global to every consumer — **yes** (added in the original PR, not round 2); additive. Data 422 (= an Echo bug) → generic 502 toast is intended.
+4. Repo `Talent`/`Experience` coupling — the match query is the **sanctioned exception** (vector-distance JOIN + payload build).
+
+**Gotchas**
+
+- Adding `read_timeout`/`max_retries` to `vectorize_job_description` broke `test_vectorize_job_description_cache_does_not_collide_across_industries` (its `fake_post(endpoint, json)` mock) → added `**kwargs`. Two `fake_post` defs in that file; only the job_description one needed it (`vectorize_text` unchanged).
+- `test_get_organization_jobs` ERRORS locally (3, parametrized): the factory stores `matched_talents` as the JSON scalar `'"[]"'`, so the `highest_match_score` column_property (`jsonb_array_elements`) throws `DataError` inside `models_to_pydantic(OrganizationJobResponse)`. **PRE-EXISTING** (models.py untouched by round 2; Response already carried both fields at HEAD `614aa7ab`) — verified NOT a round-2 regression. Same class as the ~10 TestClient-404 local-only failures.
 
 ## Pending
 
@@ -109,7 +139,8 @@ Team decision: **send the full open job + curated talent data inline** to Data (
 - [ ] Merge #1854 (blocked on US 23610).
 - [ ] M2 FE (US 23644) — frontend milestone, needs FE owner (**not backend scope**); PR should note M1 #1854 must merge first.
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
-- [ ] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — confirm with Pedro at review time.
+- [x] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — Pedro reviewed rounds 1+2 with no objection to the core approach (his round-2 questions were about the legacy-cap edge + the consumer-less smart-search view exposure, not the isolation mechanism).
+- [x] PRD §5 full-flow system test + PII-log fix — done in round 2 (`e2171b0e`).
 
 ## Related
 
