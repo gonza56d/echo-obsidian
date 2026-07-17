@@ -7,6 +7,8 @@ tags: [feature, case-studies, ai]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1842"
   - "https://github.com/taller-projects/echo-backend/pull/1843"
+  - "https://github.com/taller-projects/echo-backend/pull/1852"
+  - "https://github.com/taller-projects/echo-backend/pull/1853"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23613"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23619"
@@ -53,8 +55,17 @@ Data team (Rodri) deployed `/case_studies/regenerate` + `/case_studies/find_simi
 - **Pre-existing generate quirk** (unchanged endpoint, NOT this US): project without `tech_stack` → TB 422 (`project.tech_stack` null rejected; echo sends `tech_stack: null` via `build_proposal_request`). Candidate for a tiny follow-up (send `[]` instead of null, or TB accepts null).
 - Grafana API key expired during QA → `case_study.generation` structured-log verification pending (unit-tested; needs new key in `~/.zshrc`).
 
+## Promotion to QA / PROD (cherry-pick, 2026-07-17)
+
+Feature promoted from `dev` to the release branches as a bundle (both dev PRs = one US, one promotion PR per env), following the per-feature `cherry-pick/*` convention (precedent: dispatcher #1839/#1840). Merge with a **merge commit**, not squash.
+
+- **→ qa**: [#1852](https://github.com/taller-projects/echo-backend/pull/1852) — branch `cherry-pick/case_studies_per_card_qa`
+- **→ main (PROD)**: [#1853](https://github.com/taller-projects/echo-backend/pull/1853) — branch `cherry-pick/case_studies_per_card_main`
+
+Mechanics: each branch has **2 clean commits** (M1 #1842, M2 #1843), produced by `git cherry-pick -m 1` of the two dev **merge commits** (`13cd03d9`, `b8953097`) then rewording. qa/main were 19 commits behind dev but all 7 touched files were byte-identical to dev's pre-feature base → **cherry-picks applied cleanly, zero conflicts**; net diff verified byte-identical to dev's post-feature tree. **No schema changes / no migrations.** Both cherry-picked directly from dev (parallel, like the dispatcher precedent), main body notes to merge after qa. Feature is `TenantFeature.CASE_STUDIES`-gated → no-op for tenants without the flag. Local promotion worktrees: `../echo-backend-cs-qa`, `../echo-backend-cs-main` (removable once merged).
+
 ## Pending
+- Merge #1852 → qa, then #1853 → main (merge commits, not squash).
 - FE overlay integration (remove Regenerate All + Lock; per-card Edit/Delete/Regenerate/Find Similar; message the `null` "no result" state).
-- Feature-level QA gate before promoting to QA env / PROD.
 - Decide whether Data should register the **Taller dev tenant** in TB CaseStudies so QA isn't Navitec-only.
 - Optional follow-up: `tech_stack: null` 422 on generate for projects without tech stack (pre-existing).
