@@ -19,10 +19,11 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
 - **US [#23179](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23179)** (gonza) — "Agregar link a /evaluate en el email de scheduled interview". No dedicated PRD (small US in the interviews area).
 
 ## PRs
-- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` (OPEN). Three commits:
+- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` (OPEN). Four commits:
   - `578a106d` — feature: `evaluate_link` + jinja button + render test.
   - `9191872e` — `/pr-review` nit fixes (DRY mixin refactor + direct scheduled-path render test); see Decisions.
   - `3aa501ed` — external-review nit: regression test locking that the Slack-only `InterviewEventPayload` has no `evaluate_link`.
+  - `266264d7` — Pedro-review nits: payload-base naming (`*PayloadBase`) + docstrings; test module renamed to `test_interview_scheduled_email.py` + rescoped docstring.
 
 ## How
 - `app/modules/assessment/event_handlers.py` — the `/evaluate` deep link. Interviewer-facing link building is now factored into two mixins (post-refactor):
@@ -42,6 +43,10 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
   - **Nit 1 (fixed, `3aa501ed`)** — nothing locked the deliberate Slack exclusion. Added `test_slack_only_payload_does_not_expose_evaluate_link`: asserts `not hasattr(InterviewEventPayload(...), "evaluate_link")` + `"evaluate_link" not in model_dump()`, and that the shared interviewer-slots `link` is still present.
   - **Nit 2 (no action)** — the `__new__`-based fixture was flagged for awareness only; mirrors the existing accepted pattern in the same file.
   - **PII logging** in `_send_interview_notification` (logs the full payload incl. `interviewer_email`/`talent_name`) — pre-existing in `dev`, out of scope; folds into the hardening follow-up below.
+- **Second review on #1865** ([review](https://github.com/taller-projects/echo-backend/pull/1865#pullrequestreview-4736269251), rocha-p / Pedro) — ✅ **APPROVED**, ticket fully satisfied, CI green, no blockers. Verified the FE route expects exactly the interview id the backend passes. Two non-blocking nits, both fixed in `266264d7`:
+  - **Nit 1 — test module scope**: `test_interviewer_changed_email.py` held `TestNotificationServiceInterviewScheduledHandler` + `TestEvaluateLink` beyond its docstring scope. Renamed → `test_interview_scheduled_email.py` (`git mv`, history preserved) + rewrote docstring (both handlers render the one template).
+  - **Nit 2 — naming**: the two "mixins" declare `interview_id`, so they're payload bases, not pure mixins. Renamed `InterviewLinkMixin`→`InterviewLinkPayloadBase`, `InterviewEmailLinksMixin`→`InterviewEmailLinksPayloadBase` + docstrings.
+  - **Informational**: on `interviewer.changed`, a late email can land on the read-only "already submitted" evaluate view — confirmed intended (matches in-app). The `autoescape=False` XSS surface is the pre-existing hardening follow-up below.
 
 ## Gotchas
 - Worktree based off `origin/dev` (reset from HEAD) because the launch checkout sat on the concurrent `23640/open-jobs-matching-1-5` branch (another agent) — avoids dragging unrelated open-jobs work into this PR.
