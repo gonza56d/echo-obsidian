@@ -19,7 +19,7 @@ prd: "https://app.notion.com/p/39eaedca11f081ff95f4c0b20b6b3aab"
 
 # Open Jobs 1-5 matching (US 23640)
 
-Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended, **no migration**); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented + review rounds 1 (`614aa7ab`) & 2 (`e2171b0e`, + CI-red fix `6e7de88b`) fixed — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
+Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended; schema unchanged, but a **data-only migration wipes legacy entries at rollout** — see 2026-07-20 follow-up); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented + review rounds 1 (`614aa7ab`) & 2 (`e2171b0e`, + CI-red fix `6e7de88b`) fixed + round-2 follow-up (`be34ce85` stranded tests + `678b8225` legacy-wipe migration) — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
 
 ## Azure / docs
 
@@ -119,10 +119,10 @@ Pedro's review (CHANGES REQUESTED: 4 blockers + nits + 4 questions). All blocker
 - Type hints on `_ensure_vectorized`/`_score_candidates`/`_build_talent_payload`/`_persist_new_matches`/`_tenant_filtered_response` (foreign ORM objects typed `Any` to avoid importing `Talent`/`ATSNote` into the service). Stale "no email" docstring (`OpenJobMatchTalent`) + `test_build_talent_payload` comment corrected.
 - Extra unit coverage: new `tests/unit/test_external_api_service.py` (Timeout→504, `max_retries=0` = one attempt, `read_timeout` override reaches `requests`, `log_body` suppresses/logs bodies); Page-branch of `get_jobs_for_tenant`; unknown-`talent_id` drop.
 
-**Questions (answered in the PR reply, no code change)**
+**Questions (Q1/Q2 answers below were SUPERSEDED on 2026-07-20 — see next section)**
 
-1. Legacy entries consuming a tenant's cap-30 — **intended** per PRD §7 (legacy keeps current behavior, no conversion/backfill); a job with ≥30 legacy % matches is a pre-existing edge.
-2. Smart-search view exposing raw `matched_talents` — pre-existing, still **no downstream consumer**; untouched.
+1. ~~Legacy entries consuming a tenant's cap-30 — intended per PRD §7~~ → **superseded: legacy entries are wiped at rollout** (migration `ehjnwsqitqve`), dissolving the starvation edge entirely.
+2. Smart-search view exposing raw `matched_talents` — pre-existing, no consumer in echo-backend; **Data team being notified** (they query the view directly) — see next section.
 3. `Timeout`→504 global to every consumer — **yes** (added in the original PR, not round 2); additive. Data 422 (= an Echo bug) → generic 502 toast is intended.
 4. Repo `Talent`/`Experience` coupling — the match query is the **sanctioned exception** (vector-distance JOIN + payload build).
 
@@ -131,6 +131,14 @@ Pedro's review (CHANGES REQUESTED: 4 blockers + nits + 4 questions). All blocker
 - Adding `read_timeout`/`max_retries` to `vectorize_job_description` broke `test_vectorize_job_description_cache_does_not_collide_across_industries` (its `fake_post(endpoint, json)` mock) → added `**kwargs`. Two `fake_post` defs in that file; only the job_description one needed it (`vectorize_text` unchanged).
 - **CI RED after `e2171b0e` — fixed in `6e7de88b` (`default=list`).** I initially (wrongly) called the 3 `test_get_organization_jobs` errors "pre-existing" because models.py was untouched and the Response fields existed at HEAD. **That was wrong — it was a round-2 regression**, and the *local* TestClient-404 quirk masked it (the route 404s before the query runs), so locally it looked like the same 404 family. CI (routes resolve) exposed the truth: **8 failed + 3 errors, all in `test_organization_jobs`, all `DataError: cannot extract elements from a scalar` / `ResponseValidationError`**. Root cause: stripping `matched_talents` from the write schemas (nit 4) meant `OrganizationJobCreate` no longer carries it, so `create_entity` **and the real `create()` path** fall back to the model column default — which was the **string** `default="[]"`, JSON-serialized to a JSONB *scalar string* `"[]"`, breaking `jsonb_array_elements` in `highest_match_score` (would have 500'd every job read/list in prod, not just tests). **Fix:** `matched_talents` model default `"[]"` → `list` (proper JSONB array `[]`) + a service-level regression guard (`test_job_with_default_matched_talents_is_readable`) that reproduces the read path locally (TestClient tests can't — they 404). `top_tech` has the identical latent `default="[]"` but is still on the write schema so it's always provided — left as-is (unexercised); worth fixing if it's ever stripped.
 - **Lesson:** "CI green before, red after my push" is the authoritative baseline — never label a failure pre-existing off local results when a known local quirk (TestClient-404) can mask the real CI error. Verify the actual code path (here: service-level read) locally, not the TestClient result.
+
+## Round 2 follow-up — 2026-07-20 (commits `be34ce85`, `678b8225`)
+
+Session verified round 2 against the actual PR head (not the commit messages) and found one claim false + settled Pedro's Q1/Q2:
+
+- **Stranded test file (gotcha!):** `tests/unit/test_external_api_service.py` (5 transport tests: Timeout→504, `max_retries=0` = one attempt, `read_timeout` override, `log_body` on/off) was **claimed in `e2171b0e`'s message but left untracked** — never committed, never pushed. Committed now as `be34ce85`. **Lesson: after committing, check `git status` for strays — commit-message claims ≠ repo state.**
+- **Q1 decision change — wipe legacy entries (migration `ehjnwsqitqve`, commit `678b8225`).** The starvation edge (a job with ≥30 legacy untagged entries consumes every tenant's cap forever) is **new to this PR** (pre-PR there was no cap at all — clicks appended forever). Product decision: wipe legacy at rollout; lists rebuild in the new format on next click. Data-only migration `2026_07_20_1200-ehjnwsqitqve_wipe_legacy_matched_talents.py` (revises `51r81g9s8arp`): normalizes non-array values, then strips only entries **without** a `tenant_id` key → **idempotent, can never touch tagged entries**, safe to re-run by hand to mop up strays from the migration→rollout window (pipeline runs `apply_migrations.sh` in `RunScripts` BEFORE the ArgoCD stage, so old pods serve for a few minutes post-wipe). Downgrade = documented no-op. **Supersedes PRD "no migration" scope note + "legacy keeps current behavior" decision.** Verified read-only vs dev DB: 288k jobs, 0 non-array rows, only 100 jobs with entries, 0 with ≥30 legacy; post-wipe expression returns `[]` for legacy-only rows.
+- **Q2 — Data-team notification.** The view `view_smart_search_companies_open_jobs` exposes raw `matched_talents` (now with `tenant_id` tags + LLM justifications) and is consumed by the Data side directly in Postgres. Spanish notification message drafted for gonza to send: new entry shape, legacy wipe at deploy, tenant-filter warning for any tenant-facing surface, and 2 questions (do they use `open_job_matched_talents`? if not → follow-up to drop it from the view; careful: view column drops need `DROP VIEW`+`CREATE`, see the `_view_is_repo_shaped` incident).
 
 ## Pending
 
@@ -142,6 +150,10 @@ Pedro's review (CHANGES REQUESTED: 4 blockers + nits + 4 questions). All blocker
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
 - [x] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — Pedro reviewed rounds 1+2 with no objection to the core approach (his round-2 questions were about the legacy-cap edge + the consumer-less smart-search view exposure, not the isolation mechanism).
 - [x] PRD §5 full-flow system test + PII-log fix — done in round 2 (`e2171b0e`).
+- [x] Legacy-wipe migration (`ehjnwsqitqve`) + stranded `test_external_api_service.py` — pushed 2026-07-20.
+- [ ] Reply to Pedro's review comment on #1854 (blockers fixed in `e2171b0e`; Q1 → wipe migration, Q2 → Data notified, Q3/Q4 answers ready in this note).
+- [ ] gonza sends the Spanish notification to the Data team re: `view_smart_search_companies_open_jobs`; their answer decides the follow-up (drop `matched_talents` from the view if unused).
+- [ ] PRD amendment: "no migration" scope note + §7 "legacy keeps current behavior" → superseded by the wipe (session was updating Notion + Azure tickets right after this vault update).
 
 ## Related
 
