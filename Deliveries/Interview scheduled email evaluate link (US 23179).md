@@ -19,9 +19,10 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
 - **US [#23179](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23179)** (gonza) — "Agregar link a /evaluate en el email de scheduled interview". No dedicated PRD (small US in the interviews area).
 
 ## PRs
-- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` (OPEN). Two commits:
+- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` (OPEN). Three commits:
   - `578a106d` — feature: `evaluate_link` + jinja button + render test.
   - `9191872e` — `/pr-review` nit fixes (DRY mixin refactor + direct scheduled-path render test); see Decisions.
+  - `3aa501ed` — external-review nit: regression test locking that the Slack-only `InterviewEventPayload` has no `evaluate_link`.
 
 ## How
 - `app/modules/assessment/event_handlers.py` — the `/evaluate` deep link. Interviewer-facing link building is now factored into two mixins (post-refactor):
@@ -36,6 +37,12 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
 - **Style aligned to current**: reused `.btn` (same blue) and the "…please use the link below:" copy structure rather than introducing a new button style (per gonza's request).
 - **No FE change**: `/interviews/assessment/{id}/evaluate` is an existing echo-frontend route (confirmed: `src/pages/interviews/assessment/[id]/evaluate.tsx`, also referenced in `ScheduledCard.tsx`, `interviewsTableColumns.tsx`); `{id}` is the interview id, already present in the payload.
 
+## Review
+- **External review on #1865** ([comment](https://github.com/taller-projects/echo-backend/pull/1865#issuecomment-5023841905), leoassontaller, scoped) — ✅ **READY WITH NITS**, 0 blockers, CI green, ticket 4/4.
+  - **Nit 1 (fixed, `3aa501ed`)** — nothing locked the deliberate Slack exclusion. Added `test_slack_only_payload_does_not_expose_evaluate_link`: asserts `not hasattr(InterviewEventPayload(...), "evaluate_link")` + `"evaluate_link" not in model_dump()`, and that the shared interviewer-slots `link` is still present.
+  - **Nit 2 (no action)** — the `__new__`-based fixture was flagged for awareness only; mirrors the existing accepted pattern in the same file.
+  - **PII logging** in `_send_interview_notification` (logs the full payload incl. `interviewer_email`/`talent_name`) — pre-existing in `dev`, out of scope; folds into the hardening follow-up below.
+
 ## Gotchas
 - Worktree based off `origin/dev` (reset from HEAD) because the launch checkout sat on the concurrent `23640/open-jobs-matching-1-5` branch (another agent) — avoids dragging unrelated open-jobs work into this PR.
 - Tests render the **real** jinja template via `NotificationService.__new__` + a real `jinja2.Environment` (no HTTP client; render assertions need no DB). New in `9191872e`: `TestNotificationServiceInterviewScheduledHandler` drives `interview_scheduled(event)` end-to-end (mocks `_resolve_interview_cancel_request`, `recruiter_id=None` to skip `bulk_create`) and asserts the button + `evaluate_link` + manage `link` in the rendered email — previously only covered transitively via the `interviewer.changed` test. `TestEvaluateLink` still asserts the computed-field URL for both payloads.
@@ -46,7 +53,7 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
 - [ ] Merge #1865 → `dev` (in review).
 - [ ] qa/main promotion cherry-picks after dev.
 - [ ] Feature QA: interviewer receives the email, "Evaluate Candidate" lands on the correct candidate's evaluation page.
-- [ ] Out-of-scope hardening (separate ticket, not this PR): jinja `Environment` has autoescape off; `talent_name`/`role_title` render unescaped in this template (pre-existing).
+- [ ] Out-of-scope hardening (separate ticket, not this PR): jinja `Environment` has autoescape off + `talent_name`/`role_title` render unescaped (pre-existing XSS surface); and `_send_interview_notification` logs the full payload incl. `interviewer_email`/`talent_name` (PII).
 
 ## Related
 - [[Pending interview notifications (US 23321)]] — same interviewer-notification surface (Slack + scheduled-interview email).
