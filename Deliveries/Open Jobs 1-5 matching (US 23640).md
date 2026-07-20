@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-progress
+status: merged
 env: taller
-delivered:
+delivered: 2026-07-20
 tags: [feature, matching, open-jobs, battle-tested]
 prs: ["https://github.com/taller-projects/echo-backend/pull/1854"]
 fe_prs: []
@@ -19,7 +19,7 @@ prd: "https://app.notion.com/p/39eaedca11f081ff95f4c0b20b6b3aab"
 
 # Open Jobs 1-5 matching (US 23640)
 
-Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended; schema unchanged, but a **data-only migration wipes legacy entries at rollout** — see 2026-07-20 follow-up); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) implemented + review rounds 1 (`614aa7ab`) & 2 (`e2171b0e`, + CI-red fix `6e7de88b`) fixed + round-2 follow-up (`be34ce85` stranded tests + `678b8225` legacy-wipe migration) — PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854) open → `dev` (merge gated on Data endpoint US 23610); M2 (FE) in progress.**
+Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended; schema unchanged, but a **data-only migration wipes legacy entries at rollout** — see 2026-07-20 follow-up); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) MERGED → `dev` 2026-07-20** (PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854), merge `8e702ef8`; review rounds 1 `614aa7ab` + 2 `e2171b0e`/`6e7de88b` + follow-ups `be34ce85`/`678b8225`/`4b9ea905`). **Merged against the mock — US 23610 (Data endpoint) still New**, real end-to-end validation pending; the legacy-wipe migration runs at dev deploy. Tasks 23641/42/43 Closed; US 23640 stays Active until real-contract validation + feature QA. M2 (FE) pending.
 
 ## Azure / docs
 
@@ -144,10 +144,11 @@ Session verified round 2 against the actual PR head (not the commit messages) an
 
 ## Pending
 
-- [x] M1 BE implementation (tasks 23641/42/43) → single PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** → `dev` (open).
-- [ ] Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610)): final path + staging availability; then validate real contract end-to-end (PRD "Verificación" §4) + set `OPEN_JOB_MATCH_ENDPOINT`/`READ_TIMEOUT`.
-- [ ] Latency target (P95) to agree with Data → drives the timeout setting value.
-- [ ] Merge #1854 (blocked on US 23610).
+- [x] M1 BE implementation (tasks 23641/42/43) → single PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** → `dev`.
+- [x] Merge #1854 — **MERGED 2026-07-20** (merge `8e702ef8`; the "gated on US 23610" plan was overridden — merged against the mock with 23610 still New). Tasks 23641/42/43 Closed; US 23640 left Active.
+- [ ] **Real-contract validation end-to-end vs the Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610), still New)** — now post-merge; dev points at the mock until Data ships staging.
+- [ ] Latency target (P95) to agree with Data → confirm `OPEN_JOB_MATCH_ENDPOINT`/`READ_TIMEOUT` values.
+- [ ] Verify the legacy-wipe migration applied cleanly on dev after deploy (`SELECT count(*) FROM organization_job WHERE matched_talents <> '[]'::jsonb` should count only tagged-entry jobs).
 - [ ] M2 FE (US 23644) — frontend milestone, needs FE owner (**not backend scope**); PR should note M1 #1854 must merge first.
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
 - [x] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — Pedro reviewed rounds 1+2 with no objection to the core approach (his round-2 questions were about the legacy-cap edge + the consumer-less smart-search view exposure, not the isolation mechanism).
