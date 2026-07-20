@@ -6,6 +6,8 @@ delivered:
 tags: [chore, repo-hygiene, git]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1860"
+  - "https://github.com/taller-projects/echo-backend/pull/1861"
+  - "https://github.com/taller-projects/echo-backend/pull/1862"
 fe_prs: []
 tickets: []
 prd: ""
@@ -19,12 +21,14 @@ The `echo-backend/vault/` Obsidian notes directory had been accidentally committ
 - No ticket (repo-hygiene chore).
 
 ## PRs
-- [#1860](https://github.com/taller-projects/echo-backend/pull/1860) → `dev` — open (in review)
+- [#1860](https://github.com/taller-projects/echo-backend/pull/1860) → `dev` — **merged 2026-07-20** (squash)
+- [#1861](https://github.com/taller-projects/echo-backend/pull/1861) → `qa` — open (merge with a **merge commit**, not squash)
+- [#1862](https://github.com/taller-projects/echo-backend/pull/1862) → `main` — open (merge with a **merge commit**, not squash)
 
-## How
 - Investigated authorship: across **every ref**, all 7 commits touching `vault/` are the author's; it first entered via deploy-merge PR #1112 (2026-04-15), swept in by accident.
 - `git rm -r --cached vault/` on the branch `chore/untrack-vault-directory` — removes the 24 files from the index only; local copies untouched.
-- No `.gitignore` edit needed: `vault/` was already ignored (line 6, committed); the rule was simply a no-op for files committed before it existed.
+- No `.gitignore` edit needed: `vault/` was already ignored (line 6, committed) on **all three branches** (dev/qa/main); the rule was simply a no-op for files committed before it existed.
+- **qa + main carried the identical 24-file vault tree** (`git rev-parse origin/qa:vault` == `origin/main:vault` == `59e80584`). Removed there too via isolated scratch worktrees (`git worktree add` from `origin/qa` / `origin/main`) so the main working tree — which holds the user's local vault files — was never touched. Same `git rm --cached` on each → PRs #1861 (qa) / #1862 (main).
 
 ## Decisions
 - **`--cached`, not a full delete** — the user wanted to *untrack* and drop it from upstream while keeping the local notes.
@@ -36,7 +40,7 @@ The `echo-backend/vault/` Obsidian notes directory had been accidentally committ
 - Note the naming collision: most repo hits for "vault" are the unrelated **HashiCorp Vault** secret manager (`VaultService`, `VAULT_ENABLED`), which must not be touched.
 
 ## Pending
-- Merge #1860 → `dev`; it then reaches `main` via the normal release flow (removes `vault/` from upstream everywhere).
+- Merge #1861 → `qa` and #1862 → `main` (merge commits, not squash) to drop `vault/` from upstream on all three branches. #1860 → `dev` already merged.
 - Decide whether to strip the now-dangling `vault/Echo/` references from `CLAUDE.md` / pr-review skill / agent files / code comments (separate follow-up).
 
 ## Related
