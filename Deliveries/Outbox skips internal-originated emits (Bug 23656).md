@@ -23,13 +23,14 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
 - [Bug 23656](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23656) — Active, assigned to me.
 
 ## PRs
-- [#1870](https://github.com/taller-projects/echo-backend/pull/1870) → `dev` — in review (2026-07-20). /pr-review round 1: **READY WITH NITS** (0 blockers, 6/6 ticket compliance, CI green) — all 4 nits addressed in `7781ef17`.
+- [#1870](https://github.com/taller-projects/echo-backend/pull/1870) → `dev` — in review (2026-07-20). /pr-review round 1: **READY WITH NITS** (0 blockers, 6/6 ticket compliance, CI green) — all 4 nits addressed in `7781ef17`. Full-loop e2e regression added in `1782228f`.
 
 ## How
 - New dedicated `is_internal` flag on `RequestContext` (`app/context.py`) — deliberately NOT reusing `is_sync_operation` to avoid changing `last_sync_at` stamping.
 - `mark_internal_context` dependency (`app/permissions.py`) set **globally on the internal app's root router** (`get_internal_app_router`, `app/routers.py`) → covers 100% of `/internal`, independent of per-router `mark_sync_context`.
 - Guard in `write_outbox_event` (`app/modules/outbox/writer.py`) — the single write point: if `is_internal`, return `None` and skip. Enforced at write time; never left to the dispatcher.
 - Unit tests in `tests/unit/test_outbox_writer.py` (internal → no emit; non-internal → emits).
+- Full-loop e2e regression (`1782228f`): `tests/system/test_outbox_loop.py` — front-facing create emits → dispatcher delivers (mocked `httpx.Client`, real Postgres; delivery success + event completed + external link persisted) → writeback PATCH via `/internal` → outbox still holds exactly the one completed event (pre-fix: a pending `contact.updated` re-appears → ping-pong). Plus a non-vacuity control: the same update outside `/internal` DOES emit. System suite → does NOT run in CI (sh-vs-bash gotcha); the CI guards remain the unit wiring tests.
 - Review nits (`7781ef17`): new `tests/unit/test_outbox_internal_surface.py` pins the wiring (`mark_internal_context` asserted as a root dependency of the internal router; flag-setter test; end-to-end probe POST `/internal/contacts` → 201 + no `IntegrationOutbox` row); writer tests moved to the autouse `cleanup_request_context` fixture; `outbox_emit_skipped_internal` debug log in the guard; EventBus worker comment on the `is_internal` boundary.
 
 ## Decisions
@@ -47,6 +48,7 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
 - `is_sync_operation` existed and was set on internal routers but only wired to `last_sync_at` (`database/base.py`, `application/repository.py`) — never to outbox suppression. Easy to mistake as already solving this.
 - The `write_outbox` docstring claims the dispatcher "deduplicates per entity at fan-out" — **false**, there is no such dedup; every enqueued event becomes an HTTP call.
 - `echo_organization_id` in the contact payload derives from `current_company_id` → `current_relationship_id` (volatile computed subqueries in `app/modules/contact/models.py`), so relationship churn flips the pushed company, even to null.
+- A bare service call from a test thread is NOT a faithful front-facing origin: `TenantScopedRepository.get_tenant_id()` gates on `is_in_request_context()`, so outside a request tenant auto-injection is skipped and the contact INSERT falls back to `contact.tenant_id`'s hardcoded Taller `server_default` (`f8a652e6…`) → FK violation in a test DB. Wrap the leg in `background_request_context(ctx)` (same fork mechanism the EventBus uses) to get real request-like tenant stamping.
 - EventBus handlers run with a **fresh** `RequestContext` on the worker thread (`event_bus.py::_process_event`) — `is_internal` does NOT propagate. No current handler writes outbox events; a future one would bypass suppression (boundary documented in a comment there since `7781ef17`).
 
 ## Pending
