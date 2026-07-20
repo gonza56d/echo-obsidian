@@ -1,11 +1,13 @@
 ---
 type: delivery
-status: in-review
+status: promoting
 env: taller
 delivered:
 tags: [bugfix, outbox, trackerrms, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1870"
+  - "https://github.com/taller-projects/echo-backend/pull/1871"
+  - "https://github.com/taller-projects/echo-backend/pull/1872"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23656"
 ---
@@ -23,7 +25,9 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
 - [Bug 23656](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23656) — Active, assigned to me.
 
 ## PRs
-- [#1870](https://github.com/taller-projects/echo-backend/pull/1870) → `dev` — in review (2026-07-20). /pr-review round 1: **READY WITH NITS** (0 blockers, 6/6 ticket compliance, CI green) — all 4 nits addressed in `7781ef17`. Full-loop e2e regression added in `1782228f`.
+- [#1870](https://github.com/taller-projects/echo-backend/pull/1870) → `dev` — **MERGED 2026-07-20** (merge commit `475a2201`). /pr-review round 1: **READY WITH NITS** (0 blockers, 6/6 ticket compliance, CI green) — all 4 nits addressed in `7781ef17`; full-loop e2e regression `1782228f`.
+- [#1871](https://github.com/taller-projects/echo-backend/pull/1871) → `qa` — promotion cherry-pick (3 commits `92cdd22e`/`7781ef17`/`1782228f`), **open**, byte-identical to dev, no migrations.
+- [#1872](https://github.com/taller-projects/echo-backend/pull/1872) → `main` — promotion cherry-pick, **open** (merge after qa), byte-identical to dev.
 
 ## How
 - New dedicated `is_internal` flag on `RequestContext` (`app/context.py`) — deliberately NOT reusing `is_sync_operation` to avoid changing `last_sync_at` stamping.
@@ -59,7 +63,7 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
   - Contact company semantics: stop pushing the volatile derived company, never push `null` that blanks Tracker.
   - Stale contact external_id reconciliation (the 204/404 deaths).
   - Per-tenant rate-limit / circuit-breaker + dead-letter & abnormal-volume alerts (we found out via the client, not our own monitoring).
-- qa/main promotion after dev merge.
+- qa/main promotion: PRs [#1871](https://github.com/taller-projects/echo-backend/pull/1871) (qa) + [#1872](https://github.com/taller-projects/echo-backend/pull/1872) (main) **open**; merge each with a **merge commit** (main after qa). Azure Bug 23656 linked.
 
 ## Related
 - [[Map - TrackerRMS integration]]
