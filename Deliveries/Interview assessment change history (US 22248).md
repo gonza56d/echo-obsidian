@@ -6,8 +6,8 @@ delivered:
 tags: [feature, bugfix, interviews, migrations, tests]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1848"
-  - "https://github.com/taller-projects/echo-backend/pull/1879"
-  - "https://github.com/taller-projects/echo-backend/pull/1880"
+  - "https://github.com/taller-projects/echo-backend/pull/1875"
+  - "https://github.com/taller-projects/echo-backend/pull/1876"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/2970"
 tickets:
@@ -114,18 +114,20 @@ artifacts — identical test-by-test in a pre-fix baseline run, green in CI.)
 
 ## Promotion to qa/main — 2026-07-21
 
-Cherry-picks opened to promote #1848 up the pipeline, **batched with Open Jobs 1-5 matching (US 23640, [[Open Jobs 1-5 matching (US 23640)]])** so both features release to `main`/prod together:
+**Shipped combined with Open Jobs 1-5 matching (US 23640) — one PR per environment carrying BOTH features** (not separate PRs; see correction), so the two release to `main`/prod as a single self-contained unit:
 
-- **qa: PR [#1879](https://github.com/taller-projects/echo-backend/pull/1879)** — branch `cherry-pick/interview_change_history_qa` → `qa`.
-- **main/PROD: PR [#1880](https://github.com/taller-projects/echo-backend/pull/1880)** — branch `cherry-pick/interview_change_history_main` → `main`.
+- **qa: [#1875](https://github.com/taller-projects/echo-backend/pull/1875)** — the open-jobs promotion PR, now also carrying US 22248's 5 commits + the `3gufg5ykw01g` backfill.
+- **main/PROD: [#1876](https://github.com/taller-projects/echo-backend/pull/1876)** — same, for `main` (still DO-NOT-MERGE for the open-jobs prod blockers: Data US 23610 + FE M2).
 
-**How built:** the 5 feature commits of #1848 cherry-picked **cleanly (zero conflicts)** onto `origin/qa` and `origin/main` via isolated scratch worktrees. The 13 feature files are **byte-identical to dev**; only `app/routers.py` differs (qa/main's existing content + the one-router wiring). Full branch diff vs base = exactly the 14 PR files (`+1536/-1`). ruff `app/` clean, single alembic head.
+**Correction (this session):** I first opened *separate* interview cherry-pick PRs (#1879 → qa, #1880 → main) — the ask was to fold the feature INTO #1875/#1876. Re-did it: cherry-picked the 5 interview commits onto the #1875/#1876 branches (**fast-forward, no force-push**), then **closed #1879/#1880 and deleted their branches**.
 
-**Gotcha — do NOT cherry-pick the merge commit's `parent1..parent2` diff.** #1848 merged to dev via merge commit `5057e358`, but its branch was never rebased onto the newer dev, so `5057e358^1..5057e358^2` is polluted by unrelated `case_study`/`role`/`solution_service` **deletions** (a separate PR that landed on dev meanwhile). The true PR diff is `merge-base(^1,^2)..^2` = the 5 commits `a0e330c8..4cae3e48` — cherry-pick those.
+**How built:** the 5 commits `a0e330c8..4cae3e48` of #1848 cherry-picked **cleanly (zero conflicts)** onto each open-jobs branch — no file overlap (open-jobs never touches `app/routers.py`/`tests/factories.py`). 13 feature files **byte-identical to dev**; only `app/routers.py` differs (base + one-router wiring). ruff `app/` clean.
 
-**Migration chain:** `3gufg5ykw01g` keeps its dev `down_revision = q8vd3mzk7w2p` (the current qa/main head, confirmed applied in both the qa **and** PROD DBs read-only — no rebase needed, byte-identical to dev). It ships **before** the open-jobs wipe: the batched chain on each release branch is `q8vd3mzk7w2p → 3gufg5ykw01g → ehjnwsqitqve` (open-jobs' `ehjnwsqitqve` `down_revision` re-pointed onto `3gufg5ykw01g` on [#1875](https://github.com/taller-projects/echo-backend/pull/1875)/[#1876](https://github.com/taller-projects/echo-backend/pull/1876)). `51r81g9s8arp` (dev's contact-index between them) is a separate unshipped feature — **skipped**. **⚠️ Merge order per env: THIS interview PR first, then the open-jobs PR.** Both merge with a merge commit (release convention).
+**Gotcha — do NOT cherry-pick the merge commit's `parent1..parent2` diff.** #1848 merged to dev via merge commit `5057e358`, but its branch was never rebased onto the newer dev, so `5057e358^1..5057e358^2` is polluted by unrelated `case_study`/`role`/`solution_service` **deletions** (a separate PR that landed on dev meanwhile). The true PR diff is `merge-base(^1,^2)..^2` = the 5 commits — cherry-pick those.
 
-**Before the prod backfill (#1880):** re-confirm the divergence COUNT on PROD with a read-only `SELECT` (~51 at authoring); the backfill mutates prod interview data (downgrade is a documented no-op).
+**Migration chain (self-contained, single head):** each combined PR carries **both** migrations, linearized `q8vd3mzk7w2p → 3gufg5ykw01g (this backfill) → ehjnwsqitqve (open-jobs wipe)`. `3gufg5ykw01g` keeps its dev `down_revision = q8vd3mzk7w2p` (byte-identical); open-jobs' `ehjnwsqitqve` `down_revision` re-pointed onto `3gufg5ykw01g` (skipping the unshipped `51r81g9s8arp`). Verified `alembic heads` = single head `ehjnwsqitqve`; **no cross-PR merge order** (both features in one PR). qa + PROD DBs both confirmed at `q8vd3mzk7w2p` (read-only).
+
+**Before the prod backfill:** re-confirm the divergence COUNT on PROD with a read-only `SELECT` (~51 at authoring); the backfill mutates prod interview data (downgrade is a documented no-op).
 
 ## Related
 - [[Pending interview notifications (US 23321)]] — same interviews module
