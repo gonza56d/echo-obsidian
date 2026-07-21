@@ -26,7 +26,7 @@ Proposals & case studies were a privileged-tenant capability: proposal export 40
 - Approved design: Echo Proposal Template — 10 slides (claude.ai design `32867681`)
 
 ## PRs
-- [#1878](https://github.com/taller-projects/echo-backend/pull/1878) → dev — **open** (M1 + M3, PDF-first). Self-`/pr-review` 2026-07-21: **READY WITH NITS** — 0 blockers, PRD 10/12 + PPTX-flag PDF-first tradeoff + 2 cover/closing design-fidelity partials; cross-tenant isolation + auth + role gates all intact after the gate removal. 3 nits fixed in `bef5b680`.
+- [#1878](https://github.com/taller-projects/echo-backend/pull/1878) → dev — **open** (M1 + M3, PDF-first). Formal 3-agent `/pr-review` 2026-07-21: **READY WITH NITS** — 0 code blockers, **CI green** (`test and lint` pass) + 138 unit tests pass locally; cross-tenant isolation (explicit `tenant_id` repo filter, *not* RLS), auth + role gates intact after the gate removal; no dangling refs to the removed enum/exception. PRD 15/21 fully + PPTX-flag PDF-first tradeoff (→M2) + design-fidelity/footer QA-reconciles. First-round nits fixed `bef5b680`; second-round test-coverage nits fixed `70f6c661`.
 - FE: **required, not yet opened** — ungating + data-readiness warnings (R5); `has_custom_export_project` becomes always-true so the FE always shows the export action, and the FE must **not** offer PPTX for template-less tenants (still 403 until M2).
 
 ## How
@@ -40,6 +40,7 @@ Proposals & case studies were a privileged-tenant capability: proposal export 40
 - **Design source**: couldn't fetch the claude.ai design (share links 403); adapted from Navitec structure + a user screenshot of slide 6 + Echo tokens. Cover/objectives/delivery-phases/resource/closing inferred — reconcile vs the approved design in QA.
 - One PR for M1+M3 in a worktree off updated `dev`.
 - **Review nits fixed (`bef5b680`)**: (a) dropped the vestigial tenant `SELECT` on the update/delete/regenerate/find-similar write paths — only `generate` needs the tenant config; (b) block-scoped `{% autoescape %}` over the generic template body; (c) added service-level + render-branch test coverage. export + case-study unit suites green, ruff clean.
+- **Review nits fixed (`70f6c661`)**: second round, from the formal 3-agent `/pr-review` — added generic-template test coverage: (a) Echo-logo fallback fills masthead/cover/closing when the tenant has no logo (R2), mirroring the service wiring; (b) no-rate resource row renders the em-dash fallback (isolate the row, assert no `$`); (c) logo-URL attribute-context escaping under the block-scoped autoescape. `test_proposal_graphics.py` 24 passed locally.
 
 ## Gotchas
 - `generic_proposal.jinja` section names live in CSS comments/selectors ("Delivery Phases", "Executive Summary", …) → text-based test assertions false-positive; assert on rendered `class="..."` markup instead.
