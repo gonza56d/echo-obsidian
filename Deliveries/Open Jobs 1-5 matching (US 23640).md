@@ -4,7 +4,7 @@ status: merged
 env: taller
 delivered: 2026-07-20
 tags: [feature, matching, open-jobs, battle-tested]
-prs: ["https://github.com/taller-projects/echo-backend/pull/1854"]
+prs: ["https://github.com/taller-projects/echo-backend/pull/1854", "https://github.com/taller-projects/echo-backend/pull/1875", "https://github.com/taller-projects/echo-backend/pull/1876"]
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23494"
@@ -142,6 +142,22 @@ Session verified round 2 against the actual PR head (not the commit messages) an
 - **Q4 — layering exception DISSOLVED, not consecrated (commit `4b9ea905`).** Key insight: `OrganizationJobRepository.match_talents` joined `organization_job` **solely to reference `job.vector`**, but the service already holds the job row (`get_by_id` + `_ensure_vectorized` guarantee a vector) — so passing the vector *value* kills the entire cross-module coupling. Query moved to `TalentRepository.get_top_matches(target_vector, tenant_id, exclude_talent_ids, limit)` + `TalentService.get_top_matches` façade; job repo dropped `_talent_model`/`_experience_model` lazy-import properties and the `Experience` import. Same SQL semantics (percentage label, `is_available_for_matching`, exclusion, joined experiences→organization + selectin notes). Verified: baseline-diff clean (identical 10 local TestClient-404 failures on unmodified head), 5/5 system tests green vs real Postgres (also proves the new `Inject[TalentService]` DI wiring). **Note:** `ApplicationRepository` (Roles matching) still has the same `_talent_model` pattern — candidate for the same treatment as a follow-up, out of scope here.
 - **Q3 — audited, confirmed intended.** Nothing in the app branches on 500 vs 504: only status conditionals anywhere are `!= 404` (trackers/contact), `== 400` (vault), `== 504` (new job code). Response body unchanged (`retryable=False` is a class attr, FE reads `detail` only). The 504 is strictly more accurate for triage. One external caveat: any Grafana alert keyed to exactly `status=500` (not 5xx) would stop seeing timeouts — flagged in the PR reply for a quick dashboard eyeball.
 
+## Promotion to qa/main — 2026-07-21
+
+Cherry-picks of #1854 opened to promote M1 up the pipeline (dev → qa → main):
+
+- **qa: PR [#1875](https://github.com/taller-projects/echo-backend/pull/1875)** — branch `cherry-pick/open_jobs_matching_1_5_qa` → `qa` (**mergeable**).
+- **main/PROD: PR [#1876](https://github.com/taller-projects/echo-backend/pull/1876)** — branch `cherry-pick/open_jobs_matching_1_5_main` → `main`, opened **flagged DO-NOT-MERGE** (see risks below). Merge order is qa first, then main; both merge with a **merge commit** (release-branch convention, never squash).
+
+**How built:** the 11 feature commits of #1854 (`8e702ef8^1..8e702ef8^2`) cherry-picked cleanly onto each base — **zero conflicts**, and the resulting tree is **byte-identical to `dev`** for all 17 touched files (verified: every touched file was already at the same state on qa/main as the PR's dev base, since none of the ~70 unpromoted drift commits touched the open-jobs / talent / external-api / vectorizer surface). Preserved the individual commits (not squashed) — matches the merge-commit-PR precedent (`cherry-pick/outbox_skip_internal_emit_{qa,main}`), vs the squash-merged case-studies precedent that carried one commit per PR.
+
+**Migration rebase (the one manual step) — gotcha:** `ehjnwsqitqve`'s `down_revision` on dev is `51r81g9s8arp`, which is **not on qa/main** — it belongs to two unrelated, still-unpromoted features (interview-assessment backfill `3gufg5ykw01g` and the contact last-interaction index `51r81g9s8arp`). Cherry-picking it as-is would break the alembic chain ("Can't locate revision 51r81g9s8arp"). Fix: a `chore(migrations)` commit re-points `down_revision` → `q8vd3mzk7w2p` (the current qa/main head) on each branch. Safe — the wipe has zero semantic dependency on the skipped migrations. Verified `uv run alembic heads` = **single head `ehjnwsqitqve`** on both branches; ruff clean. **Known future event:** when the batch `dev-to-qa`/`qa-to-main` release later promotes `3gufg5ykw01g`/`51r81g9s8arp`, the `ehjnwsqitqve` file will conflict on the `down_revision` line (dev = `51r81g9s8arp`, qa/main = `q8vd3mzk7w2p`) — expected, resolve in favor of keeping a single connected chain on the release branch.
+
+**⚠️ PROD (main #1876) risks flagged in the PR body — hold the merge:**
+1. Real Data endpoint (US 23610) still **New** → prod "Get Candidates" would 502/504 (merged against the mock).
+2. The wipe migration **irreversibly destroys existing prod `matched_talents`** at deploy (downgrade = no-op); combined with (1), prod users lose matches they can't regenerate.
+3. FE M2 (US 23644) not built → no UI consumes the new shape; current prod FE renders the matches the wipe clears.
+
 ## Pending
 
 - [x] M1 BE implementation (tasks 23641/42/43) → single PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** → `dev`.
@@ -151,6 +167,9 @@ Session verified round 2 against the actual PR head (not the commit messages) an
 - [ ] Verify the legacy-wipe migration applied cleanly on dev after deploy (`SELECT count(*) FROM organization_job WHERE matched_talents <> '[]'::jsonb` should count only tagged-entry jobs).
 - [ ] M2 FE (US 23644) — frontend milestone, needs FE owner (**not backend scope**); PR should note M1 #1854 must merge first.
 - [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
+- [ ] **Merge #1875 → `qa`** (mergeable; merge commit) once ready to promote.
+- [ ] **Merge #1876 → `main`/PROD** — **HOLD** until Data US 23610 ships to prod + FE M2 ready (destructive wipe migration; prod would 502/504 otherwise).
+- [ ] After the batch release promotes `3gufg5ykw01g`/`51r81g9s8arp`, resolve the expected `ehjnwsqitqve` `down_revision` conflict (keep a single connected chain).
 - [x] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — Pedro reviewed rounds 1+2 with no objection to the core approach (his round-2 questions were about the legacy-cap edge + the consumer-less smart-search view exposure, not the isolation mechanism).
 - [x] PRD §5 full-flow system test + PII-log fix — done in round 2 (`e2171b0e`).
 - [x] Legacy-wipe migration (`ehjnwsqitqve`) + stranded `test_external_api_service.py` — pushed 2026-07-20.
