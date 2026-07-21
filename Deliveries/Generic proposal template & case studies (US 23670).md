@@ -26,7 +26,7 @@ Proposals & case studies were a privileged-tenant capability: proposal export 40
 - Approved design: Echo Proposal Template — 10 slides (claude.ai design `32867681`)
 
 ## PRs
-- [#1878](https://github.com/taller-projects/echo-backend/pull/1878) → dev — **open** (M1 + M3, PDF-first)
+- [#1878](https://github.com/taller-projects/echo-backend/pull/1878) → dev — **open** (M1 + M3, PDF-first). Self-`/pr-review` 2026-07-21: **READY WITH NITS** — 0 blockers, PRD 10/12 + PPTX-flag PDF-first tradeoff + 2 cover/closing design-fidelity partials; cross-tenant isolation + auth + role gates all intact after the gate removal. 3 nits fixed in `bef5b680`.
 - FE: **required, not yet opened** — ungating + data-readiness warnings (R5); `has_custom_export_project` becomes always-true so the FE always shows the export action, and the FE must **not** offer PPTX for template-less tenants (still 403 until M2).
 
 ## How
@@ -39,9 +39,11 @@ Proposals & case studies were a privileged-tenant capability: proposal export 40
 - **Gates removed from code, not kept as kill-switches** (PRD 2026-07-20) — flags would force a backfill for every new tenant.
 - **Design source**: couldn't fetch the claude.ai design (share links 403); adapted from Navitec structure + a user screenshot of slide 6 + Echo tokens. Cover/objectives/delivery-phases/resource/closing inferred — reconcile vs the approved design in QA.
 - One PR for M1+M3 in a worktree off updated `dev`.
+- **Review nits fixed (`bef5b680`)**: (a) dropped the vestigial tenant `SELECT` on the update/delete/regenerate/find-similar write paths — only `generate` needs the tenant config; (b) block-scoped `{% autoescape %}` over the generic template body; (c) added service-level + render-branch test coverage. export + case-study unit suites green, ruff clean.
 
 ## Gotchas
 - `generic_proposal.jinja` section names live in CSS comments/selectors ("Delivery Phases", "Executive Summary", …) → text-based test assertions false-positive; assert on rendered `class="..."` markup instead.
+- **Autoescape must be block-scoped, never global**: the shared export `Environment` (`export/service.py::_setup_jinja`) has no autoescape and registers a `markdown` filter — several templates emit raw HTML via `{{ x | markdown }}`. Flipping the env to autoescape would double-escape that output and regress CV/JD/Navitec renders. The generic template opts in with `{% autoescape true %}` around its body only (it uses no `| markdown`/`| safe`).
 - Echo-logo fallback on the **dark cover/closing** is low-contrast (bundled `echo_logo.png` is dark) — needs a light logo variant (same pattern Navitec solved with `wordmark_light`).
 - Footer separator has a small **center gap** (WeasyPrint margin-box border quirk).
 - Azure **Tasks reject `System.State='Active'`** (and `In Progress`/`Doing`) — their workflow uses other values; only the User Story accepted `Active`. PR-link comments were posted on all three; task states left as-is.
