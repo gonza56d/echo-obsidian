@@ -23,13 +23,14 @@ Sentry issue [7585920278](https://taller-wn.sentry.io/issues/7585920278/) (POST 
 
 ## PRs
 
-- [#1911](https://github.com/taller-projects/echo-backend/pull/1911) → dev — open
+- [#1911](https://github.com/taller-projects/echo-backend/pull/1911) → dev — open; formal 3-agent `/pr-review` 2026-07-27: **READY WITH NITS** (0 blockers, CI green, ticket compliance 6/6); nits addressed in `ebf77385`
 
 ## How
 
 - `app/modules/role/routers.py::_enhance_role_with_context` pre-fetched the role with `get_by_id(role_id)` **outside** `enhance_role`'s try/except. Under pool exhaustion that checkout raised, escaped the background task, and surfaced through the ASGI stack as `unhandled_exception_in_request`; `_mark_role_failed` never ran.
 - Fix = hand `enhance_role` the UUID (it accepts `Role | uuid.UUID` precisely for this; `project/service.py` already used the UUID form). Failure now logs + marks the role `FAILED` (fresh session) → `reset_for_retry` works. One less query per role creation.
 - Tests (`tests/unit/test_roles.py`): helper passes the UUID through; a pool timeout on the initial fetch leaves the role `FAILED` without propagating.
+- Review-nit commit `ebf77385` (2026-07-27): internal `create_role` (`internal_routers.py:55`) now hands `new_role.id` to the background task — a Role object riding across risks attribute-expiration DB access *before* the protected block (same 23808 failure class); `enhance_role` short-circuits with a warning when the role no longer exists (benign delete race — no more false-alarm CRITICAL from `_mark_role_failed`); helper typed (`req_ctx: RequestContext`, `-> None`); +1 test (missing role → no FAILED marking). 3/3 tests green, ruff clean.
 
 ## Decisions
 
@@ -46,7 +47,7 @@ Sentry issue [7585920278](https://taller-wn.sentry.io/issues/7585920278/) (POST 
 
 ## Pending
 
-- Merge [#1911](https://github.com/taller-projects/echo-backend/pull/1911) → dev; decide on qa/main cherry-picks (prod is where it bit).
+- Merge [#1911](https://github.com/taller-projects/echo-backend/pull/1911) → dev (reviewed READY WITH NITS 2026-07-27, nits addressed `ebf77385`; CI green on first commit, second-commit run pending); decide on qa/main cherry-picks (prod is where it bit).
 - Follow-up (separate ticket): investigate the recurring pool exhaustion around the 03:00 UTC bulk-matching push (`PATCH /internal/applications/bulk/matching` window; even `/talents` auth checks failed on checkout in `session_validation_service.is_session_live`).
 - Follow-up (separate ticket): hardening pass over other unprotected `background_tasks.add_task` call sites (`update_vector`, `refresh_contact_attributes`, …) — same unhandled-noise class.
 - Renew the Grafana service-account API key (`~/.zshrc`).
