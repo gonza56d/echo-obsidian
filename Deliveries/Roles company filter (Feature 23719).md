@@ -6,6 +6,8 @@ delivered:
 tags: [feature, roles, filters]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1907"
+  - "https://github.com/taller-projects/echo-backend/pull/1908"
+  - "https://github.com/taller-projects/echo-backend/pull/1909"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23719"
@@ -21,6 +23,8 @@ The Roles section had no company filter while candidates already have one (multi
 
 ## PRs
 - [#1907](https://github.com/taller-projects/echo-backend/pull/1907) → dev — open (in review), branch `23719/role_company_filter`
+- [#1908](https://github.com/taller-projects/echo-backend/pull/1908) → qa — open, cherry-pick of `94e89e28` (`cherry_pick/23719_role_company_filter_qa`); **merge commit, never squash**
+- [#1909](https://github.com/taller-projects/echo-backend/pull/1909) → main — open, cherry-pick of `94e89e28` (`cherry_pick/23719_role_company_filter_main`); **merge commit, never squash; after #1908**
 
 ## How
 - `app/modules/role/filters.py`: added `company_id__in: list[uuid.UUID] | None` next to the existing scalar `company_id`. Propagates to `IndependentRoleFilter` (public `GET /roles`) and `IndependentRoleFilterInternal` for free.
@@ -35,9 +39,11 @@ The Roles section had no company filter while candidates already have one (multi
 - `select(Role)` in compile tests pulls non-deferred column_properties (`company_name`/`company_logo`) whose subqueries contain `JOIN project` — a blanket `"JOIN" not in sql` assertion fails. Use `select(Role.id)` to pin the WHERE clause in isolation.
 - `RoleFilter(...)` built directly needs `commitments=None` (known gotcha, FilterDepends default leaks a `Depends` object).
 
+- Cherry-picks were opened while #1907 was still unmerged, so #1908/#1909 carry the feature-branch commit `94e89e28`, not dev's future squash SHA — content-identical, later dev→qa/main deploy trains resolve it as already-applied.
+
 ## Pending
 - FE PR (multi-select company filter UI on Roles) — frontend-owned, not backend scope.
-- Merge #1907 → dev; qa/main promotion later per release train.
+- Merge [#1907](https://github.com/taller-projects/echo-backend/pull/1907) → dev (squash), then [#1908](https://github.com/taller-projects/echo-backend/pull/1908) → qa and [#1909](https://github.com/taller-projects/echo-backend/pull/1909) → main (merge commits, main after qa).
 
 ## Related
 - Candidates company filter precedent: `TalentFilter.last_application_company_id__in` (app/modules/talent).
