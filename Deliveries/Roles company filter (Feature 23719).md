@@ -29,7 +29,11 @@ The Roles section had no company filter while candidates already have one (multi
 ## How
 - `app/modules/role/filters.py`: added `company_id__in: list[uuid.UUID] | None` next to the existing scalar `company_id`. Propagates to `IndependentRoleFilter` (public `GET /roles`) and `IndependentRoleFilterInternal` for free.
 - `Role.company_id` is a deferred `column_property` = `(SELECT project.consumer_id WHERE project.id = role.project_id)`, so fastapi_filter's native `in_` path compiles it to a correlated subquery in WHERE — no JOIN, no row multiplication, no custom `filter()` branch needed. Same native path candidates use for `last_application_company_id__in` (an even heavier column_property).
-- Tests: `tests/unit/test_role_filter.py` — 2 compile-to-SQL tests (no DB) pinning the correlated-subquery shape for both scalar `company_id` and `company_id__in`.
+- Tests: `tests/unit/test_role_filter.py` — 3 compile-to-SQL tests (no DB): correlated-subquery shape for scalar `company_id` and `company_id__in`, plus empty `company_id__in=[]` → always-false `IN (NULL) AND (1 != 1)` (matches nothing, uniform with sibling `__in` filters).
+
+## Review (2026-07-27)
+- Formal 3-agent `/pr-review` on #1907: **READY WITH NITS** — 0 blockers, CI green; architecture 13 PASS/0 FAIL, tests-security 10 PASS/0 FAIL, ticket compliance 5/6 (6th = FE surface, other repo). Verified: field does NOT leak into the unauthenticated career-page `PublicRoleFilter`; `__in` needs no operator-allowlist change; cross-tenant company UUIDs return zero rows (base row set tenant-scoped upstream of the filter); FE candidates config already uses URL param `company_id__in` → 1:1 contract match; candidates dropdown options come from the existing organizations listing (no BE endpoint gap).
+- Nit addressed same day: empty-list pin test pushed to #1907 (`f8053ebb`) and cherry-picked to #1908 (`6d7dbcc8`) + #1909 (`844e39ac`) — all three branches carry identical content again. 15/15 tests green locally.
 
 ## Decisions
 - The scalar `company_id` filter already existed and works; the actual gap vs candidates was the multi-select. Added only `__in` (stick to scope), and pinned the scalar with a test too since nothing covered it.
@@ -42,7 +46,7 @@ The Roles section had no company filter while candidates already have one (multi
 - Cherry-picks were opened while #1907 was still unmerged, so #1908/#1909 carry the feature-branch commit `94e89e28`, not dev's future squash SHA — content-identical, later dev→qa/main deploy trains resolve it as already-applied.
 
 ## Pending
-- FE PR (multi-select company filter UI on Roles) — frontend-owned, not backend scope.
+- FE PR (multi-select company filter UI on Roles) — frontend-owned, not backend scope. **Review flagged: FE half is untracked** (Feature 23719 has no child US/task and no FE PR linked) — worth adding a child ticket so the param doesn't ship unconsumed.
 - Merge [#1907](https://github.com/taller-projects/echo-backend/pull/1907) → dev (squash), then [#1908](https://github.com/taller-projects/echo-backend/pull/1908) → qa and [#1909](https://github.com/taller-projects/echo-backend/pull/1909) → main (merge commits, main after qa).
 
 ## Related
