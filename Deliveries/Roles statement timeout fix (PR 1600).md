@@ -6,7 +6,8 @@ delivered: 2026-06-22
 tags: [bugfix, performance, roles]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1600"
-tickets: []
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23152"
 ---
 
 # /roles statement timeout — active_candidates_count filter (PR 1600)
@@ -14,7 +15,10 @@ tickets: []
 Chronic prod failure: `GET /roles` hit the DB statement timeout ~2–15×/day on tenant `01df2012-…`. Root cause: the `active_candidates_count__gte` filter was applied through the `Role.active_candidates_count` **column_property** — a triple-nested correlated subquery (role → application → latest-active-app-per-talent → step history) re-evaluated **per role row** → `O(roles × applications)`.
 
 ## PRs
-- [#1600](https://github.com/taller-projects/echo-backend/pull/1600) → dev — merged 2026-06-22
+- [#1600](https://github.com/taller-projects/echo-backend/pull/1600) → dev — merged 2026-06-22; commit `d0c93bff` + migration `q4n8wd2rmk7h` confirmed on `qa` and `main` (prod)
+
+## Tickets
+- Bug [23152](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23152) — **Closed 2026-07-27** (Fixed and verified): Sentry shows zero QueryCanceled events on GET /roles in prod Jul 23–27 vs ~2–15/day pre-fix
 
 ## How
 - `roles_with_active_candidates_subquery(min_count)`: computes latest-active-application-per-talent **once** via `DISTINCT ON (talent_id)`, groups by `role_id`, `HAVING count(*) >= min_count`.
