@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: shipped-prod
 env: taller
-delivered:
+delivered: 2026-07-20
 tags: [chore, repo-hygiene, git]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1860"
@@ -22,8 +22,8 @@ The `echo-backend/vault/` Obsidian notes directory had been accidentally committ
 
 ## PRs
 - [#1860](https://github.com/taller-projects/echo-backend/pull/1860) → `dev` — **merged 2026-07-20** (squash)
-- [#1861](https://github.com/taller-projects/echo-backend/pull/1861) → `qa` — open (merge with a **merge commit**, not squash)
-- [#1862](https://github.com/taller-projects/echo-backend/pull/1862) → `main` — open (merge with a **merge commit**, not squash)
+- [#1861](https://github.com/taller-projects/echo-backend/pull/1861) → `qa` — **merged 2026-07-20** (merge commit)
+- [#1862](https://github.com/taller-projects/echo-backend/pull/1862) → `main` — **merged 2026-07-20** (merge commit)
 
 - Investigated authorship: across **every ref**, all 7 commits touching `vault/` are the author's; it first entered via deploy-merge PR #1112 (2026-04-15), swept in by accident.
 - `git rm -r --cached vault/` on the branch `chore/untrack-vault-directory` — removes the 24 files from the index only; local copies untouched.
@@ -40,7 +40,7 @@ The `echo-backend/vault/` Obsidian notes directory had been accidentally committ
 - Note the naming collision: most repo hits for "vault" are the unrelated **HashiCorp Vault** secret manager (`VaultService`, `VAULT_ENABLED`), which must not be touched.
 
 ## Pending
-- Merge #1861 → `qa` and #1862 → `main` (merge commits, not squash) to drop `vault/` from upstream on all three branches. #1860 → `dev` already merged.
+- [x] #1861 (qa) + #1862 (main) **merged 2026-07-20** — `vault/` untracked on all three branches. Done.
 - Decide whether to strip the now-dangling `vault/Echo/` references from `CLAUDE.md` / pr-review skill / agent files / code comments (separate follow-up).
 
 ## Related

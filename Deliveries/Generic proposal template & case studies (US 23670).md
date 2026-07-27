@@ -1,13 +1,18 @@
 ---
 type: delivery
-status: in-review
+status: shipped-prod
 env: taller
-delivered:
+delivered: 2026-07-24
 tags: [feature, proposals, case-studies, export]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1878"
   - "https://github.com/taller-projects/echo-backend/pull/1883"
-fe_prs: []
+  - "https://github.com/taller-projects/echo-backend/pull/1887"
+  - "https://github.com/taller-projects/echo-backend/pull/1891"
+  - "https://github.com/taller-projects/echo-backend/pull/1899"
+  - "https://github.com/taller-projects/echo-backend/pull/1903"
+fe_prs:
+  - "https://github.com/taller-projects/echo-frontend/pull/3025"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23670"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23671"
@@ -22,10 +27,12 @@ prd: "https://app.notion.com/p/3a2aedca11f08145b822f16d751c693f"
 Proposals & case studies were a privileged-tenant capability: proposal export 404'd for any tenant without a custom `proposal_template` (only Navitec had one — and the generic fallback file the code referenced never existed), and case-study generation was gated by the `case_studies` tenant feature flag (41/43 dev tenants excluded). Backend rollout = 4 milestones: **M1** generic Echo PDF template + **M3** tenant-gate removal (PDF-first, #1878), **M2** generic PPTX theme + drop the PPTX gate + **M4** Team Builder error transparency & `tech_stack` fix (#1883). Executes deferred R6 of Phase 5.
 
 ## Status
-- **M1 + M3 — MERGED → `dev`** ([#1878](https://github.com/taller-projects/echo-backend/pull/1878), squash merge `1aa8afec`, 2026-07-21).
-- **M2 + M4 — PR [#1883](https://github.com/taller-projects/echo-backend/pull/1883) open → `dev`** (2026-07-21). Formal 3-agent `/pr-review` **READY WITH NITS** — 0 blockers, **CI green** (`test and lint` pass), 15/15 M2+M4 acceptance criteria satisfied (arch 14/14 PASS, tests-security 10/10 PASS); nits fixed `926571d1` + `c2fd9703`. 381 unit tests green (testcontainers), `ruff check app` clean.
-- **FE PR — required, not yet opened** (ungating + data-readiness R5; must also surface PPTX for template-less tenants now that PPTX is ungated).
-- **TB registration — external long pole (TB team owns)** — still blocks *generation* (and export — see gotcha) for unregistered tenants.
+- **BACKEND COMPLETE — IN PROD** since the 2026-07-23/24 dev→qa→main releases. All four milestones merged, plus Pedro's follow-ups (below).
+- **M1 + M3 — MERGED** ([#1878](https://github.com/taller-projects/echo-backend/pull/1878), squash `1aa8afec`, 2026-07-21). **M2 + M4 — MERGED** ([#1883](https://github.com/taller-projects/echo-backend/pull/1883), merged by Pedro 2026-07-22).
+- **Pedro's follow-ups while I was out (2026-07-22 → 24, all merged + in prod)** — see the dedicated section below: [#1887](https://github.com/taller-projects/echo-backend/pull/1887) PDF design fidelity, [#1891](https://github.com/taller-projects/echo-backend/pull/1891) PPTX mirror, [#1899](https://github.com/taller-projects/echo-backend/pull/1899) outbound `tech_stack` null→[], [#1903](https://github.com/taller-projects/echo-backend/pull/1903) optional `next_steps`/`contact`.
+- **FE ungating — SHIPPED**: [echo-frontend #3025](https://github.com/taller-projects/echo-frontend/pull/3025) (show Case Studies for all tenants) merged 2026-07-24. Data-readiness warnings (R5) still unshipped.
+- **TB registration — external long pole (TB team owns)** — still blocks generation AND export for unregistered tenants (Pedro's e2e attempt was still 409-blocked on 07-22).
+- **Azure + PRD reconciled 2026-07-27**: Tasks 23671–74 **Closed**, US 23670 → **Ready to Test**; Feature [23541](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23541) → In development (Pedro, 07-22); PRD status line updated to match.
 
 ## Azure / docs
 - [US 23670](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23670) → Tasks [23671](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23671) (M1, #1878) · [23673](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23673) (M3, #1878) · [23672](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23672) (M2, #1883) · [23674](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23674) (M4, #1883)
@@ -52,21 +59,30 @@ Proposals & case studies were a privileged-tenant capability: proposal export 40
 - **#1883 review nits fixed (`926571d1`)**: `_load_logo` now logs a warning when the bundled Echo wordmark is unreadable (a deploy regression should not silently yield logo-less decks); corrected the now-stale `export/service.py` timeline comment (post-M2 the gate feeds both PDF and PPTX); typed `_iter_tb_error_messages(detail: object)`; added two TB-error boundary tests (list-detail pass-through without the marker + the intended broad case-insensitive "not registered" substring match). 110 affected export/TB unit tests green, ruff clean.
 - **#1883 remaining review nits fixed (`c2fd9703`)**: the M4 typed error (`TeamBuilderTenantNotRegisteredError`, a `DependencyMissingError` — NOT an `ExternalApiException`) bypassed the two `except ExternalApiException` soft-fail handlers in `case_study/service.py`, silently dropping the `case_study.generation` `outcome="error"` telemetry for the tenant-not-registered case — the dominant failure mode during ungating rollout until TB accepts every tenant. The set was still safe (persistence runs only after a successful TB response), but the failure went invisible in telemetry. `generate()` + `_request_single_study()` now also catch the typed error, log it at **warning** (no stack trace — expected precondition, avoids Sentry spam) and still record `outcome="error"`; genuine transport failures keep the error + traceback. Added regression-lock tests: typed 409 propagates + the persisted set is never touched across generate/regenerate/find-similar + telemetry fires. 85 case-study/TB/export tests green, ruff clean.
 
+## Follow-ups while I was out (2026-07-22 → 24, Pedro)
+
+- [#1887](https://github.com/taller-projects/echo-backend/pull/1887) **PDF design fidelity** (merged 07-22, 4 commits): white Echo wordmark (`echo_logo_white.png` + `logo_on_dark`) so the logo is visible on the dark-teal cover/closing — resolves my "light Echo logo" pending; Mona Sans bundled (SIL OFL, DS substitute for Proxima Nova); DS palette tokens (ink `#080808`, body `#4D4D4D`, hairlines `#E9E9E9`); zebra-free resource table; 16px pill badges; delivery phases ≤3/slide; **16:9 render** (`13.333in × 7.5in`) + single `position: fixed` footer hairline — resolves the footer-rule center-gap pending; generic PPTX ends on the Thank-you closing.
+- [#1890](https://github.com/taller-projects/echo-backend/pull/1890) opened 07-22 19:25 from the same branch **after #1887 had merged** (18:46) and **closed unmerged 4 minutes later** — a stale duplicate; its PPTX half became #1891. Nothing was lost (the PDF fixes are #1887 commits — verified on `dev`).
+- [#1891](https://github.com/taller-projects/echo-backend/pull/1891) **PPTX design-fidelity mirror** (merged 07-22): soft corner-glow ripple (disc + 3 rings), teal Delivery-Phases header + "Duration" + big teal numeral + square bullets, neutral-grey case-study label column — all gated on `theme.echo_layout`, Navitec byte-identical (structurally verified).
+- [#1899](https://github.com/taller-projects/echo-backend/pull/1899) **outbound `tech_stack` null→[]** (merged 07-24): `proposal_builder.py` sent `tech_stack or None` and TB's *request* model declares it non-optional → 422 (seen in prod, project intive). **Settles the Task-23674 open question: the 422 existed in BOTH directions** — #1883 fixed inbound (TB response), this fixes outbound. TB-side contract fix (optional in their request model) tracked as non-blocking follow-up.
+- [#1903](https://github.com/taller-projects/echo-backend/pull/1903) **`next_steps`/`contact` optional** (merged 07-24): TB omitted both keys for a prod proposal (Sentry `ECHO-BACKEND-BA`, generic template) and `@validate_call(validate_return=True)` 500'd before rendering; now `| None` + PPTX/Navitec renderers skip the sections (the generic template never rendered them).
+- **FE**: [echo-frontend #3025](https://github.com/taller-projects/echo-frontend/pull/3025) removed the `case_studies` FE feature gate (merged 07-24).
+- All of it reached prod via the 07-23 (#1897/#1898) and 07-24 (#1901/#1902, #1904/#1906) releases.
+
 ## Gotchas
 - **Export is NOT independent of Team Builder** (corrects the earlier M1/M3 note): `ProjectService.export_proposal` calls `solution_service.generate_proposal` — a TB `self.post` — on *every* export. So proposal export hits the same "tenant not registered" long pole as case-study generation; M4 makes it a clear 409 but does not make it succeed.
 - **PPTX theme refactor**: color tokens were module constants used in method bodies AND default params. Default params (`color=TEXT`, `bar_color=RED`) can't reference `self.theme`, so they became `None` + in-body resolution; body refs were word-boundary swapped to `self.theme.*`. Tech-badge text maps to `badge_text` (`#146D73`), not the primary accent.
 - **`test_proposal_graphics` no-panel tests**: the Echo-logo fallback now adds logo pictures, so `_count_pictures == 0` broke — added `_panel_picture_count` that excludes pictures whose blob == the bundled Echo logo.
 - **`tech_stack` needs `mode="before"`**: the field is non-optional `List[str]`, so an "after" validator never runs on `null` (type validation rejects it first).
 - Echo logo is dark → low-contrast on the dark-teal cover/closing; light Echo wordmark is a follow-up (same as the PDF).
-- Azure **Tasks reject `System.State` transitions** — PR-link comments posted on 23672/23674; states left as-is.
+- Azure Tasks rejected `System.State` transitions on 2026-07-21, but on 2026-07-27 a direct PATCH to `Closed` worked on all four — the project uses a custom state set (New/Being defined/…/In development/Developed/Ready to Test/Testing/Closed); the default Agile `Active` is NOT valid for these types (legacy value on old items), which is the likely cause of the earlier rejections.
 
 ## Pending
-- **Paired FE PR** (must ship with this): ungating + data-readiness warnings (R5); surface PPTX for template-less tenants (now ungated).
-- **External long pole**: Team Builder must accept/register all tenants (TB team owns) — blocks generation AND export for unregistered tenants.
-- **Confirm the `tech_stack` 422 direction before closing Task 23674** (`/pr-review` open question): the fix coerces the *inbound* TB-response schemas (`CaseStudyGenerated`/`ProposalResourceAllocation`), but `proposal_builder.py:72` still sends `tech_stack=... or None` *outbound*. Correct iff TB echoes null back and echo's own `validate_return` is what 422s (the PR's claim; the added tests confirm the response path). Verify against one real TB call — no regression either way.
-- Design-fidelity reconcile vs the approved 10-slide design (PDF + now PPTX).
-- Cosmetic: PDF footer-rule center gap; light Echo logo for dark pages.
-- Close Azure tasks on merge (23671/23673 already merged via #1878; 23672/23674 in review).
+- **External long pole**: Team Builder must accept/register all tenants (TB team owns) — still blocks generation AND export for unregistered tenants (409 as of 07-22).
+- **FE data-readiness warnings (R5)** — not shipped (FE #3025 only removed the gate); PRD wants warn-on-zero roles (`sourced`) / talents (`inspired`).
+- Feature QA (US 23670 is Ready to Test): generic PDF+PPTX vs the approved 10-slide design on a real tenant + Navitec regression pass.
+- Product follow-ups flagged out-of-scope in #1887: objectives numbered-list merge (pain_points+outcomes semantics) · categorized tech stack (needs TB data change).
+- TB request-model fix (make `tech_stack` optional TB-side) — non-blocking, noted in #1899.
 
 ## Related
 - [[Case studies per-card management (US 23613)]] · [[WeasyPrint 62 to 68 upgrade (US 23479)]] · [[Industry-agnostic Echo (PRD 398aedca)]]

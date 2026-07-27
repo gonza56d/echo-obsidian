@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: taller
-delivered: 2026-07-20
+delivered: 2026-07-21
 tags: [feature, matching, open-jobs, battle-tested]
 prs: ["https://github.com/taller-projects/echo-backend/pull/1854", "https://github.com/taller-projects/echo-backend/pull/1875", "https://github.com/taller-projects/echo-backend/pull/1876"]
 fe_prs: []
@@ -19,7 +19,7 @@ prd: "https://app.notion.com/p/39eaedca11f081ff95f4c0b20b6b3aab"
 
 # Open Jobs 1-5 matching (US 23640)
 
-Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended; schema unchanged, but a **data-only migration wipes legacy entries at rollout** — see 2026-07-20 follow-up); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) MERGED → `dev` 2026-07-20** (PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854), merge `8e702ef8`; review rounds 1 `614aa7ab` + 2 `e2171b0e`/`6e7de88b` + follow-ups `be34ce85`/`678b8225`/`4b9ea905`). **Merged against the mock — US 23610 (Data endpoint) still New**, real end-to-end validation pending; the legacy-wipe migration runs at dev deploy. Tasks 23641/42/43 Closed; US 23640 stays Active until real-contract validation + feature QA. M2 (FE) pending.
+Bring Companies → Open Jobs → "Get Candidates" from the old raw-% cosine display to the same 1-5 LLM scoring that Roles→Candidates uses ("battle tested" matching). Keeps the `matched_talents` JSONB on `organization_job` (extended; schema unchanged, but a **data-only migration wipes legacy entries at rollout** — see 2026-07-20 follow-up); a NEW **synchronous** Data-service endpoint scores 5 candidates per call. "Get More Candidates" +5 per click, hard cap 30. Taller only (Kforce has no Open Jobs UI). Status: **M1 (backend) MERGED → `dev` 2026-07-20** (PR [#1854](https://github.com/taller-projects/echo-backend/pull/1854), merge `8e702ef8`; review rounds 1 `614aa7ab` + 2 `e2171b0e`/`6e7de88b` + follow-ups `be34ce85`/`678b8225`/`4b9ea905`). **Merged against the mock — US 23610 (Data endpoint) still New**, real end-to-end validation pending; the legacy-wipe migration runs at dev deploy. Tasks 23641/42/43 Closed. **SHIPPED end-to-end**: Data US 23610 Closed 2026-07-21 → #1875 (qa) + #1876 (main) merged 2026-07-21 → US 23640 + FE US 23644 Closed 2026-07-22.
 
 ## Azure / docs
 
@@ -160,26 +160,18 @@ Cherry-picks of #1854 opened to promote M1 up the pipeline (dev → qa → main)
 2. The wipe migration **irreversibly destroys existing prod `matched_talents`** at deploy (downgrade = no-op); combined with (1), prod users lose matches they can't regenerate.
 3. FE M2 (US 23644) not built → no UI consumes the new shape; current prod FE renders the matches the wipe clears.
 
+**Outcome — SHIPPED (2026-07-21/22):** the Data endpoint landed and [US 23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610) was **Closed 2026-07-21** (nicolas.lizondo), clearing the blockers — **#1875 (qa) and #1876 (main) merged 2026-07-21** (merge commits). [US 23640](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23640) and FE [US 23644](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23644) both **Closed 2026-07-22** (florencia — feature QA passed). The wipe migration `ehjnwsqitqve` ran at the qa/prod deploys as designed.
+
 ## Pending
 
-- [x] M1 BE implementation (tasks 23641/42/43) → single PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** → `dev`.
-- [x] Merge #1854 — **MERGED 2026-07-20** (merge `8e702ef8`; the "gated on US 23610" plan was overridden — merged against the mock with 23610 still New). Tasks 23641/42/43 Closed; US 23640 left Active.
-- [ ] **Real-contract validation end-to-end vs the Data endpoint (US [#23610](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23610), still New)** — now post-merge; dev points at the mock until Data ships staging.
-- [ ] Latency target (P95) to agree with Data → confirm `OPEN_JOB_MATCH_ENDPOINT`/`READ_TIMEOUT` values.
-- [ ] Verify the legacy-wipe migration applied cleanly on dev after deploy (`SELECT count(*) FROM organization_job WHERE matched_talents <> '[]'::jsonb` should count only tagged-entry jobs).
-- [ ] M2 FE (US 23644) — frontend milestone, needs FE owner (**not backend scope**); PR should note M1 #1854 must merge first.
-- [ ] QA gating on full feature (M1+M2), 4-6h per PRD.
-- [ ] **Merge #1875 → `qa`** (mergeable; merge commit) once ready to promote.
-- [ ] **Merge #1876 → `main`/PROD** — **HOLD** until Data US 23610 ships to prod + FE M2 ready (destructive wipe migration; prod would 502/504 otherwise).
-- [ ] After the batch release promotes `3gufg5ykw01g`/`51r81g9s8arp`, resolve the expected `ehjnwsqitqve` `down_revision` conflict (keep a single connected chain).
-- [x] Tenant-isolation decision (per-entry tag + tenant-aware SQL) — Pedro reviewed rounds 1+2 with no objection to the core approach (his round-2 questions were about the legacy-cap edge + the consumer-less smart-search view exposure, not the isolation mechanism).
-- [x] PRD §5 full-flow system test + PII-log fix — done in round 2 (`e2171b0e`).
-- [x] Legacy-wipe migration (`ehjnwsqitqve`) + stranded `test_external_api_service.py` — pushed 2026-07-20.
-- [x] Q4 refactor: cosine selection moved to `TalentService.get_top_matches` (commit `4b9ea905`) — layering exception dissolved.
-- [ ] Reply to Pedro's review comment on #1854 (blockers fixed in `e2171b0e`; Q1 → wipe migration, Q2 → Data notified, Q3 → audited/intended + Grafana caveat, Q4 → dissolved via `4b9ea905`).
-- [ ] Possible follow-up: apply the same vector-value treatment to `ApplicationRepository`'s `_talent_model` coupling (Roles matching) — same pattern, out of scope for #1854.
-- [ ] gonza sends the Spanish notification to the Data team re: `view_smart_search_companies_open_jobs`; their answer decides the follow-up (drop `matched_talents` from the view if unused).
-- [ ] PRD amendment: "no migration" scope note + §7 "legacy keeps current behavior" → superseded by the wipe (session was updating Notion + Azure tickets right after this vault update).
+- [x] M1 BE implementation (tasks 23641/42/43) → PR **[#1854](https://github.com/taller-projects/echo-backend/pull/1854)** — **MERGED → `dev` 2026-07-20** (merge `8e702ef8`).
+- [x] Promotion: **#1875 (qa) + #1876 (main) MERGED 2026-07-21** once Data US 23610 closed; wipe migration ran at the deploys; the `down_revision`-conflict gotcha dissolved with the combined-PR approach.
+- [x] Real-contract validation / M2 FE / feature QA — **US 23640 + FE US 23644 Closed 2026-07-22**, Data US 23610 Closed 2026-07-21.
+- [ ] Post-deploy sanity never re-checked by me: `SELECT count(*) FROM organization_job WHERE matched_talents <> '[]'::jsonb` (dev/prod) should count only tagged-entry jobs.
+- [ ] Confirm the reply to Pedro's review comment on #1854 went out (blockers `e2171b0e`; Q1 → wipe migration, Q2 → Data notified, Q3 → audited/intended + Grafana caveat, Q4 → dissolved via `4b9ea905`).
+- [ ] Data-team Spanish notification re: `view_smart_search_companies_open_jobs` — confirm it was sent; their answer decides whether `matched_talents` gets dropped from the view.
+- [ ] Possible follow-up: apply the same vector-value treatment to `ApplicationRepository`'s `_talent_model` coupling (Roles matching).
+- [x] PRD amendment ("no migration" → wipe) — done 2026-07-20.
 
 ## Related
 

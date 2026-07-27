@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: shipped-prod
 env: taller
-delivered:
+delivered: 2026-07-23
 tags: [feature, notifications, interviews]
 prs: ["https://github.com/taller-projects/echo-backend/pull/1865"]
 fe_prs: []
@@ -16,10 +16,10 @@ prd:
 Add a direct link to the candidate's `/evaluate` page in the "Interview Scheduled" email so the interviewer can jump straight to submitting their evaluation instead of navigating the app. Backend-only (Taller); the FE evaluation page already exists.
 
 ## Azure
-- **US [#23179](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23179)** (gonza) — "Agregar link a /evaluate en el email de scheduled interview". No dedicated PRD (small US in the interviews area).
+- **US [#23179](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23179)** (gonza) — "Agregar link a /evaluate en el email de scheduled interview". No dedicated PRD (small US in the interviews area). **Closed 2026-07-24** (florencia — feature QA passed).
 
 ## PRs
-- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` (OPEN). Four commits:
+- [#1865](https://github.com/taller-projects/echo-backend/pull/1865) — branch `23179/interview-scheduled-evaluate-link` → `dev` — **MERGED 2026-07-20** (merge `31e8cb31`); no dedicated cherry-picks — rode the batch dev→qa→main release to prod 2026-07-23. Four commits:
   - `578a106d` — feature: `evaluate_link` + jinja button + render test.
   - `9191872e` — `/pr-review` nit fixes (DRY mixin refactor + direct scheduled-path render test); see Decisions.
   - `3aa501ed` — external-review nit: regression test locking that the Slack-only `InterviewEventPayload` has no `evaluate_link`.
@@ -55,9 +55,9 @@ Add a direct link to the candidate's `/evaluate` page in the "Interview Schedule
 - Verified locally (main `.venv`, Docker up): `test_interviewer_changed_email` + `test_notification_service` + `test_inactive_vendor_notifications` = 64 passed; `test_interviews` (exercises the re-based `InterviewEventPayload`) = 25 passed.
 
 ## Pending
-- [ ] Merge #1865 → `dev` (in review).
-- [ ] qa/main promotion cherry-picks after dev.
-- [ ] Feature QA: interviewer receives the email, "Evaluate Candidate" lands on the correct candidate's evaluation page.
+- [x] Merge #1865 → `dev` — **MERGED 2026-07-20**.
+- [x] qa/main promotion — rode the batch dev→qa→main releases (prod 2026-07-23); no cherry-picks needed.
+- [x] Feature QA — **US 23179 Closed 2026-07-24**.
 - [ ] Out-of-scope hardening (separate ticket, not this PR): jinja `Environment` has autoescape off + `talent_name`/`role_title` render unescaped (pre-existing XSS surface); and `_send_interview_notification` logs the full payload incl. `interviewer_email`/`talent_name` (PII).
 
 ## Related

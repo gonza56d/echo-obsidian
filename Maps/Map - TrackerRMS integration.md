@@ -23,9 +23,12 @@ Role→Opportunity · Talent→Resource · Application→OpportunityResource · 
 - [[ATS deep-links Open in ATS (US 23507)]] — expose links + logo for the FE button (Jul 8–9)
 - [[Outbox poll backoff (Bug 23522)]] — dispatcher resilience under DB outage (Jul 9)
 - [[Outbox flat payload fix (PR 1838)]] — first prod-enablement bug: envelope vs flat body (Jul 15)
+- [[Outbox skips internal-originated emits (Bug 23656)]] — Layer-1 loop-break: /internal-originated changes never emit; **in prod Jul 21** (Bug in Testing)
+- **Team activity (Jul 21–24, while gonza was out)**: Pedro — [#1893](https://github.com/taller-projects/echo-backend/pull/1893) outbox sends post-update role state (+ cherry-picks [#1894](https://github.com/taller-projects/echo-backend/pull/1894)/[#1895](https://github.com/taller-projects/echo-backend/pull/1895)) · [#1888](https://github.com/taller-projects/echo-backend/pull/1888) manual push sends `role.quantity` · [#1896](https://github.com/taller-projects/echo-backend/pull/1896) `owner_id` (from `account_manager_id`) in job payloads · [#1900](https://github.com/taller-projects/echo-backend/pull/1900) workflow step name as status · [#1905](https://github.com/taller-projects/echo-backend/pull/1905) **open**: overlay owner_id on account_manager_id change. leoasson — [#1873](https://github.com/taller-projects/echo-backend/pull/1873)/[#1874](https://github.com/taller-projects/echo-backend/pull/1874)/[#1877](https://github.com/taller-projects/echo-backend/pull/1877): DELETE endpoint to unmap `external_id` from an Echo entity (dev/qa/main).
 
 ## Prod rollout state
 - Dispatcher enabled in prod via infra PR **[#9981](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/9981)** (values-prod dispatcher block; prereqs: Vault `OUTBOX_DISPATCHER_ENABLED` + role migration `du9q74zf53x9`). ~8 weeks of prod backlog drains safely (bounded; no-op for non-integrated tenants).
+- **Loop incident (Jul 15–20)**: writeback sync loop ([[Outbox skips internal-originated emits (Bug 23656)]]) → dispatcher disabled in prod as mitigation; loop-break fix in prod since Jul 21 — **confirm re-enable state** before relying on outbox delivery.
 
 ## Reference
 - TrackerRMS API: swagger + object mapping notes in auto-memory `reference_trackerrms_api`.

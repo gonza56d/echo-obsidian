@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: taller
-delivered:
+delivered: 2026-07-21
 tags: [feature, bugfix, interviews, migrations, tests]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1848"
@@ -128,6 +128,8 @@ artifacts — identical test-by-test in a pre-fix baseline run, green in CI.)
 **Migration chain (self-contained, single head):** each combined PR carries **both** migrations, linearized `q8vd3mzk7w2p → 3gufg5ykw01g (this backfill) → ehjnwsqitqve (open-jobs wipe)`. `3gufg5ykw01g` keeps its dev `down_revision = q8vd3mzk7w2p` (byte-identical); open-jobs' `ehjnwsqitqve` `down_revision` re-pointed onto `3gufg5ykw01g` (skipping the unshipped `51r81g9s8arp`). Verified `alembic heads` = single head `ehjnwsqitqve`; **no cross-PR merge order** (both features in one PR). qa + PROD DBs both confirmed at `q8vd3mzk7w2p` (read-only).
 
 **Before the prod backfill:** re-confirm the divergence COUNT on PROD with a read-only `SELECT` (~51 at authoring); the backfill mutates prod interview data (downgrade is a documented no-op).
+
+**Outcome (2026-07-21/24):** [#1875](https://github.com/taller-projects/echo-backend/pull/1875) and [#1876](https://github.com/taller-projects/echo-backend/pull/1876) both **merged 2026-07-21** (the Open Jobs blockers cleared the same day when Data US 23610 closed) — the backfill `3gufg5ykw01g` ran at the qa and prod deploys. The pre-run COUNT re-confirmation was overtaken by events. [US 22248](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22248) → **Ready to Test** (Melina, 2026-07-24); FE [#2970](https://github.com/taller-projects/echo-frontend/pull/2970) had merged 2026-07-20.
 
 ## Related
 - [[Pending interview notifications (US 23321)]] — same interviews module

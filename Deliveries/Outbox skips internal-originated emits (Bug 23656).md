@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: promoting
+status: shipped-prod
 env: taller
-delivered:
+delivered: 2026-07-21
 tags: [bugfix, outbox, trackerrms, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1870"
@@ -22,12 +22,12 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
 - The `is_sync_operation` flag was set by some internal routers (`mark_sync_context` on talent/role/application) but **never consulted** by the outbox emitters — the only gate was `external_id is not None` (`app/modules/role/service.py`).
 
 ## Azure
-- [Bug 23656](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23656) — Active, assigned to me.
+- [Bug 23656](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23656) — **Testing** (since 2026-07-20), assigned to me.
 
 ## PRs
 - [#1870](https://github.com/taller-projects/echo-backend/pull/1870) → `dev` — **MERGED 2026-07-20** (merge commit `475a2201`). /pr-review round 1: **READY WITH NITS** (0 blockers, 6/6 ticket compliance, CI green) — all 4 nits addressed in `7781ef17`; full-loop e2e regression `1782228f`.
-- [#1871](https://github.com/taller-projects/echo-backend/pull/1871) → `qa` — promotion cherry-pick (3 commits `92cdd22e`/`7781ef17`/`1782228f`), **open**, byte-identical to dev, no migrations.
-- [#1872](https://github.com/taller-projects/echo-backend/pull/1872) → `main` — promotion cherry-pick, **open** (merge after qa), byte-identical to dev.
+- [#1871](https://github.com/taller-projects/echo-backend/pull/1871) → `qa` — promotion cherry-pick (3 commits `92cdd22e`/`7781ef17`/`1782228f`), **MERGED 2026-07-21**, byte-identical to dev, no migrations.
+- [#1872](https://github.com/taller-projects/echo-backend/pull/1872) → `main` — promotion cherry-pick, **MERGED 2026-07-21** → **fix in prod**.
 
 ## How
 - New dedicated `is_internal` flag on `RequestContext` (`app/context.py`) — deliberately NOT reusing `is_sync_operation` to avoid changing `last_sync_at` stamping.
@@ -56,16 +56,17 @@ Once the outbox → TrackerRMS dispatcher was enabled in prod (~15-jul, see [[Ou
 - EventBus handlers run with a **fresh** `RequestContext` on the worker thread (`event_bus.py::_process_event`) — `is_internal` does NOT propagate. No current handler writes outbox events; a future one would bypass suppression (boundary documented in a comment there since `7781ef17`).
 
 ## Pending
-- **Prod re-enable**: dispatcher is disabled in prod (mitigation); safe to re-enable only after this merges + promotes to prod.
+- **Prod re-enable**: dispatcher was disabled in prod as mitigation; the fix is **in prod since 2026-07-21** — confirm whether the dispatcher was re-enabled (Vault `OUTBOX_DISPATCHER_ENABLED` / infra values).
 - This PR is **only Layer 1 (loop-break)**. Deeper hardening discussed but NOT done:
   - Change-detection before emit (emit only when a payload-relevant field changed) — kills no-op re-emit churn.
   - Coalescing + idempotency at dispatch (collapse N pending per entity to latest; guard stale backlog on re-enable).
   - Contact company semantics: stop pushing the volatile derived company, never push `null` that blanks Tracker.
   - Stale contact external_id reconciliation (the 204/404 deaths).
   - Per-tenant rate-limit / circuit-breaker + dead-letter & abnormal-volume alerts (we found out via the client, not our own monitoring).
-- qa/main promotion: PRs [#1871](https://github.com/taller-projects/echo-backend/pull/1871) (qa) + [#1872](https://github.com/taller-projects/echo-backend/pull/1872) (main) **open**; merge each with a **merge commit** (main after qa). Azure Bug 23656 linked.
+- [x] qa/main promotion — #1871 + #1872 **merged 2026-07-21** (merge commits).
 
 ## Related
 - [[Map - TrackerRMS integration]]
 - [[Outbox flat payload fix (PR 1838)]] — the prod-enablement that exposed this
 - [[Outbox poll backoff (Bug 23522)]]
+- Pedro's role-sync follow-ups in the same subsystem (2026-07-22 → 24): [#1893](https://github.com/taller-projects/echo-backend/pull/1893) outbox sends post-update role state (stale-payload fix; cherry-picks [#1894](https://github.com/taller-projects/echo-backend/pull/1894) qa + [#1895](https://github.com/taller-projects/echo-backend/pull/1895) main) · [#1888](https://github.com/taller-projects/echo-backend/pull/1888) manual push sends `role.quantity` · [#1896](https://github.com/taller-projects/echo-backend/pull/1896) `owner_id` in job payloads · [#1900](https://github.com/taller-projects/echo-backend/pull/1900) workflow step name as status · [#1905](https://github.com/taller-projects/echo-backend/pull/1905) **open**: overlay owner_id on account_manager_id change.
