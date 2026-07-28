@@ -72,7 +72,22 @@ Unsigned (PRD B's twin section is signed by Pedro Rocha; same date, same method)
 
 **Contract/testing precisions** (11-13): put `organization_job_id` on **`RoleListResponse`**, not `RoleBase` — `RoleUpdate` is `@partial_model(RoleBase)` and `RoleListResponse` inherits `RoleCreate`, so a base-level field becomes client-writable and contradicts "Override: No" (verified: `role/schemas.py:198-204`, `:233`). Zero join cost either way (scalar → `LoadOnlyNode`). • **There is no test of `POST /roles` at all today** — this PRD writes the first coverage of the path; add a `tests/multitenancy/` isolation test and run the system test with `ENABLE_ACCESS_CONTROL=True`, or item 2 escapes to QA. • Close the loop with the queue PRD: its M1 lists "the 4 creation/retry endpoints" and does **not** include this new one.
 
-## Still mine to fold in (not covered by the review)
+## Resolutions — folded into the PRD 2026-07-28 (status → "Draft, revisión resuelta, listo para `Approved`")
+
+Every item now has a decision in a **"Resolución de la revisión técnica"** section, and the body was corrected in place (criteria, contract code block, risk table, scope table, estimate, open questions).
+
+- **1 JD overwrite → accepted and declared.** The role ends with the pipeline-generated JD; the posting survives in `organization_job.description` and as the placeholder's `requirements`. Identical to a hand-typed JD today, so the feature inherits the behavior rather than introducing it. Literal-posting-as-JD would be a separate feature.
+- **2 Permissions → `Protected([Permission.ProjectsCreate | Permission.RolesEdit])` on the route, on top of the router's `Companies`.** Effective set `companies AND (projects.create OR roles.edit)` — exactly the project INSERT policy's `with_check` (the placeholder is always `is_roles_only=True`). Denial becomes a 403 before the DB; RLS returns to being a backstop. Option 1 kept. The repo-wide "RLS denial → untranslated 500" is a separate ticket.
+- **3 Tracked-org check → accepted exposure + ticket.** Same as `GET /company/jobs/{id}` and `POST /roles`; the correct check doesn't exist yet (`organization_tracker` is keyed by user, not tenant).
+- **4 Permanent 409 → accepted.** A real re-post gets a new `{source}:{source_id}` id (new row, no collision); the residual case has a workaround (delete the role). The "already converted" signal moves from *if product asks* to **committed for v1.1**.
+- **5 409 → own translation with structured detail** `{code, message, role_id}` (`user_group/service.py:138-143` pattern) + a cheap pre-INSERT SELECT, index as race backstop. **Closes open question 2: yes, the 409 carries `role_id`.** FE must read `getApiErrorStatus`/`getApiErrorDetailMessage`.
+- **6 Orphan project → atomicity is now a technical criterion**: project + role in one transaction (`add` + `flush` + translate + single commit), with a regression test that `POST /roles` is unchanged.
+- **7-10 corrections applied in the body**: Kforce OUT reason rewritten (module exists there, older + no tenancy); the re-ingest risk row replaced by "organization CASCADE" (ingest is an idempotent PK upsert, never deletes); no-`description` mitigation now a try/except, **in scope**; plan limit declared as 403 + structured detail, with the FE `useLicenseLimit` pre-check as a new dependency and the `projects.edit`-gated retry accepted for v1.
+- **11-13 adopted**: field on `RoleListResponse`; multitenancy test + system test under `ENABLE_ACCESS_CONTROL=True`; the queue PRD's M1 now lists this endpoint.
+- **14 (mine)**: `requirements` is set **always** from `job.description` in this path, regardless of a `short_description` override.
+- **Estimate 3-5 → 4-6 days.** Open questions 1-4 closed; only the Capa 1 business PRD stays open and it doesn't block backend.
+
+## Superseded — my earlier framing
 
 - **A `short_description` override silently discards the posting.** `requirements = short_description or job_description` (`project/service.py:733`) and the enhancement regenerates the JD from `requirements` alone — so an override of `short_description` keeps the posting out of the LLM input entirely. Related to review item 1 but distinct: item 1 is about the *output* JD being replaced, this is about the *input* disappearing. Pin the derivation precedence.
 - The 409 also needs the `IntegrityError` translation to be scoped to *that* index specifically (same shape trap as [[Contact bulk_track IntegrityError (Bug 23251)]]).
@@ -87,10 +102,11 @@ Unsigned (PRD B's twin section is signed by Pedro Rocha; same date, same method)
 
 ## Pending
 
-- **Answer the 6 blocking review items** (JD overwrite = product call; permission set + 500-vs-403; tracked-org check; permanent-409 / no soft delete; 409 translation + FE handling; orphan placeholder project) and the derivation-precedence item above, then move the PRD to `Approved`.
-- Apply the 4 factual corrections in-place (Kforce rationale, re-ingest risk, no-description severity, 403 plan-limit + partial retry backstop) and the 3 contract/testing precisions (`RoleListResponse`, first-ever `POST /roles` coverage + `ENABLE_ACCESS_CONTROL=True` in the system test, cross-link to the queue PRD's M1).
-- Pick Option 1 vs 2 — review item 2 is now the decisive input.
-- Create the Capa 1 PRD; create the Azure Feature/US + tasks; FE ticket for the Open Jobs overlay action + 409 handling.
+- **Team sign-off on the resolution → flip the PRD to `Approved`.** Nothing technical is open; the JD-overwrite decision (item 1) is the one a product person could still veto.
+- Create the Azure Feature/US + tasks. FE ticket: Open Jobs overlay action, 409 → navigate to the existing role via `detail.role_id`, `useLicenseLimit` pre-check on that surface.
+- Spin off the two follow-up tickets the resolution creates: repo-wide RLS-denial translation (42501 → 403, today a 500 everywhere) and tenant scoping for the open-jobs read paths.
+- Capa 1 business PRD — still owed, does not block backend.
+- v1.1 commitment: the "already converted" signal in the open-jobs list.
 - Kforce: explicitly out of scope (no open-job boards there).
 
 ## Related

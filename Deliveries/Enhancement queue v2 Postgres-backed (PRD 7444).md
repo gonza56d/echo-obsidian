@@ -88,6 +88,20 @@ Signed review against `dev` `b9465656`. **He endorses the approach** ("bien sost
 
 **Minor**: a **third queue pattern already exists** in the repo and the PRD doesn't mention it — `CandidateEmailWorkerService` (APScheduler inside the web pods, advisory lock, atomic claim, stale reaper); it's the precedent for both the synthetic context and the reaper, and today it's hidden under "OUT: migrate existing schedulers" — say whether it converges into `background_job`. • `OUTBOX_METRICS_PORT=8001` is taken — the worker needs its own port + ServiceMonitor. • The metric that governs the *user-visible* SLO is missing: **queue wait / time-to-start** (`oldest_pending_age` alone can't tell "long job" from "clogged queue"); add an `attempts` histogram too. • Schema needs `updated_at`/heartbeat if the lease is renewable (only `locked_at` today), and must state whether `payload` holds JWT claims (changes the table's data classification and retention). • `tests/system/test_outbox_atomicity.py` already exists as the template for M1's atomicity test.
 
+## Resolutions — folded into the PRD 2026-07-28 (status → "Draft, revisión de Pedro resuelta, listo para `Approved`")
+
+- **1 Sweeper** → the cleanup `UPDATE` gains `AND NOT EXISTS (… background_job … status IN ('pending','running'))`, **and** the worker's skip rule changes: skip only on `ENHANCED` or exhausted attempts; a `FAILED` role *with an active job* is re-driven. Lands in **M1**, not M4. During the transition the sweeper only covers roles that never went through the queue.
+- **2 SLO split into four**: (a) 201 p95 <500ms; (b) steady state — time-to-start p95 <60s **and** the inherited ≥99% `ENHANCED` <10 min, which is where it was always achievable; (c) under the 500-job burst — full drain, zero losses, **gate ≤120 min** at the initial sizing; (d) ≥99% of jobs reach a terminal state without manual intervention. **Closes open question 3 by dependency**: sizing is derived, starts at 2×8, recalibrated in week 2.
+- **3 Context → option B, synthetic, zero JWT at rest.** The payload carries exactly `tenant_id`, `user_id` (attribution only), `is_internal`, `is_sync_operation`, `authenticated=False`, trace id. Worker uses its own DB role + per-job `SET LOCAL request.tenant_id`. Consequences declared: the jobs table holds no PII (7-day retention needs no special treatment), matching stops varying with the creator's data scope (a fix, cf. 23594), and `is_internal` is mandatory or the TrackerRMS loop reopens — dedicated M1 regression test with `tests/system/test_outbox_loop.py` as template.
+- **4 Fairness** → `priority` smallint + claim on `(priority, available_at)` **plus a per-tenant in-flight cap** (default `ceil(concurrency/2)`), which is what actually stops head-of-line blocking. No round-robin in v1.
+- **5 Dedup committed**: partial unique index `(kind, entity_id) WHERE status IN ('pending','running')`; `retry-enhancement` → 409 when a job is already active.
+- **6 Connections**: formula `pool = concurrency × conns_per_job + headroom`, `conns_per_job` measured in M2 (expected ~3), initial budget ~48 Supavisor clients, DevOps confirms **before M4**. 20+10 clarified as Vault values vs repo defaults 30+100.
+- **7 Shutdown**: grace ≥ p99 (**proposed 600s**) + preStop that stops claiming and drains; lease-expiry re-execution accepted as fallback *because* item 5 makes it safe.
+- **8 Five enqueue sites + `generate_team`, which moves M5 → M1** (M4's gate is unfalsifiable for `POST /projects` otherwise), and the enqueue decision moves into `RoleService` — routers stop calling `add_task`, `_create(enhance_role=…)` becomes the single switch, and PRA's endpoint enters through the same point.
+- **9 Two flags**: `ENHANCEMENT_QUEUE_ENQUEUE_ENABLED` + `ENHANCEMENT_WORKER_ENABLED`, drain-then-disable; turning both off at once is forbidden in the runbook. Replaces the single inherited `USE_QUEUE_FOR_ENHANCEMENT`.
+- **Minors adopted**: `CandidateEmailWorkerService` cited as the third precedent (does *not* converge in v1); own metrics port + ServiceMonitor; `queue_wait_seconds` + `attempts` histograms; `heartbeat_at` + `priority` on the table, payload explicitly JWT-free; `test_outbox_atomicity.py` as the M1 template; FE risk closed now instead of validated in M1.
+- **Estimate 8-13 → 10-15 days.** Open questions: 2 closed (dedup index suffices, no client keys), 3 closed as a starting value, 4 closed at 7 days, 5 closed (alert on `queue_wait_seconds` p95 >5 min sustained 15 min; Redis trigger unchanged); 1 (failed-UX) and 6 (kforce) stay with product/FE and a separate PRD.
+
 ## Gotchas
 
 - The worker **cannot** reuse the dispatcher's `BYPASSRLS` role posture: enhancement runs tenant-scoped code, so the job must carry the serialized `RequestContext` and the worker must `SET LOCAL request.tenant_id` per job. This is the PRD's risk #1 and the one an implementer is most likely to get subtly wrong — see the `background_request_context` gotcha recorded in [[Outbox skips internal-originated emits (Bug 23656)]] (`TenantScopedRepository` only auto-injects the tenant inside a request context; otherwise INSERTs fall back to the hardcoded Taller `server_default`).
@@ -96,12 +110,10 @@ Signed review against `dev` `b9465656`. **He endorses the approach** ("bien sost
 
 ## Pending
 
-- **Close Pedro's 3 blockers first** (sweeper-vs-queue authority, SLO redefinition, context strategy A-vs-B) — the SLO one gates open question 3, so sizing can't be answered before it.
-- Then the 6 important ones (fairness, committed dedup index + retry semantics, connection budget, shutdown/drain policy, single enqueue decision point + `generate_team`, split enqueue/worker flags) and the 5 minors (CandidateEmailWorker precedent, metrics port, time-to-start metric, heartbeat column + JWT-in-payload classification, reuse `test_outbox_atomicity.py`).
-- Then Azure Feature/US + milestone tasks (nothing created yet).
-- Remaining inherited open questions: failed-enhancement UX (product/FE), client-side idempotency keys (whoever runs migrations), completed-job retention [7 d], `oldest_pending_age` thresholds for the alert **and** the Redis re-evaluation trigger, Kforce backport modality.
-- Scope amendment owed to the sibling PRD: M1 must list **5** creation/retry endpoints + `POST /company/jobs/{job_id}/roles` if [[Create Role from Open Job (PRD 887e)]] ships first.
-- FE risk can be closed now (polling verified unbounded) instead of waiting for M1.
+- **Team sign-off on the resolution → `Approved`.** All 9 gaps have decisions; nothing technical is open.
+- DevOps items to confirm before M4: Supavisor connection budget (~48 clients at 2×8), `terminationGracePeriodSeconds` 600s + preStop drain, worker Deployment + own metrics port/ServiceMonitor, per-env Vault flags (now two).
+- Azure Feature/US + milestone tasks (nothing created yet). M1 is now bigger: enqueue + sweeper coordination + dedup index + `generate_team`.
+- Still with product/FE: failed-enhancement UX. Still a separate PRD: the Kforce backport (copy+adapt).
 - DevOps dependency: new worker Deployment in Helm/ArgoCD + per-env Vault flag/secrets. **No new data infra** — the difference that unblocks v1's M0.
 - Confirm with the FE that `useRoleEnhancementPolling` needs no change (expected: none; validate in M1).
 
