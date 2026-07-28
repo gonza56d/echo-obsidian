@@ -19,6 +19,10 @@ Sentry tooling, and the family of prod timeout/resilience fixes it keeps surfaci
 - [[Outbox poll backoff (Bug 23522)]] — dispatcher retry flood during DB read-only window
 - [[Outbox flat payload fix (PR 1838)]] — prod-only 422 dead-lettering masked by lenient dev mock
 
+## Structural fixes proposed (PRD stage)
+- [[Enhancement queue v2 Postgres-backed (PRD 7444)]] — the structural answer to this whole family: role enhancement (2-5 min) leaves `BackgroundTasks` for a **Postgres job queue + dedicated worker pod**, reusing the outbox dispatcher's operational skeleton. Enqueue rides the role's own transaction (no dual-write window); worker concurrency becomes **bounded and configurable** — today concurrency = incoming traffic. Triggered by [[Role enhance pool timeout unhandled (Bug 23808)]] recurring the May incident class. Draft, 2026-07-28.
+- Feeder: [[Create Role from Open Job (PRD 887e)]] adds a new creation path onto the current mechanism knowingly, absorbed at the queue's cutover.
+
 ## Recurring lessons
 - Correlated `column_property`s are fine for SELECT projection but poison as WHERE filters or JOIN-ON conditions at scale — rewrite as set-based subqueries or pointer joins.
 - A statement-timeout'd query leaves **no SQL breadcrumb in Sentry** — look for the time gap after the last recorded query.
