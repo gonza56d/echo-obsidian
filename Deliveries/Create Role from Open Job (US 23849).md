@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-07-29
 tags: [feature, roles, open-jobs, authorization, transactions]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1933"
+  - "https://github.com/taller-projects/echo-backend/pull/1943"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23849"
@@ -47,6 +48,35 @@ Turn a scraped open job into an Echo role and keep them linked via `role.organiz
 - Left three adjacent defects alone to keep the diff scoped; filed as tickets instead (below).
 - **Review round 1 (rubric protocol, 2026-07-29)**: two blockers confirmed and fixed same-day. (1) `@partial_model` makes every override field nullable at the wire level, so `{"name": null}` passed request validation and blew up inside the service as a raw `pydantic.ValidationError` → 500; fix = drop None-valued keys in the merge (explicit null now means "use the derived value"), verified by reverting and watching the new unit + system tests fail. (2) Task 23853's system test existed only as unit-level substitutes; now `tests/system/test_role_from_open_job.py` runs the real app with `ENABLE_ACCESS_CONTROL=True` (201/404/403 both directions/409 wire shape) and a concurrent double submit where a `threading.Barrier` holds both requests past the cheap pre-check so the partial unique index is what rejects the loser.
 
+## Follow-up PR — post-merge review nits ([#1943](https://github.com/taller-projects/echo-backend/pull/1943))
+
+Six nits arrived after #1933 merged. Verified against merged `dev` first — **none had been fixed**; the two commits on the feature branch whose messages mention "Pedro's blockers 1, 4, 6" addressed the PR review's *blockers*, a different numbered set.
+
+- **1 + 6 compose.** The authorization mirror moved to `ProjectService.assert_can_create_standalone_role(user, company_id)` — it mirrors `project`'s INSERT policy, and that policy guards the placeholder project *ProjectService* inserts, so `POST /roles` can adopt it later. Taking the `User` instead of an id is what makes it free: `ProjectService` gains no injection and the job service drops `UserService` entirely.
+- **The nit-6 enabler is the interesting part.** `get_current_user` and `get_user_tenant_id` both did `getattr(request.state, "current_user", user_service.get_by_id(user_id))` — and **getattr evaluates its default eagerly**, so the SELECT fired on every call including cache hits, once per dependency asking for the user, on every authenticated request in the app. Passing the `User` down would have *moved* the query (the route already depends on `get_user_tenant_id`) rather than removing it. Now `or`-guarded. This is the one change in that PR touching a hot shared path.
+- **2** FK named in the model to match the migration (no migration needed — the DB already has `fk_role_organization_job_id`; unnamed, `create_all` derives a different name than migrated DBs, so `drop_constraint` fails on one side and autogenerate shows a phantom diff).
+- **3** `DuplicateError.constraint` attribute, so the 409 compares by identity instead of substring-matching a human message; unparseable pgerror → `None` → re-raise rather than guess.
+- **4** `Protected` admits `PermissionSet` in the annotation (always accepted at runtime) and now *wraps* a bare one — unwrapped it would break `enforce`, since `PermissionSet` isn't iterable. `has_permissions` widened to match.
+- **5** typed `user.access_role.visible_organizations if user.access_role else []`.
+- Removed `test_unknown_caller_is_a_403`: the `user is None` branch is unreachable once the auth dependency resolves the `User`.
+
+3076 tests green. The dependency-cache guard was verified by restoring the eager default and watching both parametrised cases fail.
+
+## Dev verification (2026-07-29, post-merge)
+
+Everything testable on dev passed. Roles created in the Taller tenant: **103853, 103854, 103855** (from open jobs) and **103856, 103857** (standalone) — deletable.
+
+- 409 on an already-converted job, 404 unknown job, colon-namespaced PK (`hiring_our_heroes:514871536`), overrides (name/quantity/short_description), `POST /roles` with **and without** a JD, `retry-enhancement` reachable.
+- **Item 14 confirmed live**: with a client-supplied `short_description`, `project.requirements` is still the posting.
+- **0 orphan placeholder projects** after a real 409 → M1's shared transaction proven against live Postgres.
+- **The open job was never mutated**: `updated_at` still 2026-04-15, three months before the conversion.
+- `POST /roles` **without** a JD turned out to cover the case I'd called untestable on dev (no empty-`description` open job exists): the guarded sync generation ran after the commit and still populated the 201 with a 1809-char JD.
+- Enhancement output is grounded in the posting — 12 of 14 extracted skills appear verbatim; the two that don't are a dedup miss (`"Artificial Intelligence (AI)"`) and a normalisation (`"Digital Twin"` for "Digital Thread / Twin"), both pre-existing extractor behaviour.
+
+**Correction I had to make twice over**: the 409's `detail` **is** a dict `{code, message, role_id}` (plus `error.context`). I reported it as a string and wrote that into the PRD as a "correction" — wrong both times. The merged code uses the dict deliberately, because the FE helpers read `detail.code` / `detail.message`, so a string resolves the code to null and makes the "open the existing role" UX unreachable. PRD fixed with the verified response body.
+
+**Not provable on dev**: 403 permissions (system_admin token bypasses; also depends on `ENABLE_ACCESS_CONTROL`, still unconfirmed), 403 data scope (no Taller access role restricts organizations), the `roles.edit`-only retry (needs another user's token), plan-limit 403, `POST /internal/roles` (API-key auth).
+
 ## Gotchas
 
 - **The `short_id` sequence commits the session.** `tenant/sequence/service.py:34` does `db_session.commit()` to bump the counter, which silently split M1's shared transaction and left the placeholder project committed anyway. Fixed by reserving the number *before* the transaction opens (`RoleService.reserve_short_id`). Any future "make these writes atomic" work in this area has to account for it.
@@ -62,6 +92,8 @@ Turn a scraped open job into an Echo role and keep them linked via `role.organiz
 - Azure PAT extraction: `.zshrc` uses **single** quotes, so the `azure-devops` skill's documented `cut -d\'"\'` gives garbage and every call 302s to a sign-in page. Use `cut -d"\'" -f2`.
 
 ## Pending
+
+- **[#1943](https://github.com/taller-projects/echo-backend/pull/1943) open** → `dev` (the six nits).
 
 - Round 3 of review on [#1933](https://github.com/taller-projects/echo-backend/pull/1933) = verification-only over `8e9f5e69` + `856b2c51` (per protocol, round 3 is also the hard stop). Reply to Pedro's comment mapping blockers → commits still owed.
 - **Q1 resolved** (409 shape now matches the PRD dict — decided by Pedro's round 2). Still open: (Q2) closed jobs (`is_open=False`) are convertible — decide and pin with a test; (Q3) RLS-mirror placement (Pedro nits it toward `ProjectService.assert_can_create_standalone_role`; standalone `POST /roles` data-scope 500 stays deferred to [Bug 23858](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23858)); (Q4) admin-bypass parity between `User.has_permissions` and the SQL policy's `authorize()`; (Q5, Pedro's) 409 without `role_id` when the winner's role is invisible to the loser under real RLS — the shape now serialises `role_id: null`, but the PRD should document the case.
