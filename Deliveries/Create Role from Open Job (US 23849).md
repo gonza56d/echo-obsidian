@@ -62,6 +62,23 @@ Six nits arrived after #1933 merged. Verified against merged `dev` first — **n
 
 3076 tests green. The dependency-cache guard was verified by restoring the eager default and watching both parametrised cases fail.
 
+### Review of #1943 + its nits fixed (2026-07-29, `663883b8`)
+
+Ran the rubric review on #1943 itself (3 parallel reviewers): **READY WITH NITS — 6/6 nits delivered, 0 blockers, 0 scope creep**. Both reviewer questions dissolved on direct verification: the route already ran `get_current_user` pre-PR via the router-level `Protected([Permission.Companies])` (`app/routers.py:486-493`), so switching the route param adds **no** disabled-user behaviour change; and `tests/system/test_role_from_open_job.py` passes 10/10 at the PR head (CI never runs it).
+
+All 8 review nits fixed in `663883b8`:
+
+- Two stale pointers the PR itself created: the drift-guard docstring (`test_role_creation_authorization_spec.py`) still named `OrganizationJobService._assert_can_create_role`, and the `ROLE_PER_JOB_UNIQUE_INDEX` comment still claimed the constraint name only travels in the message.
+- The "always accepted at runtime" wording in `Protected`'s and the test module's docstrings — a bare `PermissionSet` actually passed at decoration time and raised `TypeError` inside `enforce` at request time.
+- `get_user_tenant_id` annotated `-> uuid.UUID` (was `-> User` while returning `user.tenant_id`).
+- Cache tests parametrised with a per-dependency expected-value extractor (the old `returned is cached or returned == cached.tenant_id` disjunction let a mutant pass), and the uncached fallback now covers `get_user_tenant_id` too.
+- New test pins `access_role=None` (the SYSTEM_ADMIN fallback) as unrestricted data scope — the `else []` branch.
+- Duplicate `role.exceptions` import merged.
+
+3078 green (3076 + the 2 net-new cases), ruff clean.
+
+Review leftovers, all pre-existing and routed out of scope: the same eager-`getattr`-default pattern in `app/core/permissions/auth.py:24` (JWT decode on every cache hit — CPU-only, natural follow-up); `e.orig.pgerror` can be `None` → `from_db_string(None)` would `TypeError` (`sql_repository.py:80-82`); and Pedro's ten remaining round-2 items (migration docstring/VALIDATE placement, `DROP INDEX CONCURRENTLY` pre-check, `OrganizationJobRepository.save(**extra_fields)` vs `commit`, constants-file placement, `assert not barrier.broken`, ruff format on 3 test files, missing test branches, plan-limit assertion shape, unused `OrganizationJobFactory`, `tests/system` not in CI) **still have no tracking ticket**.
+
 ## Dev verification (2026-07-29, post-merge)
 
 Everything testable on dev passed. Roles created in the Taller tenant: **103853, 103854, 103855** (from open jobs) and **103856, 103857** (standalone) — deletable.
@@ -93,7 +110,7 @@ Everything testable on dev passed. Roles created in the Taller tenant: **103853,
 
 ## Pending
 
-- **[#1943](https://github.com/taller-projects/echo-backend/pull/1943) open** → `dev` (the six nits).
+- **[#1943](https://github.com/taller-projects/echo-backend/pull/1943) open** → `dev` (the six nits) — reviewed READY WITH NITS, all 8 review nits fixed in `663883b8`; awaiting CI + Pedro. The ten remaining round-2 items still need a tracking ticket.
 
 - Round 3 of review on [#1933](https://github.com/taller-projects/echo-backend/pull/1933) = verification-only over `8e9f5e69` + `856b2c51` (per protocol, round 3 is also the hard stop). Reply to Pedro's comment mapping blockers → commits still owed.
 - **Q1 resolved** (409 shape now matches the PRD dict — decided by Pedro's round 2). Still open: (Q2) closed jobs (`is_open=False`) are convertible — decide and pin with a test; (Q3) RLS-mirror placement (Pedro nits it toward `ProjectService.assert_can_create_standalone_role`; standalone `POST /roles` data-scope 500 stays deferred to [Bug 23858](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23858)); (Q4) admin-bypass parity between `User.has_permissions` and the SQL policy's `authorize()`; (Q5, Pedro's) 409 without `role_id` when the winner's role is invisible to the loser under real RLS — the shape now serialises `role_id: null`, but the PRD should document the case.
