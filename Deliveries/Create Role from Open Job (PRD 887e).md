@@ -77,7 +77,7 @@ Unsigned (PRD B's twin section is signed by Pedro Rocha; same date, same method)
 Every item now has a decision in a **"Resolución de la revisión técnica"** section, and the body was corrected in place (criteria, contract code block, risk table, scope table, estimate, open questions).
 
 - **1 JD overwrite → accepted and declared.** The role ends with the pipeline-generated JD; the posting survives in `organization_job.description` and as the placeholder's `requirements`. Identical to a hand-typed JD today, so the feature inherits the behavior rather than introducing it. Literal-posting-as-JD would be a separate feature.
-- **2 Permissions → `Protected([Permission.ProjectsCreate | Permission.RolesEdit])` on the route, on top of the router's `Companies`.** Effective set `companies AND (projects.create OR roles.edit)` — exactly the project INSERT policy's `with_check` (the placeholder is always `is_roles_only=True`). Denial becomes a 403 before the DB; RLS returns to being a backstop. Option 1 kept. The repo-wide "RLS denial → untranslated 500" is a separate ticket.
+- **2 Permissions → superseded by the second pass below.** (First attempt: `Protected([Permission.ProjectsCreate | Permission.RolesEdit])` on the route. Wrong tool — `Protected` returns 404, and a permission gate can't cover the policy's data-scope clause.) Option 1 kept. The repo-wide "RLS denial → untranslated 500" is a separate ticket.
 - **3 Tracked-org check → accepted exposure + ticket.** Same as `GET /company/jobs/{id}` and `POST /roles`; the correct check doesn't exist yet (`organization_tracker` is keyed by user, not tenant).
 - **4 Permanent 409 → accepted.** A real re-post gets a new `{source}:{source_id}` id (new row, no collision); the residual case has a workaround (delete the role). The "already converted" signal moves from *if product asks* to **committed for v1.1**.
 - **5 409 → own translation with structured detail** `{code, message, role_id}` (`user_group/service.py:138-143` pattern) + a cheap pre-INSERT SELECT, index as race backstop. **Closes open question 2: yes, the 409 carries `role_id`.** FE must read `getApiErrorStatus`/`getApiErrorDetailMessage`.
@@ -86,6 +86,25 @@ Every item now has a decision in a **"Resolución de la revisión técnica"** se
 - **11-13 adopted**: field on `RoleListResponse`; multitenancy test + system test under `ENABLE_ACCESS_CONTROL=True`; the queue PRD's M1 now lists this endpoint.
 - **14 (mine)**: `requirements` is set **always** from `job.description` in this path, regardless of a `short_description` override.
 - **Estimate 3-5 → 4-6 days.** Open questions 1-4 closed; only the Capa 1 business PRD stays open and it doesn't block backend.
+
+## Second pass on the resolution — Pedro, 2026-07-28 (6 items, all valid, all resolved)
+
+He confirmed 10 of 13 closed cleanly. The six that came back — three of them corrections to *my* resolution — all verified in the repo:
+
+1. **`Protected` raises 404, not 403** (`app/user/permissions.py:87-94`, `detail="Not Found."`), so the "403 por permisos" criterion didn't exist, and on this endpoint it would have collided with the job-not-found 404.
+2. **The permission gate doesn't eliminate the RLS 500.** The project INSERT `with_check` has a second AND: `project.consumer_id = aro.organization_id` (i.e. `job.organization_id`) **OR** the user has no organizations assigned. A restricted-data-scope user passes any permission gate and still trips RLS. Unlike item 3 of the first pass, **the data already exists** (`access_role_organizations` = the FE's `visible_organizations`), so it isn't new design.
+3. **Items 6 and 9 collided**: one atomic transaction + in-request JD generation = a write transaction held open across the LLM call — exactly what `enhance_role` avoids with its `db_session.close()` calls.
+4. **Items 6 and 9 change the shared helper**, so they alter the failure contract of `POST /roles` and `POST /internal/roles` undeclared — and `repo.save()` commits unconditionally, so item 6 can't be built on it.
+5. **Items 4 and 10 cancelled out**: with `companies + roles.edit` the user creates the role but can neither retry the enhancement nor delete the role to free the job (**both** routes are `Protected(Permission.ProjectsEdit)`) → failed enhancement is terminal and the job is blocked forever. Verified, and the dead end **pre-exists** for any standalone role created by a `roles.edit`-only user, since `POST /roles` has no permission gate.
+6. **Section 5 was never actually updated** — item 12 claimed "ampliado" while the table and the 3-4 h QA figure were untouched.
+
+**Decisions folded in (a "Resolución — segunda pasada" section, plus body fixes and `↳` markers on the superseded first-pass items):**
+
+- **1+2 together → authorization moves into the service.** The route adds no `Protected` of its own; the service replicates the whole policy — (`projects.create` OR `roles.edit`) **and** the data scope over `job.organization_id` — and raises `AuthorizationError` (403, `app/exceptions.py:150-155`). Final contract: **404** = job doesn't exist *or* caller lacks `companies` (indistinguishable by design, the repo's anti-enumeration posture); **403** = can see the job but can't create the role, or it's outside their data scope. The 403 leaks nothing new — reaching it proves the caller can already see open jobs.
+- **3 → write order declared.** (1) One transaction, DB only: insert project + insert role + translate the unique violation → single commit. (2) *After* commit, the guarded sync JD generation runs as a short independent write. With a posting that has a `description`, step 2 never fires.
+- **4 → the shared change is accepted and declared**: no more orphan placeholder project on failure, no more 500-after-commit on a JD-provider failure, for `POST /roles` and `POST /internal/roles` too. Strictly fewer failure modes, no shape or status-code change; regression tests on both endpoints + a Changelog entry at approval. Implementation note: not via `repo.save()`.
+- **5 → `retry-enhancement` widens to `Protected([Permission.ProjectsEdit | Permission.RolesEdit])`.** Recovering your own enhancement shouldn't need a higher permission than creating the role. `DELETE` stays on `projects.edit` — freeing a job becomes an **escalation**, not a dead end, and the v1.1 "already converted" signal must name the linked role so the escalation is actionable.
+- **6 → section 5 rebuilt for real**: unit cell (404-vs-403 incl. data scope, structured 409, `requirements` precedence, JD guard), system row now under `ENABLE_ACCESS_CONTROL=True` + concurrent-double-submit atomicity, new Multitenancy row, new shared-path regression row, QA row with the permission matrix and the `roles.edit` retry. **QA 3-4 → 5-6 h, estimate 4-6 → 5-7 days.**
 
 ## Superseded — my earlier framing
 
@@ -102,7 +121,8 @@ Every item now has a decision in a **"Resolución de la revisión técnica"** se
 
 ## Pending
 
-- **Team sign-off on the resolution → flip the PRD to `Approved`.** Nothing technical is open; the JD-overwrite decision (item 1) is the one a product person could still veto.
+- **Third-pass sign-off → flip the PRD to `Approved`.** Two review rounds resolved (13 + 6 items); nothing technical is open. The JD-overwrite decision remains the one a product person could still veto.
+- Two declared cross-endpoint changes need to survive review when the code lands: the shared-helper failure-contract change (`POST /roles`, `POST /internal/roles`) and the `retry-enhancement` permission widening. Both get a Changelog entry at approval.
 - Create the Azure Feature/US + tasks. FE ticket: Open Jobs overlay action, 409 → navigate to the existing role via `detail.role_id`, `useLicenseLimit` pre-check on that surface.
 - Spin off the two follow-up tickets the resolution creates: repo-wide RLS-denial translation (42501 → 403, today a 500 everywhere) and tenant scoping for the open-jobs read paths.
 - Capa 1 business PRD — still owed, does not block backend.
