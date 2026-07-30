@@ -4,9 +4,9 @@ status: in-progress
 env: taller
 delivered:
 tags: [reliability, roles, background-tasks, queue, outbox, prd, planning]
-prs: []
+prs: [1944]
 fe_prs: []
-tickets: []
+tickets: [23871, 23872, 23873, 23874, 23875, 23876, 23877]
 prd: "https://app.notion.com/p/3abaedca11f081ba904afd1f73277444"
 ---
 
@@ -108,9 +108,25 @@ Signed review against `dev` `b9465656`. **He endorses the approach** ("bien sost
 - Chaos criteria (`kill -9`, rollout with a loaded queue) live in `tests/system` — **CI runs `tests/unit` only**, so they will never gate a PR. Plan them as manual/scripted verification.
 - The alembic revision must use a real random id, and heads must be checked with `alembic heads` (not regex) — repo rules.
 
+## Production evidence — 2026-07-29 incident (added to the PRD by Pedro)
+
+One user's bulk-load script (tenant EQT, Python-urllib, **220 roles**, 16:30–18:25 UTC) broke prod at current volume — no 5k users needed: each `POST /roles` held ~3 connections for ~50s (max 109s), the pod pool (Vault 20+10, 30s timeout) exhausted, and **every endpoint 500'd for every tenant** 17:05–18:10 (Sentry [ECHO-BACKEND-BR](https://taller-wn.sentry.io/issues/7640609250/), release `6959c12`). Outcome on data: 158 `enhanced` / 53 `failed` / **9 `pending` stuck hours later** — 28% silently lost (Bug 23808 class). Pedro mapped it item-by-item against the resolved design: **fully covered, no failure mode outside it**, and turned it into the M4 acceptance gate (incident replay in QA: ~220 concurrent single-tenant POSTs; zero QueuePool timeouts; other-tenant p95 ≤ baseline; cross-tenant time-to-start <60s; 100% legitimate-terminal). New pending it added: explain the 9 unswept `pending` roles before cutover (a sweeper hole is also a transition-backstop hole), plus EQT data remediation via existing retry at low concurrency.
+
+**Lead hypothesis for the 9 unswept (mine, code-read, unverified)**: `RoleCleanupSchedulerService._cleanup_stale_enhancements` skips the run whenever the session-level advisory lock isn't acquired — a pod session that held the lock and hung (without dying) during pool exhaustion silences every sweep across all pods for as long as that connection lives. Loki check: `"Role enhancement cleanup completed"` vs `"Another instance is already running role cleanup, skipping"`, 2026-07-29 17:00–24:00 UTC. Also: the sweep itself needs a pool checkout, so it fails *during* the exhaustion window by design — the anomaly is only that it never caught up after.
+
+## Implementation — kicked off 2026-07-30 (PRD → In Progress)
+
+- **Azure**: US [23871](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23871) + tasks 23872 (M0) → 23877 (M5), one per milestone, PRD linked.
+- **M0 delivered**: [#1944](https://github.com/taller-projects/echo-backend/pull/1944) → dev (branch `23872/background-job-worker-skeleton`, commit `e1884805`). Migration `n3vw8kq2r7pd`: `background_job` + partial dispatch index `(priority, available_at) WHERE pending` + **partial unique `(kind, entity_id)` on active** + `echo_worker` role (NOLOGIN BYPASSRLS, mirrors `echo_dispatcher`). `app/modules/background_job/` (models / writer / repository / worker / metrics) + `app/worker.py` behind `ENHANCEMENT_WORKER_ENABLED` + docker-compose `worker` + 25 unit tests (CI-gated, in `tests/unit/background_job/`).
+- **Design decisions locked in M0** (dev-level, PRD delegates them): `attempts` increments **at claim**, so kill-loop poison jobs converge to `failed` via `release_expired_leases` (CASE on `attempts >= max`) instead of looping; lease renewable via `heartbeat_at` renewed every poll (TTL 180s bounds worker death, not job duration); `priority` ASC = lower value first (bulk enqueues higher values); purge deletes **completed only** (failed/dead stay visible, dispatcher precedent); worker metrics port **8002** (8001 = dispatcher); retry schedule list-driven (`[30,120,600]`, exhausted → failed) with no separate MAX_ATTEMPTS knob to drift.
+- **PRD deltas folded in**: 6th enqueue site `organization/job/routers.py:113` (PR #1933 shipped post-review) added to M1's checklist; all line numbers re-pinned at `dev@bcd2c6b5`.
+
 ## Pending
 
-- **Team sign-off on the resolution → `Approved`.** All 9 gaps have decisions; nothing technical is open.
+- **Infra PR for the M0 done-gate** (we own it): worker Deployment + PodMonitor in `taller-ttit-kubernetes`, mirroring my dispatcher PRs [#9139](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/9139) (deployment, dev) / [#9174](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/9174) (PodMonitor) / [#9981](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/9981) (prod enable, M4-time); files = `applications/echo-backend/templates/{dispatcher-deployment,dispatcher-podmonitor}.yaml` + `values-dev.yaml`. Include Pedro's nil-safe lesson (#9181) from the start; `terminationGracePeriodSeconds: 600` + preStop; Vault flags off.
+- **9-pending Loki investigation blocked**: `GRAFANA_API_KEY` is gone from `~/.zshrc` (not just expired) AND `grafana.taller.ai:443` refuses connections (VPN or down) — user must renew the key + confirm reachability. Read-only. Gates M4, not M1.
+- M1 (task 23873) next: enqueue in `RoleService`, 6 router sites + `generate_team`, synthetic context, sweeper coordination, 409 retry, per-tenant cap, `ENHANCEMENT_QUEUE_ENQUEUE_ENABLED`.
+- EQT remediation (53 failed + 9 pending, re-drive at low concurrency) — coordinate before the queue exists.
 - DevOps items to confirm before M4: Supavisor connection budget (~48 clients at 2×8), `terminationGracePeriodSeconds` 600s + preStop drain, worker Deployment + own metrics port/ServiceMonitor, per-env Vault flags (now two).
 - Azure Feature/US + milestone tasks (nothing created yet). M1 is now bigger: enqueue + sweeper coordination + dedup index + `generate_team`.
 - Still with product/FE: failed-enhancement UX. Still a separate PRD: the Kforce backport (copy+adapt).
