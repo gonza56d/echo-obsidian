@@ -16,6 +16,8 @@ prd: "https://app.notion.com/p/3abaedca11f081ba904afd1f73277444"
 
 ## Testing non-happy paths via MockServer (retry → dead-letter)
 
+> **CONFIRMED LIVE 2026-08-03**: both PRs merged; dev Vault set `PROJECT_TEAM_BUILDER_USE_MOCKSERVER=true` + `MOCKSERVER_URL=http://ttit-echo-backend-dev-mockserver:1080`. A `MOCKFAIL`-named role hit the mock 500 → worker retried with growing backoff (attempts 1→2→3, `last_error`=ExternalApiException 500) → converging to `dead` + role `FAILED`; a control role enhanced via the literal `[MOCK]` stub JD (selective failure + happy-path-via-mock both work). **Gotcha: BOTH vars required** — flag alone no-ops (guard is `and MOCKSERVER_URL`).
+
 Requires: echo-backend **#1969** merged + deployed to dev; infra **ttit #10479** merged (MockServer expectations); both worker flags on (`ENHANCEMENT_QUEUE_ENQUEUE_ENABLED` + `ENHANCEMENT_WORKER_ENABLED`).
 
 1. dev Vault: set **`PROJECT_TEAM_BUILDER_USE_MOCKSERVER=true`** (+ `MOCKSERVER_URL` = the dev mockserver). This reroutes ONLY team-builder (JD generation) to MockServer; TrackerRMS etc. stay on real endpoints (independent toggles).
