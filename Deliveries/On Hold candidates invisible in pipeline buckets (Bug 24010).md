@@ -21,13 +21,22 @@ Candidates with status **"On Hold"** appeared in NO bucket of Roles → Candidat
 - Related: [US 11885](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/11885) (original buckets), [Bug 20819](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/20819)
 
 ## PRs
-- [#1973](https://github.com/taller-projects/echo-backend/pull/1973) → dev — **open, in review** (branch `24010/fix-on-hold-category`)
+- [#1973](https://github.com/taller-projects/echo-backend/pull/1973) → dev — **open, in review** (branch `24010/fix-on-hold-category`); /pr-review round 1 done 2026-08-04, blocker + nit fixed in `346b8225`
 
 ## How
 - `app/modules/application/schemas.py`: `ON_HOLD` + `ON_HOLD_JAZZ` appended to `ACTIVE_STATES`; `ON_HOLD_JAZZ` removed from `INACTIVE_STATES`; `field_validator("status")` on `ApplicationCreate` maps `"ON HOLD"` → `"On Hold"` — ALL write schemas inherit it (Create/Update, public/internal, incl. `partial_model` ones, since `partial_model` uses `__base__=model`).
 - Migration `1u4ash4rwbxj`: `UPDATE application SET status='On Hold' WHERE status='ON HOLD'`. Enum value stays (PG can't drop enum values); downgrade = documented no-op (pre-existing title-case rows indistinguishable).
 - `app/modules/role/service.py` pipeline-health `excluded_statuses`: added `ON_HOLD` next to `ON_HOLD_JAZZ` (behavior preserved post-normalization).
 - Tests `tests/unit/test_application_on_hold_category.py`: list guards, validator (create + partial update), query-level `category == active` for both variants (factory writes raw status → also covers pre-migration rows).
+
+## Review round 1 (2026-08-04, own /pr-review — 3 reviewers)
+- Ticket compliance 7/7, architecture 13 PASS / 0 FAIL, tests-security 9 PASS / 2 FAIL → **CHANGES REQUESTED** on one mechanical blocker.
+- **BLOCKER (fixed)**: alembic fork — dev merged `tp7dq2mk9v4x` (reminder stamps) after this branch was cut, also revising `tpls3jaidxpa` → two heads on merge. Fix in `346b8225`: merged origin/dev into the branch + re-chained `down_revision` → `tp7dq2mk9v4x`; `alembic heads` = single head `1u4ash4rwbxj`. CI was green because the branch predated the fork — CI green ≠ merged-chain valid.
+- **NIT (fixed)**: `get_pipeline_health` ON_HOLD exclusion had zero coverage → added `test_get_pipeline_health_excludes_both_on_hold_variants` (`RoleService.__new__` + mocked repo, pins the excluded list the service passes to the repository). 10/10 file tests green.
+- **Questions left open (answer on PR body/ticket before merge)**:
+  - **ACTIVE_STATES ripple**: the list change also flips `Talent.has_active_applications` (`talent/models.py:715`), `Role.active_candidates_count` (`role/models.py:345`) and the talent source-change gate (`talent/service.py:687` — On Hold now hard-blocks as `active_application`; before, "On Hold" fell through both lists and "ON HOLD" hit the softer 2-business-day inactive rule). Consistent with "pause, not exit" but unstated in PR body.
+  - `application_status_history` keeps legacy "ON HOLD" literals (migration only touches `application`) — inert for this bug.
+  - Pre-existing title-case "On Hold" rows previously COUNTED in pipeline-health metrics; now excluded — QA heads-up needed at close-out.
 
 ## Decisions
 - **Scope narrowed by Gonzalo: On Hold ONLY.** Meli found 8 statuses falling to `other`; the other 7 were deliberately left out (see Pending).
@@ -42,7 +51,8 @@ Candidates with status **"On Hold"** appeared in NO bucket of Roles → Candidat
 - Pre-existing local failures (also on clean `origin/dev`): `test_source_pipeline_health.py` 4 failures standalone; `test_application_process_status_filter.py` fails only in combination with other files. Not caused by this change — verified against baseline.
 
 ## Pending
-- PR [#1973](https://github.com/taller-projects/echo-backend/pull/1973) review + merge → then move Bug 24010 to Ready to Test.
+- PR [#1973](https://github.com/taller-projects/echo-backend/pull/1973) team review + merge → then move Bug 24010 to Ready to Test.
+- Answer the 3 review questions on the PR body/ticket (ACTIVE_STATES ripple, history literals, pipeline-health metric shift) — doubles as the QA heads-up.
 - **Follow-up ticket NOT filed yet**: the remaining 7 `other`-orphan statuses + `Offer Accepted` dup + `Full Time` bucket decision (needs Product; check row counts in prod first).
 - Consider an exhaustiveness test (no enum member falls to `other`) when the orphans are resolved.
 
