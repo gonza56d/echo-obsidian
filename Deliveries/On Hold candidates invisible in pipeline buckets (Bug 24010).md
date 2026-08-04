@@ -6,6 +6,8 @@ delivered: 2026-08-04
 tags: [bugfix, applications, pipeline-buckets, jazz]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1973"
+  - "https://github.com/taller-projects/echo-backend/pull/1976"
+  - "https://github.com/taller-projects/echo-backend/pull/1977"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24010"
@@ -22,6 +24,8 @@ Candidates with status **"On Hold"** appeared in NO bucket of Roles → Candidat
 
 ## PRs
 - [#1973](https://github.com/taller-projects/echo-backend/pull/1973) → dev — **MERGED 2026-08-04** (`68e1a085`, merge commit; another agent re-chained the migration onto `tp7dq2mk9v4x` + added a pipeline-health exclusion test pre-merge). **Dev e2e verified 2026-08-04**: staged both variants on a QA role → both returned by `category=active`, `category=other` empty; migration ran on deploy (alembic at `1u4ash4rwbxj`, 3 legacy ON HOLD rows collapsed); staged data restored to NULL.; /pr-review round 1 done 2026-08-04, blocker + nit fixed in `346b8225`
+
+- Cherry-picks: [#1976](https://github.com/taller-projects/echo-backend/pull/1976) → qa + [#1977](https://github.com/taller-projects/echo-backend/pull/1977) → main — **open 2026-08-04** (branches `24010/fix-on-hold-category-qa|-main`). Full pick of `68e1a085` incl. the migration, **re-chained onto `n8vc3kq7wx2m`** per Gonzalo's explicit call (heads confirmed by him; my code-only recommendation was overridden). `alembic heads` single-head + lint + 10/10 tests verified on both branches. Merge with MERGE COMMITS, never squash.
 
 ## How
 - `app/modules/application/schemas.py`: `ON_HOLD` + `ON_HOLD_JAZZ` appended to `ACTIVE_STATES`; `ON_HOLD_JAZZ` removed from `INACTIVE_STATES`; `field_validator("status")` on `ApplicationCreate` maps `"ON HOLD"` → `"On Hold"` — ALL write schemas inherit it (Create/Update, public/internal, incl. `partial_model` ones, since `partial_model` uses `__base__=model`).
