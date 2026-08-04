@@ -1,10 +1,11 @@
 ---
 type: delivery
-status: in-progress
+status: in-review
 env: taller
 delivered:
 tags: [feature, jazzhr, outbox, applications, entity-resolution]
-prs: []
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/1986"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24051"
@@ -16,7 +17,7 @@ prd: "https://app.notion.com/p/3b2aedca11f081318531c144c63d72e7"
 
 # Push Applications Echo → JazzHR (Feature 24051)
 
-Inverts the sync direction for **Taller** applications: today they are born in JazzHR and mirrored into Echo by the data team's back-sync (Echo = espejo); stage changes happen in Jazz. This feature makes **Echo the origin** — the application is created in Echo (`POST /applications`, status `New`) and the event rides the **existing outbox/dispatcher** (same infra as TrackerRMS/Navitec) to a new `jazz_hr` delivery handler that calls **entity-resolution**: `application.created` → create-or-get, `application.updated` → `change_stage`. Taller status names match the Jazz workflow **637230** steps 1:1 (raw, no mapping table). **No schema changes, no new public endpoints.** Tickets written 2026-08-04; no code/PR yet.
+Inverts the sync direction for **Taller** applications: today they are born in JazzHR and mirrored into Echo by the data team's back-sync (Echo = espejo); stage changes happen in Jazz. This feature makes **Echo the origin** — the application is created in Echo (`POST /applications`, status `New`) and the event rides the **existing outbox/dispatcher** (same infra as TrackerRMS/Navitec) to a new `jazz_hr` delivery handler that calls **entity-resolution**: `application.created` → create-or-get, `application.updated` → `change_stage`. Taller status names match the Jazz workflow **637230** steps 1:1 (raw, no mapping table). **No schema changes, no new public endpoints.** M1 (create path) shipped as PR [#1986](https://github.com/taller-projects/echo-backend/pull/1986) → `dev` (open, full `tests/unit` suite green: 3292).
 
 ## Azure / docs
 - Epic [23305](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23305) Taller - Jazz (Application stages)
@@ -27,7 +28,10 @@ Inverts the sync direction for **Taller** applications: today they are born in J
 - PRD: [Push de Applications Echo → JazzHR (tenant Taller)](https://app.notion.com/p/3b2aedca11f081318531c144c63d72e7) — owner @pedro.rocha, Tier C
 - Sibling exploratory line (different approach): Feature [23306](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23306) "Explore ↔ sync echo→jazz on stages", US [23688](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23688) (Ready to Test), US [24026](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24026) (FE hardcoded-stages dropdown for Taller).
 
-## How (planned shape)
+## PRs
+- [#1986](https://github.com/taller-projects/echo-backend/pull/1986) → `dev` — **open** (M1 create path): emission rule in `ApplicationService` + `jazz_hr` create-or-get handler + dual-write link persistence + no-op for unsupported event types. Commit `ce12c492`. Also fixes the active Navitec `matching_diff` → TrackerRMS shortlist leak. Branch `24052/jazz-hr-application-push-m1` (worktree).
+
+## How (implementation shape across milestones)
 - **Emission rule — all in `ApplicationService`** (`app/modules/application/service.py`), zero changes to dispatcher/writer/repos/schema. Verified against `dev` before ticketing:
   - Helper `_in_matching(status, workflow_step_id)` = `status is None and workflow_step_id is None` — extracts the canonical predicate today duplicated in `_snapshot_owner_if_leaving_matching` (`service.py:515`) and the `category==MATCHED` branch (`models.py:361`).
   - `create()`: emit `APPLICATION_CREATED` only when the app is born **outside** matching (defensive gate); payload gains `status`.
@@ -54,6 +58,7 @@ Inverts the sync direction for **Taller** applications: today they are born in J
 - **Infra**: INSERT `tenant_integrations` (Taller, `jazz_hr`) per env + dispatcher ER env vars (URL + `X-Echo-internal` key).
 - Prod verification for open q#1 (`application.external_id` format) → backfill decision for `entity_external_links`. Gonzalo can run the prod query when needed.
 - **QA hours + estimate**: PENDING (sprint planning) before `Ready for review`.
+- **M1 (#1986) in review** → merge to dev, then M2 (US 24053, change_stage) on the same branch lineage.
 - FE work tracked as a section inside US 24054 (per team decision — no separate FE ticket).
 
 ## Related
