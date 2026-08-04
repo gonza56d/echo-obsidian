@@ -6,6 +6,7 @@ delivered:
 tags: [feature, jazzhr, outbox, applications, entity-resolution]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1986"
+  - "https://github.com/taller-projects/echo-backend/pull/1987"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24051"
@@ -59,7 +60,8 @@ Inverts the sync direction for **Taller** applications: today they are born in J
 - **Infra**: INSERT `tenant_integrations` (Taller, `jazz_hr`) per env + dispatcher ER env vars (URL + `X-Echo-internal` key).
 - Prod verification for open q#1 (`application.external_id` format) → backfill decision for `entity_external_links`. Gonzalo can run the prod query when needed.
 - **QA hours + estimate**: PENDING (sprint planning) before `Ready for review`.
-- **M1 (#1986) in review** → merge to dev, then M2 (US 24053, change_stage) on the same branch lineage.
+- **M1 (#1986) in review** (MERGEABLE) → merge to dev FIRST. **M2 (#1987) in review, stacked on M1** → rebase onto dev after M1 merges, then merge. Next: **M3** (US 24054 — DELETE 409, tenant_integrations enablement, back-sync dep, prod).
+- Open q#5 (`change_stage` `user_id`: Echo id vs `jazz_user_id`) flagged in M2 handler comment — needs data-team answer before enabling.
 - FE work tracked as a section inside US 24054 (per team decision — no separate FE ticket).
 
 ## Related
