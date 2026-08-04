@@ -7,6 +7,8 @@ tags: [map, trackerrms, outbox, navitec]
 
 Everything around syncing Echo ↔ TrackerRMS for **Navitec** (active client: TrackerRMS ATS, custom CV/JD generation; team notes in echo-backend `vault/Echo/Navitec/`).
 
+> **Sibling saga**: [[Map - JazzHR integration]] reuses this same outbox/dispatcher for the Taller tenant. Its **matching emission rule** also fixes an active Navitec bug here — `matching_diff` today emits an `updated` per matched app → tracker fallback-POST → shortlist created in TrackerRMS off a single match. Keep the Navitec regression green when that lands.
+
 ## Object mapping
 Role→Opportunity · Talent→Resource · Application→OpportunityResource · Organization→Client. Linked by TrackerRMS id in `entity_external_links`.
 
