@@ -30,6 +30,7 @@ Inverts the sync direction for **Taller** applications: today they are born in J
 
 ## PRs
 - [#1986](https://github.com/taller-projects/echo-backend/pull/1986) → `dev` — **open** (M1 create path): emission rule in `ApplicationService` + `jazz_hr` create-or-get handler + dual-write link persistence + no-op for unsupported event types. Commit `ce12c492`. Also fixes the active Navitec `matching_diff` → TrackerRMS shortlist leak. Branch `24052/jazz-hr-application-push-m1` (worktree).
+  - **Conflict fix 2026-08-04**: `dev` merged the touchpoints reverse-push PRs (#1978/#1979) which appended test classes at the same EOF as mine → merged `origin/dev` into the branch (merge `f7b3ea1a`, no rebase/force per no-force-push rule); resolved both test-file conflicts (kept my emission tests + `TestDeliverJazzHr`, kept dev's touchpoint tests, dropped dev's stale stage-change assertion superseded by my M1 change). 266 outbox/application/touchpoint tests green, ruff clean. PR #1986 now MERGEABLE.
 
 ## How (implementation shape across milestones)
 - **Emission rule — all in `ApplicationService`** (`app/modules/application/service.py`), zero changes to dispatcher/writer/repos/schema. Verified against `dev` before ticketing:
