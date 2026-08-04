@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-04
 tags: [bugfix, applications, pipeline-buckets, jazz]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/1973"
@@ -21,7 +21,7 @@ Candidates with status **"On Hold"** appeared in NO bucket of Roles → Candidat
 - Related: [US 11885](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/11885) (original buckets), [Bug 20819](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/20819)
 
 ## PRs
-- [#1973](https://github.com/taller-projects/echo-backend/pull/1973) → dev — **open, in review** (branch `24010/fix-on-hold-category`); /pr-review round 1 done 2026-08-04, blocker + nit fixed in `346b8225`
+- [#1973](https://github.com/taller-projects/echo-backend/pull/1973) → dev — **MERGED 2026-08-04** (`68e1a085`, merge commit; another agent re-chained the migration onto `tp7dq2mk9v4x` + added a pipeline-health exclusion test pre-merge). **Dev e2e verified 2026-08-04**: staged both variants on a QA role → both returned by `category=active`, `category=other` empty; migration ran on deploy (alembic at `1u4ash4rwbxj`, 3 legacy ON HOLD rows collapsed); staged data restored to NULL.; /pr-review round 1 done 2026-08-04, blocker + nit fixed in `346b8225`
 
 ## How
 - `app/modules/application/schemas.py`: `ON_HOLD` + `ON_HOLD_JAZZ` appended to `ACTIVE_STATES`; `ON_HOLD_JAZZ` removed from `INACTIVE_STATES`; `field_validator("status")` on `ApplicationCreate` maps `"ON HOLD"` → `"On Hold"` — ALL write schemas inherit it (Create/Update, public/internal, incl. `partial_model` ones, since `partial_model` uses `__base__=model`).
@@ -45,6 +45,7 @@ Candidates with status **"On Hold"** appeared in NO bucket of Roles → Candidat
 - No bucket-change migration needed: `category` is a query-time `column_property`, list changes apply on deploy.
 
 ## Gotchas
+- **`ApplicationResponse` inherits `ApplicationCreate`** → the normalization validator also applies on READ: un-migrated `'ON HOLD'` rows display as "On Hold" in API responses while the raw DB value stays "ON HOLD". Defense-in-depth, but remember it when comparing API output vs raw SQL.
 - `ApplicationStatus` has **73 members** and the category fallback only covers what the two lists enumerate — anything new falls silently to `other` and disappears from the UI. No exhaustiveness guard exists (deliberately not added: out of the narrowed scope).
 - The 8 orphans found: On Hold, Technical/1st/2nd/3rd Client Interview **Done**, Candidate Pre-Selected by Client (opt), **Position Canceled** (single-L typo twin of the double-L entry in INACTIVE), **Full Time**. The 4 "Done" states are the worst: candidate finishes an interview → vanishes until manually moved to Passed.
 - `Offer Accepted` sits in BOTH `ACTIVE_STATES` and `INACTIVE_STATES` (ACTIVE wins by case order). Left as-is.
