@@ -7,7 +7,11 @@ tags: [map, kforce]
 
 Kforce is a **parallel fork**, not a config flavor: `kforce-dev`/`kforce-master` diverged from `dev` on 2026-01-09; hundreds of commits of drift. Single-tenant (no `tenant_id`, no RLS tenant filtering, `user_id` is `str`), `X-Echo-internal` auth, no `/admin` mount. Full rules in echo-backend `CLAUDE.md`.
 
-## Backport doctrine (the thing to re-read before any "port X to kforce" task)
+## ⚠️ The fork is being retired — [[Kforce-main code unification (PRD 3b2aedca)]]
+Pedro's Tier-C program (**Draft**, 2026-08-04) collapses both codebases into **one** (base = `dev`) where **Kforce becomes a tenant** on its own dedicated infra/DB. When it ships, everything below — the backport doctrine and every "drift bite" — stops being a recurring tax: Kforce differences become additive, feature-gated PRs on `dev`, and `kforce-dev` is archived. Until then this map still governs; treat every port you do now as a future ledger entry the program will absorb. Read that note before any large Kforce decision.
+
+
+## Backport doctrine (until unification lands — the thing to re-read before any "port X to kforce" task)
 1. **Targeted cherry-pick** — only for small, dependency-free changes. Rarer than it looks.
 2. **Copy + adapt** (most common) — reimplement against the structure kforce actually has.
 3. **Scheduled batch backport** — dedicated PRD, weeks of work.
