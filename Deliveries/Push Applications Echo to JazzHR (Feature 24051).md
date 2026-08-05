@@ -8,6 +8,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/1986"
   - "https://github.com/taller-projects/echo-backend/pull/1987"
   - "https://github.com/taller-projects/echo-backend/pull/1988"
+  - "https://github.com/taller-projects/echo-backend/pull/1989"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24051"
@@ -56,6 +57,7 @@ Inverts the sync direction for **Taller** applications: today they are born in J
 - QA case to confirm: `On Hold` vs `ON HOLD` case-sensitivity in ER's stage-name match (the Echo enum has both variants) — ties to [[On Hold candidates invisible in pipeline buckets (Bug 24010)]].
 
 ## Pending
+- **System tests DONE** (#1989) — the PRD's testcontainers plan is covered.
 - **Blocked on data team** (does not block starting M1's emission rule / handler skeleton): open q#2 (final `/applications/sync_data` v2 shape — today returns 200-on-failure), q#4 (`jazz_candidate_id`: `ats_external_ids` vs `jazz_person_id`), q#5 (`user_id` of `change_stage`: Echo id vs `jazz_user_id` + fallback). **Do not enable delivery in dev without the v2 contract.**
 - **Blocked on data team for cutover (M3)**: back-sync → upsert/skip when the app already exists in Echo.
 - **Infra**: INSERT `tenant_integrations` (Taller, `jazz_hr`) per env + dispatcher ER env vars (URL + `X-Echo-internal` key).
