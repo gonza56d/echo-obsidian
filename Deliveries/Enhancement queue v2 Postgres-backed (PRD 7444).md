@@ -6,7 +6,7 @@ delivered:
 tags: [reliability, roles, background-tasks, queue, outbox, prd, planning]
 prs: [1944, 1945, 1946, 1947, 1965, 1969]
 fe_prs: []
-tickets: [23871, 23872, 23873, 23874, 23875, 23876, 23877, 23971, 23974]
+tickets: [23871, 23872, 23873, 23874, 23875, 23876, 23877, 23971, 23974, 24024]
 prd: "https://app.notion.com/p/3abaedca11f081ba904afd1f73277444"
 ---
 
@@ -206,6 +206,13 @@ Team approved promoting the **full current dev batch** to prod (the migration ch
 **Ships INERT** (verified in code): every `background_job` write is gated behind `ENHANCEMENT_QUEUE_ENQUEUE_ENABLED` (role/service.py `request_enhancement`:673 / `create`:905-920, project/service.py:487 bulk — its only caller). Both Vault flags default false → enhancement stays on the legacy sync path, **zero queue rows written**. The danger combo is enqueue-ON + worker-OFF (rows pile up, no sync fallback) → invariant: never set `ENHANCEMENT_QUEUE_ENQUEUE_ENABLED=true` while the worker is off; turn-on order worker-first (Task 24024).
 
 **Remaining sequencing after these merge**: (1) merge #1980 → QA deploys + migrates → smoke-test (flags off); (2) merge #1981 → PROD deploys + migrates; (3) once the prod image with `app/worker.py` is live, **re-enable the worker Deployment idle** in `values-prod` (revert ttit #10520's `worker.enabled:false` → true; pod idles, 0 conns); (4) end state = only the two Vault flags pending (Task 24024). Result the user asked for: "only the Vault vars pending."
+
+## Prod turn-on + hard-3 concurrency cap (2026-08-05)
+
+- **The queue is LIVE in prod and verified end-to-end — M4 cutover effectively done.** Both Vault flags are on (`ENHANCEMENT_WORKER_ENABLED` + `ENHANCEMENT_QUEUE_ENQUEUE_ENABLED`). Proof: retried a throwaway `failed` role (name "Test", `010af5a6-...`, project `6a39cc33-...`, Taller tenant `01df2012-...`) via `POST /projects/{pid}/roles/{rid}/retry-enhancement` → a `background_job` row (`kind=role_enhancement`) went `pending -> running -> completed` (`attempts=1`, `priority=0`, `last_error=null`) and the role landed `enhancement_stage=enhanced`. A job row existing at all proves enqueue is on (flag-off uses legacy `BackgroundTasks`, zero rows); it draining proves the worker is enabled. Prod DB checked via the direct conn `db.hixqbnaslefvbxstwoog` (`sslmode=require`).
+- **Decision: cap concurrent enhancements at a HARD 3** (reverses the "2 pods x 8, tenant cap 8" sizing recorded in the Task 23971 section above). Why `BACKGROUND_WORKER_TENANT_IN_FLIGHT_CAP` alone CANNOT deliver 3: it is a **snapshot fairness bound, not a quota** — the claim SQL (`repository.py:90-97`) counts running-per-tenant against the statement's snapshot, so under a burst one round can claim up to `BATCH_SIZE` (8) before the count moves, and with 2 pods each replica admits against its own snapshot → overshoot **stacks across pods** (worst-case transient ~16). The only HARD bound is per-pod `BACKGROUND_WORKER_CONCURRENCY` (`free_slots = CONCURRENCY - in_flight` caps every claim; `in_flight` can never exceed CONCURRENCY). With 2 pods you can't land on 3 (2 x integer = 2 or 4) → **1 replica x CONCURRENCY=3 = exactly 3, zero overshoot.**
+- **Change (two parts, BOTH required):** (1) **infra** — prod worker `replicaCount` 2 -> 1: ttit [#10553](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_git/taller-ttit-kubernetes/pullrequest/10553) -> master **OPEN**, branch `24024/worker-prod-single-replica`, linked to Task [24024](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24024); (2) **Vault** `secret-echo-backend-prod` — set `BACKGROUND_WORKER_CONCURRENCY=3` (+ optional `BACKGROUND_WORKER_TENANT_IN_FLIGHT_CAP=3`), then restart the worker pod to pick up env. **GOTCHA: #10553 alone (leaving CONCURRENCY at its default 8) gives 1 pod x 8 = 8 concurrent, NOT 3 — the Vault change is the binding half.**
+- **Trade-offs accepted:** no worker HA (single pod — a restart pauses enhancement; in-flight jobs re-leased after the lease TTL), ~half throughput vs 2x8, prod pooler drops from 2x28=56 to 1x28=28 conns. If HA later outweighs hitting exactly 3, the alternative is `CONCURRENCY=1` on 2 pods = hard ceiling 2 (can't reach 3 with an even pod count).
 
 ## Pending
 
