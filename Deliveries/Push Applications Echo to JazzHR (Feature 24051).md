@@ -93,6 +93,19 @@ The data team finalized the entity-resolution **create** contract as `POST /appl
 
 **Still disabled** in `tenant_integrations` until infra enablement (Task 24057). Dev row exists (`enabled=false`); `ENTITY_RESOLUTION_API_URL` default already points at the dev ER; `ECHO_INTERNAL_API_KEY` (header `X-Echo-internal`) must match ER-dev's expected secret — an infra/data-team check I couldn't confirm from here.
 
+## Live-test prep (dev) — 2026-08-05 (RESUME HERE tomorrow)
+**#1996 MERGED to dev.** Dev enablement done by Gonzalo: `tenant_integrations(Taller 9541a5d4…, jazz_hr)` → **enabled=TRUE** (was false); `ECHO_INTERNAL_API_KEY` **present** in dev Vault. `ENTITY_RESOLUTION_API_URL` is **NOT** in the dev Vault, but the code default (`https://taller-echo-entity-resolution-dev.taller.ai`) already = dev ER, so dev is fine — **TRAP: qa/prod Vaults MUST set it explicitly or they silently call the dev ER** (→ Task 24057).
+
+**⚠️ JazzHR is ONE shared environment (prod + dev share the same Jazz instance).** So Echo-dev → ER-dev → **real Jazz**. Enabling `jazz_hr` for the whole Taller tenant in dev means **every new Taller application create/stage-change in dev now pushes to real Jazz** (most dev Taller roles have `job_…` ids + talents have emails, so they resolve and fire) — pollution risk; consider flipping it back off after the controlled test.
+
+**Designated test job**: *"Test Engineer 888"* — Jazz UI `https://app.jazz.co/app/v2/job/9299278/candidate` (UI id `9299278`), Echo `role.external_id = job_20250113141221_L0XUZ7L6G6H72ZZI`. **That external_id has NO `role` row in Echo dev OR prod (0 rows both)** → the create path would dead-letter *"role not synced"*; a role must be **seeded in Echo-dev (Taller)** first.
+
+**Test plan — awaiting Gonzalo's go on 4 items**: (1) OK to seed `role`(external_id=test job) + `talent`(test email) + `application` in Echo-dev Taller; (2) the test **candidate email** — is *"Test Engineer 888"* the job title or a candidate? prefer one already on the job for an idempotent `apply_to` *get* (no new Jazz data), else a fake test email creates a candidate on the test job; (3) scope: create-only (`apply_to`) first, then `change_stage` (moves the stage in the real workflow 637230); (4) method: insert one controlled `application.created` outbox event for the seeded rows (mirrors the system tests, hits the real dev ER) vs the full public API — recommended: controlled outbox event, create-only first.
+
+**Ticket**: proposed to **refine existing Task 24057** (infra/Vault enablement under Feature 24051) to spell out `ENTITY_RESOLUTION_API_URL` + `ECHO_INTERNAL_API_KEY` for **QA + PROD** (incl. the default→dev trap) + confirm assigned to Gonzalo — NOT a duplicate; awaiting his confirm (refine 24057 vs standalone). **Blocked**: the worktree Bash guard refuses reading the Azure PAT from `~/.zshrc` → need `ExitWorktree` (keep) to run the Azure API; asked, pending.
+
+**Good to know**: the dev outbox **dispatcher is running** (Navitec `tracker_rms` is live), so seeded events get picked up. Delivery recap — create→`apply_to` needs `role.external_id`(`job_`) + `talent.email`(req) + optional `jazz_person_id`→`talent_jazz_ids` + `created_by_id`→`user_id`; persist writes `application.external_id` + `entity_external_links(jazz_hr)`; `change_stage` needs the `jazz_application_id` from the prior create link + `status_from`/`status_to` + `updated_by_id`.
+
 ## Related
 - [[Map - JazzHR integration]] · [[Map - TrackerRMS integration]] (shared outbox/dispatcher; the emission rule change touches Navitec — regression must stay green)
 - [[Outbox skips internal-originated emits (Bug 23656)]] — `is_internal` suppression this feature relies on
