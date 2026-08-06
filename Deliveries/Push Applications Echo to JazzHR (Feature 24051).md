@@ -119,7 +119,19 @@ Controlled-outbox-event method (as planned), real dispatcher (image `26113_dev`,
 
 **ER contract facts confirmed live**: `apply_to` response wraps ids in `data` (`jazz_candidate_id`, `jazz_job_id`, `jazz_application_id`, `stage`) and reports the CURRENT stage on the get branch (handy verification trick); `change_stage` requires `echo_source` + `user_id` as non-null strings (a talent without `source` or a PATCH without actor would 422 → dead-letter — our talent had both); ER auth via local `.env` `ECHO_INTERNAL_API_KEY` matches ER-dev.
 
-**Ticket follow-ups pending**: refine Task 24057 (QA/PROD must set `ENTITY_RESOLUTION_API_URL` explicitly or silently hit dev ER + `ECHO_INTERNAL_API_KEY`); NEW tickets for Findings 1+2 (handler-side) and 3 (data-team); Grafana key regen.
+**Ticket follow-ups pending**: refine Task 24057 (QA/PROD must set `ENTITY_RESOLUTION_API_URL` explicitly or silently hit dev ER + `ECHO_INTERNAL_API_KEY`); NEW ticket for Finding 1 (retryable-404 — Finding 2 = Bug 24118 fixed) and data-team heads-up for Finding 3; Grafana key regen.
+
+## Full-API test round (dev → real Jazz) — 2026-08-06 ✅ ALL PASSED (post-#2006 deploy, image `26151_dev`)
+Real public API with Gonzalo's JWT (user `525e7c92…`, tenant Taller) — zero simulated pieces this time: router → auth → `ApplicationService` emission → outbox → dispatcher → ER → real Jazz → DB persistence, all live.
+
+- **DELETE guard (M3) via API**: `DELETE /applications/b7ac6ffe…` (in-process) → **409** with top-level `detail` + actionable message. FE error contract intact.
+- **Create path via API**: freed the unique slot (SQL-deleted the old fixture app), `POST /applications {talent, role, status: New}` → 201 (`801460c9-097a-4fa8-8608-f407e2e0f3d8`); emission produced the exact payload (`status`, `created_by_id`=JWT user, echo ids); delivery success attempt 1 (~5 s); link `projob_…132451` dual-written (get branch — same Jazz app as yesterday).
+- **Bug 24118 fix PROVEN live by discriminator**: the fixture talent was armed with BOTH `jazz_person_id='431832457'` (numeric) AND `ats_external_ids=["prospect_…132451"]` — pre-fix code would send the numeric → guaranteed 404 dead-letter; the delivery succeeded ⇒ the deployed handler sent the prospect id. **Bug 24118 verified in dev.**
+- **Status path via API**: `PATCH` → 202; payload `status_from=New`/`status_to=Screened Candidate to be Reviewed`/`updated_by_id`=JWT user; change_stage success attempt 1; **stage moved in real Jazz** (verified pinned by prospect hint).
+- **"On Hold" QA case (PRD risk) CLOSED**: `PATCH → "On Hold"` delivered attempt 1; Jazz's step is actually **"ON HOLD"** → ER's stage-name match is **case-insensitive**; reverse direction safe via Bug 24010 normalization on write.
+- **🟠 Finding 3 UPGRADED — duplicate prospects are NOT inert**: an email-only `apply_to` (no hints) resolved to the **duplicate** prospect's application (`projob_20260806132849_HJ8PS8WPZM3TPHXF`, stage New) instead of ours — no 409, silently picks one. With #2006 the create path pins by prospect hint (~98% talent coverage) and change_stage pins by the persisted id, but hint-less talents fall back to ambiguous email matching. Raises the priority of the data-team heads-up (sync_data idempotency + apply_to multi-match behavior).
+
+**End state**: flag back to **enabled=false**; Echo fixture app `801460c9…` at "On Hold", linked `projob_…132451` (Jazz: ON HOLD); duplicate Jazz app `projob_…132849` still at New (manual cleanup via Jazz UI optional). Remaining before enablement: **Blocker 1 retryable-404 (unticketed)**, data-team heads-up, Grafana key, Tasks 24057/24058/24059, back-sync upsert/skip, FE 24115/24116, open q#5 (`user_id`: Echo id observably works — ER 200s — but confirm audit-log semantics with data team).
 
 ## Related
 - [[Map - JazzHR integration]] · [[Map - TrackerRMS integration]] (shared outbox/dispatcher; the emission rule change touches Navitec — regression must stay green)
