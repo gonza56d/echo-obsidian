@@ -11,6 +11,8 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/1989"
   - "https://github.com/taller-projects/echo-backend/pull/1996"
   - "https://github.com/taller-projects/echo-backend/pull/2006"
+  - "https://github.com/taller-projects/echo-backend/pull/2013"
+  - "https://github.com/taller-projects/echo-backend/pull/2014"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24051"
@@ -134,6 +136,11 @@ Real public API with Gonzalo's JWT (user `525e7c92…`, tenant Taller) — zero 
 **End state**: flag back to **enabled=false**; Echo fixture app `801460c9…` at "On Hold", linked `projob_…132451` (Jazz: ON HOLD); duplicate Jazz app `projob_…132849` still at New (manual cleanup via Jazz UI optional).
 
 **⚠️ Incident (same day, self-inflicted + healed): the minimally-seeded fixture role 500'd ALL of `GET /roles` in dev.** The raw INSERT left jsonb/enum columns NULL (`skills_required`, `notes`, `interview_questions`, `enhancement_stage`, …) that `RoleListResponse` (which inherits `RoleCreate`) types as **non-Optional** — with `from_attributes`, pydantic reads the explicit NULL and the field default does NOT apply → `ResponseValidationError` → 500 for the whole page whenever the row entered it (single-GET too). Sat unnoticed 13:22→17:16 UTC (zero `/roles` traffic in between), then broke Patricio's FE work on the Jazz role picker (`allows_new_applications=true&external_id__isnull=false` — that filter combo was innocent). **Healed** by copying the omitted columns from the source role `708ca2d4` → all listings 200 again. **Lessons**: (1) seed clones must copy the jsonb/enum columns, not just the FK/name/external_id set; (2) hardening follow-up **FILED + FIXED same day**: Bug [24132](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24132) / PR [#2008](https://github.com/taller-projects/echo-backend/pull/2008) → dev — see [[Roles listing NULL-row hardening (Bug 24132)]]. Remaining before enablement: **Blocker 1 retryable-404 (unticketed)**, data-team heads-up, Grafana key, Tasks 24057/24058/24059, back-sync upsert/skip, FE 24115/24116, open q#5 (`user_id`: Echo id observably works — ER 200s — but confirm audit-log semantics with data team).
+
+## Promotion to qa + main — 2026-08-06 (PRs OPEN)
+Feature-scoped **cherry-pick** promotion (NOT a full dev batch): the 6 jazz commits `d24e5007`(M1) `ae0a6752`(M2) `608956d3`(M3) `d6c2b0d8`(#1989 tests) `4854d154`(#1996) `d5b69095`(#2006), in order, **zero migrations**. PRs [#2013](https://github.com/taller-projects/echo-backend/pull/2013) → `qa` (branch `24051/jazz-hr-push-promote-qa`) + [#2014](https://github.com/taller-projects/echo-backend/pull/2014) → `main` (branch `24051/jazz-hr-push-promote-main`) — **merge with MERGE COMMIT, never squash**; #2014 after QA verification.
+
+Facts that made it clean: `qa`==`main` content-identical at cut time (main had merged qa wholesale via #2010); **touchpoints (#1978) already promoted** (the feared conflict surface — gone); all 6 picks applied with ZERO conflicts; promoted files **byte-identical to dev** (outbox module + ApplicationService + jazz tests, `git diff origin/dev` empty); the two promotion branches have **identical trees** (diff 0) so one full-suite run covers both — 3419 unit green on the qa base, no lint delta. NOT included: #2008 roles hardening (separate bug, promotes independently). Ships inert (no `tenant_integrations` jazz_hr row in QA/prod); active-on-merge behavior deltas = DELETE→409 guard + the emission rule (which FIXES the Navitec matching_diff→shortlist leak in prod!). Prod turn-on still gated: Task 24057 runbook (ENTITY_RESOLUTION_API_URL explicit + ECHO_INTERNAL_API_KEY + INSERT-after-deploy), data-team index-lag fix + back-sync, FE 24115/24116, feature QA. Promotion PRs commented on Feature 24051.
 
 ## Related
 - [[Map - JazzHR integration]] · [[Map - TrackerRMS integration]] (shared outbox/dispatcher; the emission rule change touches Navitec — regression must stay green)
