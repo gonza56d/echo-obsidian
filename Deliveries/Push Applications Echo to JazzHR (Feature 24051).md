@@ -10,12 +10,14 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/1988"
   - "https://github.com/taller-projects/echo-backend/pull/1989"
   - "https://github.com/taller-projects/echo-backend/pull/1996"
+  - "https://github.com/taller-projects/echo-backend/pull/2006"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24051"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24052"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24053"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24054"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24118"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24115"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24116"
 prd: "https://app.notion.com/p/3b2aedca11f081318531c144c63d72e7"
@@ -109,7 +111,7 @@ Controlled-outbox-event method (as planned), real dispatcher (image `26113_dev`,
 
 **🔴 Finding 1 — JazzHR search-index lag breaks the create path for NEW candidates (enablement blocker)**: after `candidates/sync_data` creates a prospect, Jazz's search takes **~5-6 min** to surface it — during the window even lookup by the prospect reference id 404s. ER `apply_to` → 404 "Candidate does not exist" → handler policy 4xx = **immediate dead-letter, no retry**. In the real FE flow (candidate sync → `POST /applications` → delivery ~2 s later) **every brand-new candidate's create dead-letters**. Fix options: treat this specific 404 as retryable in the jazz create path (à la `OrderingNotReadyError` — the candidate sync is guaranteed to have run first, so the prospect WILL appear), or ER-side wait/lookup-by-id. Needs a ticket + team decision before enablement.
 
-**🔴 Finding 2 — numeric `jazz_person_id` never matches ER's `talent_jazz_ids` (bug in the deployed handler flow)**: Echo persists the **numeric** person id (`talent_echo_service.py:174`, e.g. `"431832457"`), but ER only matches `prospect_…` reference ids — verified live: `talent_jazz_ids:["431832457"]` → 404 "none of the 1 talent_jazz_ids matched a prospect", **no fallback to email**. Any talent with `jazz_person_id` set (~5% of prod today, but ~100% of fresh applies going forward — the sync flow populates it) sends a hint that guarantees a dead-letter even when email resolution would succeed. Cheapest fix: drop `talent_jazz_ids` from the handler body (email+source works); alternatives: persist `prospect_id` instead of the numeric id, or ER accepts numeric / falls back to email.
+**🔴 Finding 2 — numeric `jazz_person_id` never matches ER's `talent_jazz_ids` → Bug [24118](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24118), fix PR [#2006](https://github.com/taller-projects/echo-backend/pull/2006) → dev (OPEN)**: Echo persists the **numeric** person id (`talent_echo_service.py:174`, e.g. `"431832457"`), but ER only matches `prospect_…` reference ids — verified live: `talent_jazz_ids:["431832457"]` → 404 "none of the 1 talent_jazz_ids matched a prospect", **no fallback to email**. Any talent with `jazz_person_id` set (~5% of prod today, but ~100% of fresh applies going forward) sent a hint guaranteeing a dead-letter. **Resolution (data team confirmed, closes PRD open q#4 for real)**: `talent_jazz_ids` must receive `talent.ats_external_ids` — the candidate sync appends `response.prospect_id` there (`talent/service.py:423-425`); dev Taller: 30,498/30,504 populated rows are `prospect_…` (~98% coverage). **PR #2006** (branch `24118/jazz-hr-talent-jazz-ids-ats-external-ids`, worktree, commit `43bf39c1`): `get_talent_jazz_context` reads `ats_external_ids` (normalized: non-list/non-string junk dropped at the read); `TalentJazzContext.jazz_person_id` → `ats_external_ids: tuple[str,...]`; create path sends ALL `prospect_`-prefixed values (`_JAZZ_PROSPECT_ID_PREFIX` gate — junk like `ATS-12345`/`"string"` in 6 legacy dev rows never rides), omits when none; change_stage untouched (never sent the hint). Tests: 2 new unit (filter+multi-prospect, only-junk→omit) + system junk-normalization case (raw-SQL seeded mixed array + scalar JSON) + both E2Es now seed a populated numeric `jazz_person_id` to prove it's ignored. 3515 unit + 74 outbox system green, ruff clean.
 
 **🟡 Finding 3 — `candidates/sync_data` not idempotent under the index lag (data-team heads-up)**: a second call for the same email during the lag window created a **duplicate prospect** (`prospect_20260806132849_MUO0POL6H4YOTSS5` / person 431833007). `apply_to` consistently resolves to the first prospect, so the dup is inert, but it pollutes Jazz (test job carries it now; cleanup via Jazz UI if desired).
 
