@@ -37,7 +37,7 @@ One role row that hydrates as Python `None` in fields the response schema types 
 - Dev/prod data clean at fix time (0 poison rows after healing the fixture role by copying columns from its clone source `708ca2d4`; live query for `'null'::jsonb` across all 10 jsonb columns → 0 rows).
 
 ## Pending
-- ~~Review + merge~~ → **MERGED to dev 2026-08-06 18:58Z** (squash `2d9b3e7c`, approved by Leo, merged by Gonza). **CI never ran on the branch** (GitHub Actions outage swallowed every event: PR-creation run auto-cancelled, the `1b751804` synchronize event dropped, merge-push to dev dropped too); post-merge validation = manually dispatched run `31126659589` on dev @ `2d9b3e7c`.
+- ~~Review + merge~~ → **MERGED to dev 2026-08-06 18:58Z** (squash `2d9b3e7c`, approved by Leo, merged by Gonza). **CI never ran on the branch** (GitHub Actions outage swallowed every event: PR-creation run auto-cancelled, the `1b751804` synchronize event dropped, merge-push to dev dropped too); post-merge validation = manually dispatched run `31126659589` on dev @ `2d9b3e7c` → **GREEN** (test and lint success, 2026-08-06 ~19:15Z).
 - Bug 24132 → move to Resolved.
 - **Follow-up tickets NOT filed yet** (surfaced by review r1):
     1. `PublicRoleResponse` (`app/modules/public_api/schemas.py`) — same failure class: JSON null in `skills_required`/`skills_nice_to_have` would 500 the public career-page `Page[PublicRoleResponse]`.
