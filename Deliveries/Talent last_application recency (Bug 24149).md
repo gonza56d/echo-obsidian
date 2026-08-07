@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-07
 tags: [bugfix, talent, applications, jazzhr, sql]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2018"
@@ -17,11 +17,11 @@ prd: ""
 The candidate overlay stopped showing the active application: add a candidate to a role from Matched, `PATCH /applications/{id}` with `status: "New"`, refresh, and the overlay resolved an *older* application. Root cause was the recency key behind `Talent.last_application` — it ranked by a column (`last_status_update`) that **no code path in Echo ever writes**, so every UI-created application sorted last forever. Fixed by ranking on `GREATEST(step-history, last_status_update, created_at)` through a shared helper, applied to all three places that independently reimplemented "the talent's latest application".
 
 ## Azure / docs
-- [Bug 24149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24149) — reported by Patricio (FE), assigned to me, state **In development**.
+- [Bug 24149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24149) — reported by Patricio (FE), assigned to me, **Closed 2026-08-07**.
 - Surfaced while working the JazzHR push feature → [[Push Applications Echo to JazzHR (Feature 24051)]].
 
 ## PRs
-- [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev — **open, APPROVED by Pedro 2026-08-07** (branch `24149/last-application-most-recent`; fix `5ab2796c` + review nits `7edfb2d4`)
+- [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev — **MERGED 2026-08-07 15:27 UTC** (merge commit `6c383870`, Pedro approved; fix `5ab2796c` + review nits `7edfb2d4`). Post-merge CI on `dev` **green**.
 - FE: none. Contract is unchanged — same fields, same shapes; only *which* application `last_application` points at changes.
 
 ## How
@@ -50,9 +50,9 @@ Approved with two non-blocking nits, both addressed in `7edfb2d4` rather than de
 - Local repro recipe that worked well: run the app locally against the dev DB (`ENFORCE_SESSION_LIVENESS=false uv run uvicorn app.main:create_app --factory --port 8011`) and hit it with a real dev JWT. Minting a JWT is blocked by the tool classifier — ask for a real one instead.
 
 ## Pending
-- Merge [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev (approved; waiting on `test and lint`), then Bug 24149 → Ready to Test.
 - **Open product question, flagged on the ticket and in the PR: "most recent" ≠ "active".** Some talents' newest application is terminal (e.g. `08cdd075-…`, whose latest is `HIRED - Contract signed`), so the overlay will now receive a terminal application in those cases. If the overlay always needs the *active* one, that needs a separate field rather than changing `last_application` semantics. Needs Patricio/producto.
-- qa/main promotion not started.
+- **qa/main promotion not started.** Only on `dev` so far.
+- **The "most recent" vs "active" question has NO ticket.** Recorded on the closing comment of Bug 24149 so it is not lost, but nobody owns it. Needs Patricio/producto: if the overlay always needs the active application, that is a new field, not a change to `last_application`.
 - Behaviour change to expect after merge: on dev the `active_candidates_count__gte` filter moves from 1746 to 1759 roles — talents get re-attributed to the role holding their genuinely-newest application. Worth a heads-up if anyone reads those counts as stable.
 
 ## Related
