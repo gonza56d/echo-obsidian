@@ -21,7 +21,7 @@ The candidate overlay stopped showing the active application: add a candidate to
 - Surfaced while working the JazzHR push feature → [[Push Applications Echo to JazzHR (Feature 24051)]].
 
 ## PRs
-- [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev — **open, in review** (branch `24149/last-application-most-recent`, commit `5ab2796c`)
+- [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev — **open, APPROVED by Pedro 2026-08-07** (branch `24149/last-application-most-recent`; fix `5ab2796c` + review nits `7edfb2d4`)
 - FE: none. Contract is unchanged — same fields, same shapes; only *which* application `last_application` points at changes.
 
 ## How
@@ -36,6 +36,12 @@ The candidate overlay stopped showing the active application: add a candidate to
 - **Added a deterministic tie-break** (`application.id DESC`). `LIMIT 1` over tied rows picked arbitrarily, so the same talent could report different "last" applications across queries — not just "the old one", genuinely unstable.
 - **Implemented "most recent", not "active".** That is what the ticket asks for. See Pending — they are not the same thing.
 
+## Review (Pedro, 2026-08-07 — APPROVED)
+Approved with two non-blocking nits, both addressed in `7edfb2d4` rather than deferred. He independently verified the parts most likely to be wrong: that the uuid tie-break is sound (Python `uuid.UUID` ordering matches Postgres `uuid` byte ordering), that dropping `.nulls_last()` is safe because `created_at` is NOT NULL, and that no migration is needed.
+- **Type the helper signature.** He suggested `ColumnElement[...]` on the params — that would have been *wrong*: `InstrumentedAttribute` is not a `ColumnElement` subclass at runtime (MRO goes `QueryableAttribute` → `SQLORMExpression` → `SQLColumnExpression`), so it would not have covered the ORM call sites. Used `SQLColumnExpression[...]` on the params (verified `isinstance` true for both `Application.id` and `app_inner.c.id`) and `-> ColumnElement[datetime]` on the return, which is right because `func.greatest()` yields a `Function`.
+- **tz-aware datetime in the tie test** — `tzinfo=UTC` to match the `timestamptz` column.
+- **Not a nit, a fair catch:** the PR body advertised "adds `created_at`" but the change also swaps `COALESCE`→`GREATEST`, which shifts ranking when a row has *both* step-history and `last_status_update` (step-history used to always win; now the newer of the two does). Made that explicit in the PR body as its own paragraph.
+
 ## Gotchas
 - **`last_status_update` is dead weight in app code.** No assignment anywhere under `app/`, no DB trigger. It only arrives via `ApplicationCreate.last_status_update` on ATS sync payloads. Any future ranking/filtering that leans on it will silently exclude every UI-created row. Dev spread: Taller 13.9% of eligible applications have a NULL ordering key; Synthesis Technologies, Cortez Group and Taller Dev are at **100%**; Navitec at 0% (its TrackerRMS sync populates it).
 - **The ticket's original diagnosis was wrong and I proved it before coding.** It claimed `GET /talents/{id}` omitted `id`/`talent_id` inside `last_application` while the list returned them. Both endpoints emit the identical shape with `id` present (verified on a local backend against the dev DB *and* on deployed dev). `talent_id` is absent from `TalentLastApplication` — but from both endpoints, so it never explained a difference. Patricio retracted it in rev 5; I rewrote the title, description and **Repro Steps** (he had updated the description but left the stale root cause in the repro field, so the ticket contradicted itself).
@@ -44,7 +50,7 @@ The candidate overlay stopped showing the active application: add a candidate to
 - Local repro recipe that worked well: run the app locally against the dev DB (`ENFORCE_SESSION_LIVENESS=false uv run uvicorn app.main:create_app --factory --port 8011`) and hit it with a real dev JWT. Minting a JWT is blocked by the tool classifier — ask for a real one instead.
 
 ## Pending
-- Merge [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev, then Bug 24149 → Ready to Test.
+- Merge [#2018](https://github.com/taller-projects/echo-backend/pull/2018) → dev (approved; waiting on `test and lint`), then Bug 24149 → Ready to Test.
 - **Open product question, flagged on the ticket and in the PR: "most recent" ≠ "active".** Some talents' newest application is terminal (e.g. `08cdd075-…`, whose latest is `HIRED - Contract signed`), so the overlay will now receive a terminal application in those cases. If the overlay always needs the *active* one, that needs a separate field rather than changing `last_application` semantics. Needs Patricio/producto.
 - qa/main promotion not started.
 - Behaviour change to expect after merge: on dev the `active_candidates_count__gte` filter moves from 1746 to 1759 roles — talents get re-attributed to the role holding their genuinely-newest application. Worth a heads-up if anyone reads those counts as stable.
