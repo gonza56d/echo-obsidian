@@ -24,7 +24,7 @@ Recruiters can now filter the talent search by rehire eligibility. A talent is *
 - [Task 24157](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24157) — [FE] control + overlay badge ANY fix (unassigned, FE team; keeps the misspelled `notElegibleForRehire` prop name)
 
 ## PRs
-- [#2022](https://github.com/taller-projects/echo-backend/pull/2022) → dev — **open, in review** (branch `24155/not-eligible-for-rehire-filter`, commit `620c0c35`)
+- [#2022](https://github.com/taller-projects/echo-backend/pull/2022) → dev — **open, APPROVED by Leo** (READY WITH NITS, 0 blockers; review `4885557685`). Both hardening nits fixed in `15937726`: 422 invalid-value case + explicit cross-tenant isolation test (locks the app-layer `TenantScopedRepository._base_query()` tenant scoping, since RLS is bypassed under testcontainers). Location nit declined with rationale on the PR: file stays in `tests/unit/` because **CI runs unit only** — moving to `tests/system/` would drop it from CI (Leo himself flagged it organizational-only).
 
 ## How
 - `TalentFilter.not_eligible_for_rehire: bool | None` (`app/modules/talent/filters.py`) via `_apply_rehire_filter`, mirroring `_apply_applications_exists`: correlated EXISTS over `placement` on `(talent_id, tenant_id)` (composite FK), field consumed (set to `None`) before `super().filter()` so the generic loop doesn't try `Talent.not_eligible_for_rehire`.
@@ -44,7 +44,7 @@ Recruiters can now filter the talent search by rehire eligibility. A talent is *
 - Task work items here don't have an "Active" state — flow is `New → In development → …` (US does have Active).
 
 ## Pending
-- PR [#2022](https://github.com/taller-projects/echo-backend/pull/2022): CI + review + merge → then US/Task states → Ready to Test.
+- PR [#2022](https://github.com/taller-projects/echo-backend/pull/2022): CI re-run after nit commit `15937726` → squash-merge to dev → Task 24156 Closed (user-directed).
 - FE Task 24157: filter control (`useFilterConfig.tsx`, `onlyVisibleForTenants: [KFORCE, TALLER]`), `src/types/talent.ts` type, overlay badge `.some(...)` fix (`TalentOverlay.tsx`).
 - Kforce port: not evaluated — `TalentFilter` diverged on kforce-dev; if wanted, copy + adapt (no tenant_id correlate there).
 
