@@ -32,6 +32,8 @@ Step 9c of the [[Kforce-main code unification (PRD 3b2aedca)]] program, with an 
 - Branch named per pr-skill snake_case (`24167/unification_9c_organization_people_ledger`); PR title without conventional prefix (squash-title style).
 
 ## Gotchas
+- **The pre-drop traffic check FAILED (2026-08-10, Loki 7d)** — the ticket's "cero consumidores" evidence covered *code*, not *traffic*. Taller prod has a live reader: 12 GET 200 via script (`python-requests/2.33.1`), always user `607b7da5-7e10-4ea7-96b8-155d34b6041a`, across multiple orgs — plus 8 vestigial PATCH 404 from the same user's browser. kforce-dev showed an internal POST 201 + DELETE 204 pair (2026-08-04, create+delete in 1 s — probably a synthetic probe, but the internal ingestion path is proven alive). kforce-prod: 5 PATCH 404 from 4 distinct browser users, latest 2026-08-10. All PATCHes 404 everywhere (FE sends `organization_employees` ids) — pure FE cleanup. **Step 2's code was therefore NOT written**: unmounting the routers would break the prod reader on promotion.
+- Prod-DB lookup of the caller was permission-blocked in-session; run manually: `PGSERVICE=echo-prod psql -c "SELECT id, email FROM \"user\" WHERE id = '607b7da5-7e10-4ea7-96b8-155d34b6041a'"`.
 - **The ticket's "FE PATCH is a no-op" claim is dev-only.** Dev's `PeopleUpdate` extends plain pydantic `BaseModel` (`extra='ignore'`) → 200 and both fields dropped. But kforce's `PeopleBase` **accepts `contact_id` and persists it** to the physical column — so the pre-drop traffic check matters most on kforce, where the PATCH is half-live.
 - `openapi.json` is in the golden-snapshot corpus → unmounting the people routers changes it; baseline must be re-recorded at drop time or the parity gate shows an unexplained mismatch. (No people endpoints in the corpus otherwise.)
 - Worktree guard blocks anything non-trivial (pipes, heredocs, long `curl -d`) inside a worktree session — Azure comments / vault writes need `ExitWorktree(keep)` first, then re-enter.
@@ -39,8 +41,8 @@ Step 9c of the [[Kforce-main code unification (PRD 3b2aedca)]] program, with an 
 
 ## Pending
 - Merge #2027 (squash → dev), then move US 24167 forward.
-- Confirm with Pedro that AC-2 ("plan de drop acordado para Fase 6") is satisfied by the ledger row, or whether the drop gets brought forward (it would be its own delivery: both branches + migration + FE PR + traffic check).
-- The drop itself (Phase 6): AC-3/AC-4 (`git grep` clean, FE clean) only apply then.
+- **Drop unblock list** (drop was attempted 2026-08-10 per Gonzalo's go, parked on the failed traffic check): (a) identify + migrate/retire the Taller prod reader script (user `607b7da5-…`, python-requests, multi-org GETs); (b) identify the kforce internal caller (POST/DELETE probe-like pair); (c) FE cleanup PR (`employeeContactService.ts` PATCH + orphan `invalidateQueries(['people'])`).
+- After unblock: the drop itself = routers unmount both branches, delete `app/modules/people/`, guarded drop migration (view first, then table; must replay over kforce's physical-`contact_id` shape), `openapi.json` snapshot baseline re-record, org-merge `organization/repository.py` relink-list cleanup. AC-3/AC-4 (`git grep` clean, FE clean) apply then.
 
 ## Related
 - [[Kforce-main code unification (PRD 3b2aedca)]] — the program; this is step 9c after 9a (placement, #1998) and 9b (contact_relationship, #2001).
