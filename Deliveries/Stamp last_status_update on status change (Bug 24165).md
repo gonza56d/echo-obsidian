@@ -19,7 +19,13 @@ Patricio (FE) found while building the Jazz stage UI: `PATCH /applications/{id}`
 - [Bug 24165](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24165) — created by Patricio 2026-08-10, assigned Gonzalo, In development. PR linked via comment.
 
 ## PRs
-- [#2026](https://github.com/taller-projects/echo-backend/pull/2026) → dev — **OPEN** (branch `24165/stamp-last-status-update`, commit `c3efb502`)
+- [#2026](https://github.com/taller-projects/echo-backend/pull/2026) → dev — **OPEN** (branch `24165/stamp-last-status-update`, commit `c3efb502`; review nits fixed in `f749d23f`)
+
+## Review (Pedro, 2026-08-10 — APPROVED, 0 blockers)
+- Nit 1 → new `test_explicit_null_last_status_update_skips_stamp_and_clears`: explicit `last_status_update: null` + status change **skips the stamp AND clears the column** (pinned as contract). Fixing it exposed a latent duplicate-kwarg bug in the `make_application` helper (pinned default + `**overrides` collide) → dict-merge.
+- Nit 2 → service comment now states the mechanics constraint: assignment registers the field in `model_fields_set` (what makes it survive `exclude_unset=True`); rebuilding `entity` before `super().update()` would silently drop the stamp.
+- Q1 answered with dev data: back-sync does NOT always send the field — 3,949/26,152 (~15%) synced status-bearing rows have NULL `last_status_update`; omitted → we stamp Echo-now (better than NULL). Data-team heads-up owed.
+- Q2: create-leaves-NULL confirmed intentional; "FE treats NULL as no stage change yet" passed to Patricio.
 
 ## How
 - `app/modules/application/service.py` — in `update()`, right before `super().update()`: if `entity.status is not None and entity.status != old_status and "last_status_update" not in entity.model_fields_set` → `entity.last_status_update = datetime.now(tz=UTC)`. Mutating the pydantic entity registers the field in `model_fields_set`, so it rides `repo.update`'s `model_dump(exclude_unset=True)`.
