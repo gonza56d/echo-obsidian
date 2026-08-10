@@ -17,7 +17,7 @@ The program that **retires the Kforce fork**. Today echo-backend is two parallel
 > Why this note reframes the whole Kforce saga: once this ships, the [[Map - Kforce]] **backport doctrine** (cherry-pick / copy+adapt / never `git merge dev→kforce-dev`) is what gets *retired* — every "port X to kforce" bite in that map becomes an additive gated PR in `dev` instead. The fork's whole reason to exist goes away.
 
 ## Azure / docs
-- No Azure work items yet (estimation is deliberately deferred to per-phase planning). Tickets will be filed phase by phase.
+- Work items are being filed per step (estimation still deferred to per-phase planning). First one on my plate: [US 24167](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24167) (step 9c) → [[Unification 9c organization_people deprecation (US 24167)]]. Execution is underway: the ledger (`docs/unification-ledger.md`, 11 rows as of 2026-08-10) tracks steps 7 / 9a / 9b / 9c shipped via PRs #1995 / #1998 / #2001 / #2027.
 - PRD: [Unificación del código KForce con la branch principal — PRD Técnico](https://app.notion.com/p/3b2aedca11f081f8a460f1c22f675ba8) (parent DB: *Echo Product Roadmap*).
 - Child page: [Plan de ejecución — pasos de implementación](https://app.notion.com/p/3b2aedca11f0815a97f2eb4208b5c5b1) (implementation steps).
 
