@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-10
 tags: [bugfix, applications, jazzhr]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2026"
@@ -19,7 +19,7 @@ Patricio (FE) found while building the Jazz stage UI: `PATCH /applications/{id}`
 - [Bug 24165](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24165) — created by Patricio 2026-08-10, assigned Gonzalo, In development. PR linked via comment.
 
 ## PRs
-- [#2026](https://github.com/taller-projects/echo-backend/pull/2026) → dev — **OPEN** (branch `24165/stamp-last-status-update`, commit `c3efb502`; review nits fixed in `f749d23f`)
+- [#2026](https://github.com/taller-projects/echo-backend/pull/2026) → dev — **MERGED 2026-08-10** (squash `fd15015a`; commits `c3efb502` + nits `f749d23f`; CI green, Pedro approved)
 
 ## Review (Pedro, 2026-08-10 — APPROVED, 0 blockers)
 - Nit 1 → new `test_explicit_null_last_status_update_skips_stamp_and_clears`: explicit `last_status_update: null` + status change **skips the stamp AND clears the column** (pinned as contract). Fixing it exposed a latent duplicate-kwarg bug in the `make_application` helper (pinned default + `**overrides` collide) → dict-merge.
@@ -45,7 +45,8 @@ Patricio (FE) found while building the Jazz stage UI: `PATCH /applications/{id}`
 - The column is naive `timestamp` (migration `65758f5ebc54`) while `created_at` is `timestamptz`; writing `datetime.now(tz=UTC)` follows the existing precedent (`matched_on`, repository.py) and Postgres converts via session TZ (UTC).
 
 ## Pending
-- PR [#2026](https://github.com/taller-projects/echo-backend/pull/2026) merge (CI running at note time); then Bug 24165 → Resolved/Ready to Test.
+- ~~PR #2026 merge~~ **MERGED 2026-08-10**, Bug 24165 → **Ready to Test** (comment on ticket incl. FE note: created-with-status keeps NULL by design, treat as "no stage change yet").
+- Data-team heads-up owed (from review Q1): back-sync omits `last_status_update` on ~15% of synced status-bearing rows (3,949/26,152 on dev) — post-fix those get Echo-now on their next change; confirm whether ER should always send it.
 - FE consumption side is Patricio's — no FE ticket known; response shape unchanged, the field just starts being populated.
 - qa/main promotion unrequested (rides normal release flow).
 
