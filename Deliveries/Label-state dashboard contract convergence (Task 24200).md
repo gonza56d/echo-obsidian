@@ -36,6 +36,9 @@ Fase 4 / paso 12 of the [[Kforce-main code unification (PRD 3b2aedca)]] program:
 - Waiver `[contacts_dashboard_metrics]` covers ONLY the 3 legacy keys. The tracked-set VALUE diff is deliberately NOT waived — it's the `tracked_by_id__in` param gap (see Pending) and waiving values would mask real classification regressions.
 - `TenantFeature.LABEL_STATE_DASHBOARD` (#1993) left in place unused — post-program cleanup, per the PRD.
 
+## Conflict resolution (2026-08-11)
+Merged `origin/dev` into the branch after #2025 (golden re-record) / #2029 (KForce seed) / #2038 (outbox role-contacts) landed. **Only `docs/unification-ledger.md` truly conflicted** — a row-number collision: dev's merge added its own row `17` (the KForce tenant seed, #2029) while mine also claimed `17`. Resolved by keeping dev's seed as **17** and renumbering mine to **18** (both are keepers); updated the `waivers.toml` cross-ref `#17 → #18`. Everything else auto-merged. Verified my `repository.py`/`schemas.py`/test were NOT in dev's change set, `contacts_dashboard_metrics.json` was NOT re-recorded by #2025 (my snapshot assertion still valid), and my 8 tests pass on the merged tree. Ledger numbering was already messy pre-merge (two `12`s, an out-of-order `11`) — a known chore-PR cleanup, not introduced here. Merge commit `56696227`; PR back to MERGEABLE.
+
 ## Gotchas
 - The golden replay can't fully MATCH this snapshot yet no matter what: the baseline was recorded via kforce's `tracked_by_id__in=U1` param and dev scopes to the JWT user (`0322865c…`), whose seed tracked set is different. The param superset ("acepta y devuelve tanto tracked_by_id como tracking_by_ids") is its own PRD contract line — separate port.
 - kforce's dashboard repo takes `tenant_id`/`tracking_by_ids` args; dev derives both (RLS context / single user). Don't copy the kforce signature when porting around this endpoint.
