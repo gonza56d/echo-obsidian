@@ -62,7 +62,7 @@ Tests: `test_outbox_payloads.py` (base builder set/omit), `test_outbox_triggers.
 - **Rollout depends on the `taller_tracker_rms_api` reverse change being live in prod** (Echo change is safe to merge regardless — undeclared fields drop harmlessly). Confirm with Emiliano.
 - Turn-on coordinates with Data: 748-row backfill + FE reveal, so Navitec doesn't see empty/premature fields.
 - 269 prod cross-tenant-deduped contacts → the integration service can't resolve a unique Tracker id, omits + logs. Expected; tell FE/product.
-- qa/main promotion unrequested.
+- **qa/main promotion OPEN 2026-08-11** as part of the full dev batch: qa [#2044](https://github.com/taller-projects/echo-backend/pull/2044) + main [#2045](https://github.com/taller-projects/echo-backend/pull/2045). #2038 is **active-on-merge** (no flag) — Emiliano confirmed the `taller_tracker_rms_api` reverse-accept is live in prod; on the main merge, Navitec role-contact edits start pushing to TrackerRMS. Sequence w/ the forward backfill + FE reveal (US 24174).
 
 ## Related
 - [[Map - TrackerRMS integration]] · [[Outbox flat payload fix (PR 1838)]] · [[Outbox skips internal-originated emits (Bug 23656)]]

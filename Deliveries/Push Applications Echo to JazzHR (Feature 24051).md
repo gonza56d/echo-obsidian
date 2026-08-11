@@ -172,6 +172,14 @@ PR [#2037](https://github.com/taller-projects/echo-backend/pull/2037) → dev **
 
 - **Review r1 (Leo, 2026-08-11) → APPROVED / READY WITH NITS, 0 blockers** (review `4907916084`: arch 12/0, tests-security 10/0, PRD 10/10). 2 test nits fixed in `65ecc02f` (empty-string `jazz_application_id` param case + dispatcher missing-`echo_role_id` skips the stash lookup); 3 non-blocking questions answered in PR comment `5256719531` (scope = outbound sync untouched; split write-via-`stash.py` / read-via-`OutboxRepository` intended, mirrors `entity_external_links`; enablement gate now moot). Branch also carries `4c2e8a5c` (tenant-FK name added to the model so metadata matches migration `habp5kg5dvpo` — drift fix Leo verified). **ER field DEPLOYED 2026-08-11** — live response body verified parsing end-to-end (`jazz_person_id` int → str, `projob_…` id intact). **READY TO MERGE**; after deploy, replay the previously dead-lettered creates (runbook above).
 
+## Batch promotion dev -> qa + main (2026-08-11) — PRs #2044 / #2045 OPEN
+Team approved promoting **everything pending on `dev`** (11 features, incl. this one) as a batch — NOT feature cherry-picks — so the migration chain travels intact. Built by merging `origin/dev` (`6f955ee0`) into a branch off `qa` and off `main`:
+- **qa**: [#2044](https://github.com/taller-projects/echo-backend/pull/2044) (branch `promote/dev-to-qa-20260811`)
+- **main**: [#2045](https://github.com/taller-projects/echo-backend/pull/2045) (branch `promote/dev-to-main-20260811`) — merge AFTER qa verification + prod preconditions.
+- **Merge with a MERGE COMMIT, never squash.** Both MERGEABLE (clean 3-way merge, no conflicts).
+- **Migration safety verified**: no migration on qa/main is absent from dev (no multi-head); the 5 new migrations chain onto the existing head `91eebppm0zva` (`mq7xw2vk4dpe`#2027 -> `q7mre4xk29tb`/`w3nk8pv2mzq7`/`s5v8kq2wr9np`#2028 -> `habp5kg5dvpo`#2037); `alembic heads` = single `habp5kg5dvpo`, `alembic branches` shows only a pre-existing reconverging branchpoint. 6 old (July) migration files differ from dev only in `down_revision` — a pre-existing qa/main lineage difference already applied to those DBs; kept as-is (NOT overwritten with dev's lineage).
+- **Prod gates on #2045**: #2027 destructive DROP (pg_dump + pg_depend + reader heads-up); #2028 email backfill+trigger+unique-index (re-verify 0-collision audit); #2038 tracker-contacts active-on-merge (Emiliano confirmed receiving end live; sequence w/ backfill+FE); **this feature (#2037) ships inert** (needs the `tenant_integrations` `jazz_hr` INSERT to activate).
+
 ## Related
 - [[Map - JazzHR integration]] · [[Map - TrackerRMS integration]] (shared outbox/dispatcher; the emission rule change touches Navitec — regression must stay green)
 - [[Outbox skips internal-originated emits (Bug 23656)]] — `is_internal` suppression this feature relies on
