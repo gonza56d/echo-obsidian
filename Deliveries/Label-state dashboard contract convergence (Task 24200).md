@@ -42,10 +42,50 @@ Fase 4 / paso 12 of the [[Kforce-main code unification (PRD 3b2aedca)]] program:
 - `docs/` matches a .gitignore rule — the ledger file is tracked anyway; `git add` the file path works, adding the dir errors.
 
 ## Pending
-- Review + squash-merge #2036 to dev.
+- Squash-merge #2036 to dev (review DONE 2026-08-11 — see Review & follow-up below).
 - FE contract-change notice to both FE TLs (PR section is the input; paso 12 note says "falta aviso FE").
 - `tracked_by_id__in`/`tracking_by_ids` param superset port (closes the replay VALUE gap; unticketed).
 - Re-run classification tests under `kforce_tenant` fixture when #2029 merges (paso 12 commitment, same as #2023's).
 - Legacy trio removal PR once both FEs migrate (end of deprecation window).
 - Prod check for persisted `Alumni`-typed relationship rows (defensive OR covers them either way).
 - Post-program: delete `TenantFeature.LABEL_STATE_DASHBOARD`.
+
+## Review & follow-up (2026-08-11)
+
+Ran the 3-agent `/pr-review` (architecture + tests-security + prd) on #2036.
+**Verdict: READY WITH NITS — 0 blockers.** Arch 11 PASS / 0 FAIL / 3 N/A;
+Tests&Security 12 PASS / 0 FAIL / 4 N/A; PRD 6/7 fully + 1 defensible warning
+(cost measured on dev, not a large prod tenant — but the endpoint scopes to the
+JWT user's tracked set, so tenant size isn't the cost driver).
+
+Independently confirmed the load-bearing claims: the **exact-partition invariant**
+holds under every data shape (state=Prospect iff no relationships, so a
+Client/Consultant contact always lands in a bucket; legacy `Alumni`-typed rows
+caught explicitly; the four types are mutually exclusive so no double-count),
+`prospects_tracked_count` computed->real has **no other consumer**
+(`reporting_dashboard` is an unrelated `ReportingDashboardResponse`, not a missed
+site), and the golden replay is a **standalone ops script** (not pytest) so the
+waiver honestly covers only the 3 legacy keys and does not mask bucket values.
+
+Addressed the 2 test-coverage nits in follow-up commit `61d8e9f4` (pushed to the PR):
+- **HTTP-layer test** `test_dashboard_metrics_endpoint_projects_label_state_buckets`
+  — end-to-end through `GET /contacts/dashboard/metrics`, asserts the 5 buckets
+  serialize via the response_model over the authenticated router path (one contact
+  per bucket tracked to `mocked_user`).
+- **Latest-relationship-wins test** `test_latest_relationship_wins_single_bucket`
+  — an ended Consultant superseded by a newer still-open Client lands in exactly
+  one bucket (open relationship wins via `end_date DESC NULLS FIRST`); partition
+  still holds, no double-count.
+- Nit #3 (factories over raw ORM) **skipped with justification**: no
+  `RelationshipFactory` exists and the sibling `test_alumni_regression.py` uses the
+  identical raw-ORM `Relationship(...)` pattern; a new factory would be scope creep.
+
+**Gotcha (new):** the dashboard endpoint **404s in an isolated TestClient run**
+because `.env` sets `ENABLE_ACCESS_CONTROL=True` and the authenticated DB-role path
+in `app/database/base.py` (read **per request**) makes it unreachable; the full CI
+suite only passes it because `test_alumni_regression.py` force-disables the flag at
+import time. I scoped a **per-request toggle fixture** (`_access_control_off`)
+around the single HTTP call instead of flipping the global module-wide — a second
+import-time flipper would add a collection-order "who-restores-last" footgun. File
+green in isolation (7 tests) and alongside the sibling + `test_relationship_state`
+(50 tests).
