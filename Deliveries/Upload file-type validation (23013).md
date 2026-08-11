@@ -24,4 +24,4 @@ Security-assessment finding (CWE-434, unrestricted upload of dangerous file type
 - Rejections → `400` with the standard `{"detail": ...}` shape. Allowlists match what the FE already restricts → no FE change.
 
 ## Related
-- [[Map - Pentest 2026]]
+- [[Map - Pentest 2026]] · [[Allow csv-json blob uploads for data team (Task 24219)]] (follow-up: widened `POST /blobs` to csv/json for the data team)
