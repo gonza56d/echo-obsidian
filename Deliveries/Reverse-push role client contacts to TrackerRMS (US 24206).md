@@ -27,7 +27,7 @@ The integration service `taller_tracker_rms_api` (separate repo) already **decla
 - [US 24206](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24206) — "BE: Push role client contacts Echo→TrackerRMS (reverse sync)", child of Feature 24170, Sprint 43. Created + set **Active** 2026-08-11, PR link commented.
 
 ## PRs
-- [#2038](https://github.com/taller-projects/echo-backend/pull/2038) → dev — **open, in review** (2026-08-11).
+- [#2038](https://github.com/taller-projects/echo-backend/pull/2038) → dev — **open, in review** (2026-08-11). **Reviewed 2026-08-11 (3-agent /pr-review): READY WITH NITS, 0 blockers** (arch 11/0/5, PRD 9/9 no creep, tests-security 11/0/5). 3 nits addressed in `16cc2d32`.
 
 ## How
 
@@ -38,6 +38,14 @@ Echo already enqueues correctly and never needed a trigger change: `RoleService.
 3. `app/services/tracker_rms_sync_service.py` — `_RoleSyncProjection` (schema-driven SELECT had to gain the 2 columns or `role.client_*` is absent) + `_build_role_payload` (the manual "Sync to Tracker" button; team plans to remove this button soon but wants parity meanwhile).
 
 Tests: `test_outbox_payloads.py` (base builder set/omit), `test_outbox_triggers.py::TestRoleOutbox` (overlay ships new ids; clear omits; unrelated edit adds no null keys — defaulted the plain-MagicMock `_make_db_role` contacts to `None`), `test_tracker_rms_sync_service.py` (manual builder set/omit; `_mock_role` gained the two kwargs). 136 passing across the 3 files + 119 across sibling outbox files (dispatcher/writer). Lint clean.
+
+## Review (2026-08-11)
+
+3-agent `/pr-review` (architecture + PRD + tests-security): **READY WITH NITS, 0 blockers**, no scope creep, all 9 code requirements satisfied. The load-bearing never-clear clause (contract §5) verified in all three builders; the overlay `pop()` confirmed non-vacuous by a mutation check. 3 nits, all addressed in `16cc2d32`:
+
+1. **Predicate alignment** — the include-when-present guard now reads `is not None` across all three builders (base snapshot + manual sync; the overlay already used it), so the never-clear intent reads uniformly for the nullable UUIDs.
+2. **Comment accuracy** — reworded the `build_role_payload` comment so it no longer implies a lightweight-snapshot caller that doesn't exist today; `getattr` stays for `_str_attr` parity + tolerating `RoleLike` inputs lacking the attr.
+3. **Coverage** — added `test_update_role_client_contact_change_overwrites_existing`: swapping an existing contact for a new one must ship the NEW id, proving the overlay overwrites the stale pre-commit snapshot value. 137 unit green across the 3 files, lint clean.
 
 ## Decisions
 - **Never-clear (product-confirmed with Gonzalo, 2026-08-11).** A contact is sent **only when non-null**; a *cleared* contact is **omitted, never sent as `null`**. TrackerRMS is the client's system of record; there's a real prior incident of a reverse PATCH overwriting a contact's `client`. So a delete in Echo does NOT propagate — the forward push re-asserts Tracker on the next job change. This differs **deliberately** from the `account_manager_id → owner_id` overlay right above, which *does* send `null` on clear. Implementation: base/manual builders add the key only when truthy; the overlay `pop()`s it on clear so a pre-commit snapshot value can't leak the old id back.
