@@ -47,7 +47,7 @@ Merged `origin/dev` into the branch after #2025 (golden re-record) / #2029 (KFor
 
 ## Pending
 - Squash-merge #2036 to dev (review DONE 2026-08-11 — see Review & follow-up below).
-- FE contract-change notice to both FE TLs (PR section is the input; paso 12 note says "falta aviso FE").
+- FE contract-change notice to both FE TLs (PR section is the input). **FE Taller work ticketed: Task [24222](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24222)** under umbrella US 24172 — migrate the Contacts dashboard donut off the deprecated trio (`clients/consultants/alumni_tracked_count`) to the 5 active/past buckets; files `constants/contacts.ts` (CONTACTS_METRICS) + `ContactMetrics.tsx` (METRICS_FOR_GRAPHIC). Spanish heads-up message drafted for the FE TL. kforce FE needs nothing (already reads the 5).
 - `tracked_by_id__in`/`tracking_by_ids` param superset port (closes the replay VALUE gap; unticketed).
 - Re-run classification tests under `kforce_tenant` fixture when #2029 merges (paso 12 commitment, same as #2023's).
 - Legacy trio removal PR once both FEs migrate (end of deprecation window).
