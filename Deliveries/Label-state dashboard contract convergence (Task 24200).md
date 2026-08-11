@@ -21,7 +21,8 @@ Fase 4 / paso 12 of the [[Kforce-main code unification (PRD 3b2aedca)]] program:
 - PRD ledger: `docs/unification-ledger.md` row **17** (added in the PR). Plan de ejecución paso 12 says "desbloqueado, falta aviso FE" — the PR's "Cambio de contrato" section (before/after JSON) is the input for that notice; the actual FE comms remain a human step.
 
 ## PRs
-- [#2036](https://github.com/taller-projects/echo-backend/pull/2036) → dev — open. Branch `unif/dashboard-label-state` (unif/ style like #2023's `unif/contact-totals-widgets`).
+- [#2036](https://github.com/taller-projects/echo-backend/pull/2036) → dev — **APPROVED by Leo 2026-08-11** (review 4907746339, READY WITH NITS, 0 blockers). Branch `unif/dashboard-label-state`.
+- Leo's 3 nits addressed (`66f61d0e`): (1) softened the e2e test docstring — it exercises the JWT-identity dep + response_model projection, NOT authz/RLS (which testcontainers bypasses); (2) added `test_dashboard_scoped_to_requesting_user_and_tenant` — a cross-tenant + cross-user negative scoping guard (the `contact.tenant_id` CTE predicate is what it locks, since `contact_tracker` has no tenant_id and RLS is off in tests); (3) sharpened the 5 bucket field descriptions to spell out the contact-level Active/Past *rollup* semantics (not last-relationship state) so the FE copy can match. 8/8 tests green, lint clean.
 
 ## How
 - `repository.py`: ported kforce's `_label_state_count` (kwargs signature kept so 4 of 5 call sites are kforce-identical) + `relationship_state` added to the dashboard `tracked_contacts`/`contact_info` CTEs; 5 FILTER aggregates lead the SELECT; legacy trio still computed behind them.
@@ -89,3 +90,9 @@ around the single HTTP call instead of flipping the global module-wide — a sec
 import-time flipper would add a collection-order "who-restores-last" footgun. File
 green in isolation (7 tests) and alongside the sibling + `test_relationship_state`
 (50 tests).
+
+## FE coordination analysis (2026-08-11)
+Verified against `echo-frontend` before answering "do we need FE coordination for prod?":
+- **Taller FE is additive-safe.** `services/contacts/metrics.ts` types the response as `Record<string, number>` — no zod, no `.parse()`, no strict schema. The 4 genuinely-new keys are ignored. `ContactMetrics.tsx` renders its donut from `METRICS_FOR_GRAPHIC` = CLIENTS/CONSULTANTS/PROSPECTS/ALUMNI_TRACKED — the exact deprecated trio + prospects, all kept with identical values (alumni≡0) → donut renders unchanged. `prospects_tracked_count` was already a serialized `computed_field`, so it isn't even a new wire key.
+- **kforce FE is NOT in the Taller-prod path** — it hits the kforce backend; only relevant at cutover.
+- **Conclusion**: no hard FE coordination to MERGE or PROMOTE (nothing breaks). The PRD's "aviso a ambos FE" is a soft/tracked obligation for: (a) the Taller FE to BUILD the active/past dashboard product wants — the backend alone renders nothing new in Taller; (b) starting the deprecation clock so the FUTURE trio-removal PR (the one that WILL break an unmigrated FE) can be scheduled. The "Cambio de contrato" PR section is the input for that notice.
