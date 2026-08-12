@@ -6,6 +6,7 @@ delivered:
 tags: [chore, kforce, unification, tech-debt, docs]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2027"
+  - "https://github.com/taller-projects/echo-backend/pull/2051"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24167"
@@ -22,6 +23,7 @@ Step 9c of the [[Kforce-main code unification (PRD 3b2aedca)]] program, with an 
 
 ## PRs
 - [#2027](https://github.com/taller-projects/echo-backend/pull/2027) → dev — **open; review r1 (Pedro, 2026-08-10) addressed in `c74f8c9c`, merge gated on the heads-up blocker**. Scope grew from docs-only to the full dev-side drop. r1 verdict: code clean; 1 process blocker (courtesy heads-up to prod reader `607b7da5-…` not done — it's the compensating control the blocker→heads-up downgrade depends on); nits: migration cycle test (done, see How), `checkfirst=True` on downgrade enum create (done), openapi baseline refs (waiver added, re-record tied to kforce twin); questions: pg_dump backup as prod-promotion precondition (added to row 11), program-owner ack of the reclassification on the ticket (asked of Pedro), waivers.toml (done).
+- [#2051](https://github.com/taller-projects/echo-backend/pull/2051) → **kforce-dev** (2026-08-12) — the kforce twin. **Copy+adapt, not a cherry-pick**: #2027's migration is parented on a dev-only rev and kforce's table shape diverges (still has the physical `contact_id` col + FK; dev dropped it in `g9keztwnnspn`, never migrated to kforce). Migration `z8kqr3nw2p6t` off the verified kforce head `og0kr2s2znyu`; upgrade DROP VIEW→TABLE→TYPE (all IF EXISTS); **downgrade recreates the kforce shape WITH `contact_id`** + the 3 indexes + the view from the kept `.sql` — the recreate-with-contact_id is *required* because the smart-search view SELECTs `contact_id`. Module deleted, both mounts + org-merge relink removed, migration-cycle test asserts the recreate keeps `contact_id`. `people_position_level_enum` verified kforce-only-used by `organization_people` (`organization_employees` moved to `employee_position_level_enum` in `qrxoxk4cexrt`) ⇒ DROP TYPE clean. No `waivers.toml`/openapi baseline on kforce ⇒ that #2027 step drops out. Lint clean, 12 tests green, single alembic head, `app.routers` imports. Reviewer: **Pedro (rocha-p)** (reviewed #2027).
 
 ## How
 - One `deuda-cola` row (11) following the style of rows 4/7/8: the row IS the spec of the drop, updated in-place as the check ran and the drop executed.
@@ -51,8 +53,8 @@ Step 9c of the [[Kforce-main code unification (PRD 3b2aedca)]] program, with an 
 - **MERGE BLOCKER (review r1)**: identify the Taller prod reader script owner (user id + psql query in Gotchas; the lookup was classifier-blocked in-session) and notify/get ack — Pedro flagged it as the compensating control the blocker→heads-up reclassification depends on.
 - **Prod-promotion preconditions**: one-time `pg_dump -t organization_people` attached to AB#24167 (~56k rows; downgrade recreates empty structure) + the `pg_depend` dependent-objects query against prod (dev verified clean; query saved in the PR body).
 - **Program-owner ack** of the reclassification on AB#24167 (asked of Pedro in the review reply — sets the precedent consciously before the kforce twin, where the PATCH persists).
-- **kforce-dev twin PR** (`24167/..._kforce`): unmount routers, delete module, same guarded drop migration adapted to the kforce tree. Also identify their internal POST/DELETE caller (probe-like pair, 2026-08-04) first.
-- **FE cleanup PR**: remove the `employeeContactService.ts` PATCH + orphan `invalidateQueries(['people'])` (FE-owned; flag to FE team).
+- **kforce-dev twin PR — DONE: [#2051](https://github.com/taller-projects/echo-backend/pull/2051) → kforce-dev (2026-08-12)** (branch `24167/unification_9c_organization_people_kforce`). **Merge-gated on** identifying the live **internal** POST/DELETE caller (probe pair 2026-08-04 — the genuine open risk; the public FE PATCH 404s in practice) + the FE cleanup below. Backend authors of the kforce people/employees module for context: **agusmdev**, **Gattas Agustín**.
+- **FE cleanup PR — owner Melina Cantamutto** (authored `employeeContactService.ts` + the /people→/organization-employees backwards-compat fallback, FE US 22264 #2559): remove the `updateEmployeeContactId` PATCH to `/organizations/{id}/people/{id}` (called via `bulkLinkEmployeesToContacts` in `ContactMatchReviewForm.tsx`) + orphan `invalidateQueries(['people'])`. In practice these PATCH 404 (FE sends `organization_employees` ids) ⇒ pure cleanup, but coordinate with Melina before the kforce drop promotes.
 - Golden-snapshot `openapi.json` baseline re-record (routers removed ⇒ expected mismatch until re-recorded; noted in row 11).
 
 ## Related
