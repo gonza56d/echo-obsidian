@@ -22,7 +22,16 @@ The external-partner "Add Candidate" flow (`POST /talents/{ats_role_id}/sync`) b
 - [Bug 24239](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24239) — original repro; data-side (idempotent `/candidates/sync_data` + Jazz dedup). Data team synced (Gonzalo).
 
 ## PRs
-- [#2058](https://github.com/taller-projects/echo-backend/pull/2058) → dev — **in review** (2026-08-12)
+- [#2058](https://github.com/taller-projects/echo-backend/pull/2058) → dev — **in review** (2026-08-12). Follow-up commit `fac68195` (2026-08-12) addresses the review coverage nits (below).
+
+## Review (2026-08-12, 3-agent `/pr-review`)
+Verdict **BLOCKED ON CLARIFICATION** — no code defect forces a rewrite; the delivered A0/A1/A4/A5 are sound and tested (arch 12 PASS/0 FAIL; tests-security 10 PASS/1 FAIL→downgraded). It hinges on one gating question. Consolidated:
+- **Q1 (top, blocker-adjacent — A3 dropped):** the update path still calls `sync_data` with the user's **new** email and `jazz_person_id=None`. If ER's `sync_data` isn't yet idempotent in prod (create-or-get covering the LinkedIn-match/new-email case), that call can still create a **new** Jazz prospect for the existing person — the same symptom, moved from create→update path (A4 won't catch a genuinely new `prospect_id`). A3 was the Echo-side guard. **Safe to drop only if idempotent `sync_data` is already live** — else re-add A3 or gate the merge on the data-side deploy. Needs confirmation before merge.
+- **Q2 (split-identity, not a regression):** `check_duplicate` (email OR linkedin, no `ORDER BY`) returns an arbitrary row; if the incoming email matches talent A but the LinkedIn matches a different talent B, the update writes the other's unique value and re-collides on the *other* index **after** `sync_data`. The old email-only code collided here too, so no regression — but "no new duplicate" doesn't fully hold. Decide: reject-before-sync deterministically, or document as accepted residual (data-side idempotency neutralizes the Jazz side).
+- **Q3 (CI gap):** the listener rewrite + AC4 atomicity are covered **only** by `tests/system/`, which this repo's CI never runs. Record a manual `./scripts/test.sh system` run on the PR before merge.
+- **Q4 (phone):** A1/AC1 literally list phone; the PR omits it. Defensible — phone has no tenant-unique index so it can't cause the collision (and could cause false-positive merges). No code change; update the ticket wording to "email OR LinkedIn".
+- **Q5 (consumer):** external "Add Candidate" caller now gets 200-on-duplicate (was 400) — confirm it treats a 200-update as success.
+- **Nits fixed in `fac68195`:** unit test for the non-list `ats_external_ids` legacy guard (string must coerce to list, not splat into chars); system tests for the two uncovered `set_source` listener branches (already-linked vendor→source guard = no duplicate `vendor_sources` row; `vendor_id is None` early return = source created, no link); stale `get_talent_by_email` comment in `sync_talent_with_jazz_and_vendor` reworded. Nits deliberately **not** taken: explicit `created_at/updated_at` in the Core insert (documented deliberate choice — explicitness/atomicity), and the `__new__`/`SimpleNamespace` fixture fragility (pre-existing file convention).
 
 ## How
 `TalentService.create_and_sync_talent` → `sync_talent_with_jazz_and_vendor` (`app/modules/talent/service.py`). Four changes:
@@ -46,6 +55,7 @@ Tests: 3 existing sync tests updated for the new collaborator; new service-level
 - Local unit run 404s all success-path talent endpoints (documented TestClient issue, green in CI) → the fix is tested at the **service** layer, and the listener via **system** tests.
 
 ## Pending
+- **Resolve review Q1 before merge**: confirm the data-team idempotent `/candidates/sync_data` (create-or-get) is live in prod and covers the LinkedIn-match/new-email case; if not, re-add A3 or gate the merge on the data-side deploy.
 - Merge #2058 → dev; then qa/main promotion.
 - Data team (Bug 24239): idempotent `/candidates/sync_data` (create-or-get) + honest 4xx/5xx; historical Jazz dedup (~16k).
 - Confirm the exact firing constraint from prod once A0 logging lands (email vs linkedin).
