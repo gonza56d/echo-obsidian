@@ -21,6 +21,7 @@ Historically Taller applications are **born in JazzHR** and mirrored into Echo b
 ## Deliveries
 - [[Push Applications Echo to JazzHR (Feature 24051)]] — **in progress** (tickets written 2026-08-04; M1 create / M2 change_stage / M3 FE+cutover). First delivery of this saga.
 - [[Per-application recruiter from Jazz back-sync (Bug 24241)]] — **in review** (PR #2049, 2026-08-12). Back-sync direction (Jazz→Echo): each application carries its own recruiter (`application.jazz_owner_id`→`owner_id`) instead of inheriting the single `talent.jazz_owner_id`. Backend enablement; data-team back-sync + backfill = Task 24245.
+- [[Candidate sync JazzHR duplicates fix (Bug 24264)]] — **in review** (PR #2058, 2026-08-12). Candidate sync (`POST /talents/{role}/sync`) blocked with "already exists" AND spawned duplicate Jazz prospects: email-only dup lookup → create path → INSERT collides *after* the irreversible `sync_data` push. Fix: dup-by-email-OR-LinkedIn → update path, `ats_external_ids` dedupe, atomic `set_source` listener, constraint logging. Data-side idempotent `/candidates/sync_data` + ~16k Jazz dedup = Bug 24239.
 
 ## Key decisions / invariants
 - **Emission rule** lives entirely in `ApplicationService` and is **platform-agnostic** (emitter describes domain facts; handlers decide): silence while in matching, promotion→`created`, defensive create gate. Invariant: every processable `updated` has a prior `created` → makes the `jazz_hr` "retry, never create" ordering guard safe.
