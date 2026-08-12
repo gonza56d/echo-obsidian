@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged-gated
 env: taller
-delivered:
+delivered: 2026-08-12
 tags: [bugfix, jazzhr, back-sync, applications, recruiter-owner, process-history]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2049"
@@ -24,7 +24,11 @@ A candidate's **Process History in Echo showed the same recruiter (e.g. Camila) 
 - [Task 24245](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24245) — **data-team follow-up** (child of 24241): back-sync sends the per-application recruiter + one-time backfill. Unassigned (data team). Gated on #2049 merged + deployed.
 
 ## PRs
-- [#2049](https://github.com/taller-projects/echo-backend/pull/2049) → dev — **OPEN** (2026-08-12). Backend enablement. Latest commit `b9f4c934`.
+- [#2049](https://github.com/taller-projects/echo-backend/pull/2049) → dev — **MERGED** 2026-08-12 (squash `7215044d`, by Gonzalo). Backend enablement. Not yet promoted to qa/main.
+
+## Status / where to pick up (2026-08-12)
+- **PR #2049 merged to dev.** Ships **inert** — no behavior change until the data-team back-sync (Task 24245) actually sends `jazz_owner_id`.
+- **[Task 24244](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24244) deliberately left at "Developed" (NOT Done/Closed).** Gonzalo's call: the backend is merged but the *visible* Bug-24241 fix still needs the data part, so the ticket stays open as the tracking anchor. **Do not close it** until the data team delivers Task 24245 (back-sync + backfill) and Process History is verified corrected in prod. When resuming: check whether Task 24245 has been picked up, whether #2049 was promoted to qa/main, and only then move 24244 → Done.
 
 ## Review (Leo, 2026-08-12) — READY WITH NITS, addressed
 - Leo's human review ([comment](https://github.com/taller-projects/echo-backend/pull/2049#issuecomment-5270846673)): `READY WITH NITS`, **0 blockers**, 4 AC met, no scope creep — noted the resolver is *more* correct than the `_get_owner_id` it mirrors (wraps the id in a list, dodging the `str`-is-`Sequence` bug). Two questions + a few nits.
@@ -63,7 +67,8 @@ A candidate's **Process History in Echo showed the same recruiter (e.g. Camila) 
 - `git add -A` in this repo sweeps in unrelated session-start junk (pentest.pdf, pngs, csv, `.claude/projects/`) — staged only the 7 real files.
 
 ## Pending
-- **Merge #2049** to dev (then qa/main promotion — no data change on merge; ships inert until the back-sync uses it).
+- ✅ ~~Merge #2049 to dev~~ — done 2026-08-12 (`7215044d`). **Still to do: qa/main promotion** (no data change on merge; ships inert until the back-sync uses it).
+- **Keep Task 24244 open at "Developed"** until the data part lands (see Status section) — then close.
 - **Task 24245 (data team)** — M2 back-sync sends `jazz_owner_id` per application on create AND update; **M3 one-time backfill/re-sync** of historical rows from Jazz (matched by `application.external_id` = `projob_…`). This is what actually repairs Process History.
 - **Open questions**: precedence of a manual `PATCH /applications/{id}/owner` reassignment vs a later back-sync (currently sync wins); the review r1 unresolved-on-update clear-vs-leave-prior decision (see Review above). **Kforce sibling: N/A** — Bug 24241 is Taller-specific (`recruiter_by_jazz_id` tenant); Kforce is single-tenant with no Jazz tenant, so nothing to port (noted in the PR body).
 
