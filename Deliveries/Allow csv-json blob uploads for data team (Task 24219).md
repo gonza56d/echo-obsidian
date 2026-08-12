@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-12
 tags: [security, pentest, uploads]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2043"
@@ -19,7 +19,7 @@ Follow-up to the CWE-434 pentest lock-down ([[Upload file-type validation (23013
 - [Task 24219](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24219) — created for this change (Task, tagged Security).
 
 ## PRs
-- [#2043](https://github.com/taller-projects/echo-backend/pull/2043) → dev — **OPEN** (2026-08-11). Leo review **APPROVED — READY WITH NITS** (2026-08-12): all 6 AC met, no blockers; confirmed the widened allowlist does not reopen CWE-434 (no extension maps to a renderable Content-Type; `.json` shares the same signature-less denylist branch as `.csv`). Folded both nits in commit `ac01ddcd` (2026-08-12).
+- [#2043](https://github.com/taller-projects/echo-backend/pull/2043) → dev — **MERGED** (2026-08-12, squash `1f9ca78a`; remote branch deleted). Leo review **APPROVED — READY WITH NITS** (2026-08-12): all 6 AC met, no blockers; confirmed the widened allowlist does not reopen CWE-434 (no extension maps to a renderable Content-Type; `.json` shares the same signature-less denylist branch as `.csv`). Folded both nits in commit `ac01ddcd` (2026-08-12).
 
 ## How
 - `app/core/file_validation.py`: new signature-less `JSON` type (mirrors `CSV`); renamed `IMAGE_POLICY` → `BLOB_POLICY` (its only consumer is the now-generic `/blobs` endpoint) and extended it to `PNG, JPEG, CSV, JSON`.
@@ -38,7 +38,7 @@ Follow-up to the CWE-434 pentest lock-down ([[Upload file-type validation (23013
 - The blob endpoint is shared across the public / internal / admin mounts, so this one policy change relaxes all three.
 
 ## Pending
-- Merge #2043 to dev (Taller-only; no qa/main cherry-pick requested).
+- No qa/main cherry-pick requested (Taller-only; ships on the next dev→qa→main batch promotion).
 - No FE change (FE already restricts client-side; server-side only). No migration.
 - Kforce twin: not requested. `POST /blobs` + `file_validation.py` exist on kforce too — port only if the kforce data team hits the same block.
 
