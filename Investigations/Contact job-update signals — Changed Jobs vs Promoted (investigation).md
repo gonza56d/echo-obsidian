@@ -207,6 +207,27 @@ Key findings from the profiles_api code dive (all in the PRD):
   drifts to `changed_job` when that job later closes (signature change →
   auto rewrite). Flagged as PRD §8.5.5.
 
+**M1 implemented 2026-08-13** (branch `feat/change_kind_added_job_retired`,
+commit `502ec0b3`, PR not opened yet): naming finalized **`added_job`** (label
+"Added Job" — "New Job" read too close to "Changed Jobs") + `retired`; stamps
+`last_job_added_at`/`last_retired_at`; migration `h4vq8sk2wnre`
+(ADD VALUE IF NOT EXISTS + 2 columns, downgrade drops columns only);
+`hot_lead` now spans 4 stamps via a shared `hot_lead_expr()` (models +
+filters, deduped); 6 new metric buckets; subscribers
+`contact.job.added_job`/`contact.job.retired` → kinds
+`contact_added_job`/`contact_retired` (titles "Ada - Added Job" /
+"Ada - Retirement"). 8 new tests incl. migration downgrade/upgrade roundtrip.
+**Testing gotcha found**: the suite-wide pattern "import-time
+`ENABLE_ACCESS_CONTROL=False` + module-teardown restore" leaks across
+modules — a module's teardown re-enables access control while later modules
+(whose import-time flip already ran at collection) still expect it off →
+their requests 404 with `user_id=None`. That's the root of the known local
+TestClient-404 flake (3 pre-existing failures under `-k contact`, identical
+on clean dev — baseline-verified). My module uses a per-test `monkeypatch`
+autouse fixture instead, which restores the ambient value and doesn't leak.
+Golden-snapshot note: the 6 additive metrics keys will read as expected
+ADDITIVE diffs in the kforce_tenant replay until the kforce twin lands.
+
 Local setup note: profiles_api `.env` verified (settings load, dev DB
 connects, both JSON blobs parse); `uv sync` blocked on the Azure Artifacts
 feed — the existing PAT lacks **Packaging → Read** scope, `~/.netrc` is ready
