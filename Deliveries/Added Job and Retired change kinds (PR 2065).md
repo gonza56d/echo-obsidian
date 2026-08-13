@@ -6,6 +6,7 @@ delivered:
 tags: [contact, jobs, change-kind, dashboard, notifications, warm-leads, profiles-api]
 prs:
   - https://github.com/taller-projects/echo-backend/pull/2065
+  - https://github.com/taller-projects/echo-backend/pull/2066
 fe_prs: []
 tickets: []
 prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
@@ -30,7 +31,7 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 ## PRs
 
 - BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **OPEN, in review** (2026-08-13, commit `502ec0b3`)
-- BE M1b (kforce twin): pending — copy+adapt, next up
+- BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **OPEN, in review** (2026-08-13, `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
 - FE (M2, both apps): not started — mapping must land before profiles_api emits (M3)
 
 ## How
@@ -79,11 +80,18 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 ## Pending
 
 - [ ] #2065 review + merge
-- [ ] Kforce twin PR (M1b — in progress)
+- [ ] #2066 (kforce twin) review + merge
 - [ ] FE mappings M2 (both FEs) — labels/colors/icons + tiles + notification
       labels + `types/contact.ts` union
-- [ ] profiles_api classifier v2 (M3) + `retired` heuristic calibration
-      (dev stats query still running)
+- [ ] profiles_api classifier v2 (M3) + `retired` heuristic calibration.
+      Dev data (2026-08-13, `profile.profiles`, 1,776,213 rows): **16,247
+      profiles with a 'retir%' title** — samples show the trap: "Senior
+      Regional Retirement Consultant" (Fidelity) is a false positive →
+      word-boundary match on retired/retiree, not 'retir%'; real patterns:
+      "Retired", "(Retired)", "[RETIRED]", "Retired - former VP …", company
+      sometimes "Retired"/"Self Employed"/"Formerly X". **449,739 profiles
+      (~25%) hold ≥2 concurrent open jobs** → added_job will be a BIG bucket
+      (volume matters for tiles/notifications/backfill).
 - [ ] Backfill / re-sync wave (M4) + duplicate-notification plan
 - [ ] Azure tickets once the PRD is shared with the team
 - [ ] qa/main promotion after merge
