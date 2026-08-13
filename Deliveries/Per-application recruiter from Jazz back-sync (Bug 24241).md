@@ -6,11 +6,14 @@ delivered: 2026-08-12
 tags: [bugfix, jazzhr, back-sync, applications, recruiter-owner, process-history]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2049"
+  - "https://github.com/taller-projects/echo-backend/pull/2059"
+  - "https://github.com/taller-projects/echo-backend/pull/2060"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24241"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24244"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24245"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24275"
 prd: ""
 ---
 
@@ -25,6 +28,15 @@ A candidate's **Process History in Echo showed the same recruiter (e.g. Camila) 
 
 ## PRs
 - [#2049](https://github.com/taller-projects/echo-backend/pull/2049) → dev — **MERGED** 2026-08-12 (squash `7215044d`, by Gonzalo). Backend enablement. Not yet promoted to qa/main.
+- [#2059](https://github.com/taller-projects/echo-backend/pull/2059) → qa — cherry-pick of `7215044d` (branch `cherry_pick/24244_per_app_recruiter_qa`), opened 2026-08-13. Merge with merge commit, before #2060.
+- [#2060](https://github.com/taller-projects/echo-backend/pull/2060) → main — cherry-pick of `7215044d` (branch `cherry_pick/24244_per_app_recruiter_main`), opened 2026-08-13. Merge with merge commit, after #2059. **Merging = prod deploy (argo auto-sync).**
+
+## Bug 24275 diagnostic (2026-08-13) — CSR re-report of the same bug
+- [Bug 24275](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24275) (Paloma, CSR, Sprint 43, assigned Gonzalo): application owner ≠ profile recruiter (Keila Ortiz / Laura Castellano on apps vs Sara Abero / Rosario Valdes on profile; repro candidates Aldo Esparza, Nilson Junior). **Same root cause as 24241**, seen through Application Details instead of Process History.
+- Verified in prod DB: Nilson Junior (`cf7d6f7d`) profile→Rosario Valdes, ~35 apps frozen at Laura Castellano; his 2026-08-12 app correctly snapshotted Rosario (only history is wrong). Aldo Esparza (`2f494577`) profile→Sara Abero, Feb app frozen at Guido Egea. The Keila-vs-Sara example = other CSR candidates (e.g. Wallas Abreu `63aab640`, 2 apps).
+- **Tenant-wide blast radius: 1,128 applications / 364 talents** where `application.owner_id` ≠ the live jazz-resolved owner (top pairs: Milagros→Rosario 45, Laura→Rosario 28, Sara→Keila 18, Rosario→Sara 17).
+- Prod schema confirmed pre-#2049: `alembic_version = habp5kg5dvpo`, no `application.jazz_owner_id`. So "yesterday's fix" couldn't have fixed it (dev-only + inert). Recommended: fold 24275 into 24241; repair = promote #2049 + data-team Task 24245 (M2 back-sync + M3 backfill).
+- Promotion PRs #2059/#2060 opened 2026-08-13 (see PRs). Azure comment with links posted on Task 24244 (comment 28593502).
 
 ## Status / where to pick up (2026-08-12)
 - **PR #2049 merged to dev.** Ships **inert** — no behavior change until the data-team back-sync (Task 24245) actually sends `jazz_owner_id`.
@@ -67,7 +79,7 @@ A candidate's **Process History in Echo showed the same recruiter (e.g. Camila) 
 - `git add -A` in this repo sweeps in unrelated session-start junk (pentest.pdf, pngs, csv, `.claude/projects/`) — staged only the 7 real files.
 
 ## Pending
-- ✅ ~~Merge #2049 to dev~~ — done 2026-08-12 (`7215044d`). **Still to do: qa/main promotion** (no data change on merge; ships inert until the back-sync uses it).
+- ✅ ~~Merge #2049 to dev~~ — done 2026-08-12 (`7215044d`). ✅ ~~Open qa/main promotion~~ — cherry-pick PRs #2059 (qa) / #2060 (main) opened 2026-08-13. **Still to do: merge #2059 then #2060 (merge commits, never squash)** — inert on deploy, but main merge = prod deploy.
 - **Keep Task 24244 open at "Developed"** until the data part lands (see Status section) — then close.
 - **Task 24245 (data team)** — M2 back-sync sends `jazz_owner_id` per application on create AND update; **M3 one-time backfill/re-sync** of historical rows from Jazz (matched by `application.external_id` = `projob_…`). This is what actually repairs Process History.
 - **Open questions**: precedence of a manual `PATCH /applications/{id}/owner` reassignment vs a later back-sync (currently sync wins); the review r1 unresolved-on-update clear-vs-leave-prior decision (see Review above). **Kforce sibling: N/A** — Bug 24241 is Taller-specific (`recruiter_by_jazz_id` tenant); Kforce is single-tenant with no Jazz tenant, so nothing to port (noted in the PR body).
