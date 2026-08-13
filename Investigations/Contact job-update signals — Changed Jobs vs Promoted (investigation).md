@@ -173,12 +173,47 @@ City/State/Country filters, Business Funnel).
 
 ## 9. Open questions
 
-1. **Data team**: exact classification rules (same-company title change =
-   promotion? laterals? demotions? title-only edits?); re-scrape cadence;
-   does the pipeline run for all tenants or just Navitec (+ Kforce)?
+1. ~~**Data team**: exact classification rules~~ **RESOLVED 2026-08-13** — the
+   classifier is ours: `profiles_api` repo,
+   `app/modules/webhook/jobs_sync.py::compute_change_kind` (flat DESC chain by
+   `(end_date|today, start_date)`; same company vs older neighbor → promotion,
+   different → changed_job, oldest → NULL). Still open: re-scrape cadence and
+   which tenants have an active pipeline (dev: almost only Navitec).
 2. **Product**: should Latest Updates include contacts with signals only in
    older history (gotcha 2)? What date should the badge show (gotcha 1)?
 3. Prod volumes unverified (dev measured only).
+
+## 10. Update 2026-08-13 — feature kicked off (PRD In Progress)
+
+The PRD stopped being a maybe: extending `ChangeKind` with **`new_job`**
+(added a concurrent job without leaving the current one — startup, consulting)
+and **`retired`** (LinkedIn "Retired" position). Decisions already closed with
+Pedro live in the PRD §8; split of work: `profiles_api` reworks
+`compute_change_kind`, echo-backend adds the enum values + stamps + metrics +
+notification subscribers (dev + kforce twin), FE maps the new values (both apps).
+
+Key findings from the profiles_api code dive (all in the PRD):
+
+- Sync is a **delete-all + bulk-create reconciliation** per (mapping, profile)
+  with a signature fast-path (`_job_signature` includes `change_kind`) —
+  so the PRD's original "backfill can't go through bulk" claim was **wrong**:
+  re-enqueueing sync after classifier v2 rewrites history correctly.
+  Side effects: rewrite wave (~350k rows dev) + duplicate `contact.job.*`
+  notifications for open jobs < 90 days old.
+- **Deploy order is a hard gate**: echo enum migration must land before
+  profiles_api emits new values — the DELETE runs before the POST, so a 422
+  on unknown enum leaves the contact with no job history until retry passes.
+- Edge found: `new_job` rule keyed on "previous job still open **today**"
+  drifts to `changed_job` when that job later closes (signature change →
+  auto rewrite). Flagged as PRD §8.5.5.
+
+Local setup note: profiles_api `.env` verified (settings load, dev DB
+connects, both JSON blobs parse); `uv sync` blocked on the Azure Artifacts
+feed — the existing PAT lacks **Packaging → Read** scope, `~/.netrc` is ready
+and just needs the new PAT pasted in. `OUTBOX_ECHO_SYNC_ENABLED` in `.env` is
+consumed by nothing (likely meant `OUTBOX_UNIFIED_UNTAG_ENABLED`). psycopg2
+builds from source there: needs `LDFLAGS`/`CPPFLAGS` pointing at Homebrew
+`openssl@3` + `libpq`.
 
 ## Related
 
@@ -187,6 +222,8 @@ City/State/Country filters, Business Funnel).
   [[Kforce Contact Relationships port (US 23370)]] ·
   [[Label-state dashboard contract convergence (Task 24200)]] ·
   [[Contact bulk_track IntegrityError (Bug 23251)]]
-- Draft PRD (private, may be deleted or promoted):
-  [Contact job-update signals — PRD Técnico (Draft)](https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37)
+- PRD (private, **In Progress** since 2026-08-13):
+  [Contact job-update signals — PRD Técnico](https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37)
+- Sibling repo: `/Users/gonza56d/taller/repos/profiles_api` (the classifier —
+  `app/modules/webhook/jobs_sync.py`)
 - Domain doc: `taller-projects/echo-flows-docs/03-contacts.md`
