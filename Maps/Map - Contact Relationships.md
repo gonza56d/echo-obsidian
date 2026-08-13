@@ -26,6 +26,9 @@ The longest-running saga: generalizing the contact relationship model to **label
 ### Adjacent contact-module fixes
 - [[Contact bulk_track IntegrityError (Bug 23251)]] · [[Future-dated interactions fix (Bug 23383)]] · [[Kforce contacts custom sorts (23546)]] · [[Kforce Last Contacted By filter (PR 1846)]]
 
+### Investigations
+- [[Contact job-update signals — Changed Jobs vs Promoted (investigation)]] — how the dashboard "Update" badges + Warm Leads + job-change notifications actually work (2026-08-13); change_kind is classified by the data pipeline, never by Echo. Draft PRD (private) in the note.
+
 ## Standing gotchas for this area
 - Smart-search views/matviews (`view_smart_search_contacts_info`, `mv_smart_search_*`) are **owner-managed out-of-band** ([ticket 19757](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/19757)) on BOTH envs — never `CREATE OR REPLACE` them without the `_view_is_repo_shaped` guard.
 - The Client Active rule lives in `_relationship_is_active_expr` (contact/models.py) on both envs, but the **implementations have drifted differently** — always verify against the branch you're on.
