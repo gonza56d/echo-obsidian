@@ -185,7 +185,7 @@ City/State/Country filters, Business Funnel).
 
 ## 10. Update 2026-08-13 — feature kicked off (PRD In Progress)
 
-The PRD stopped being a maybe: extending `ChangeKind` with **`new_job`**
+The PRD stopped being a maybe: extending `ChangeKind` with **`added_job`**
 (added a concurrent job without leaving the current one — startup, consulting)
 and **`retired`** (LinkedIn "Retired" position). Decisions already closed with
 Pedro live in the PRD §8; split of work: `profiles_api` reworks
@@ -203,7 +203,7 @@ Key findings from the profiles_api code dive (all in the PRD):
 - **Deploy order is a hard gate**: echo enum migration must land before
   profiles_api emits new values — the DELETE runs before the POST, so a 422
   on unknown enum leaves the contact with no job history until retry passes.
-- Edge found: `new_job` rule keyed on "previous job still open **today**"
+- Edge found: `added_job` rule keyed on "previous job still open **today**"
   drifts to `changed_job` when that job later closes (signature change →
   auto rewrite). Flagged as PRD §8.5.5.
 
