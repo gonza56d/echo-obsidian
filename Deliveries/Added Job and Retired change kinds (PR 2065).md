@@ -7,6 +7,7 @@ tags: [contact, jobs, change-kind, dashboard, notifications, warm-leads, profile
 prs:
   - https://github.com/taller-projects/echo-backend/pull/2065
   - https://github.com/taller-projects/echo-backend/pull/2066
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799
 fe_prs: []
 tickets: []
 prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
@@ -32,6 +33,7 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 
 - BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **OPEN, in review** (2026-08-13, commit `502ec0b3`)
 - BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **OPEN, in review** (2026-08-13, `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
+- profiles_api classifier v2 (M3): [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) → dev — **OPEN, in review** (2026-08-13, branch `feat/change-kind-added-job-retired`). **DO-NOT-MERGE gate declared in the PR**: deploy after BOTH echo PRs (#2065 + #2066 — ECHO_SYNC_TARGETS pushes to both envs). Rules: retired-title word-boundary first, then oldest→NULL, same-company→promotion, open-older-neighbor→added_job, else changed_job. 12 new unit tests (55 total green locally via PYTHONPATH stubs for the 2 private packages — real feed runs in CI).
 - FE (M2, both apps): not started — mapping must land before profiles_api emits (M3)
 
 ## How
@@ -83,7 +85,10 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 - [ ] #2066 (kforce twin) review + merge
 - [ ] FE mappings M2 (both FEs) — labels/colors/icons + tiles + notification
       labels + `types/contact.ts` union
-- [ ] profiles_api classifier v2 (M3) + `retired` heuristic calibration.
+- [ ] profiles_api PR 10799 (M3 classifier) review + merge — **deploy gated
+      on #2065 + #2066 deployed** (declared in the PR description)
+- [x] ~~profiles_api classifier v2 (M3) implementation~~ — shipped as PR
+      10799; `retired` heuristic = word-boundary retired/retiree.
       Dev data (2026-08-13, `profile.profiles`, 1,776,213 rows): **16,247
       profiles with a 'retir%' title** — samples show the trap: "Senior
       Regional Retirement Consultant" (Fidelity) is a false positive →
