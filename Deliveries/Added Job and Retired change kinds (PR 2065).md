@@ -120,7 +120,7 @@ resolves to the newly added position for added_job notifications;
       sometimes "Retired"/"Self Employed"/"Formerly X". **449,739 profiles
       (~25%) hold ≥2 concurrent open jobs** → added_job will be a BIG bucket
       (volume matters for tiles/notifications/backfill).
-- [ ] Backfill / re-sync wave (M4) + duplicate-notification plan
+- [ ] Backfill / re-sync wave (M4) — **plan scoped 2026-08-14** (US 24312 comment): 69,739 linked profiles / 248,075 mappings (dev); recommend a jobs-only enqueue variant (full `enqueue_for_profile` doubles echo calls with contact+DM legs); duplicate-notification exposure in dev is tiny (188 contacts / ~189 notifications) → likely accept the one-off, re-size on prod first; validation = change_kind distribution pre/post + zero dead-letters. Script pending (after M2+M3 deploy)
 - [x] ~~Azure tickets~~ full set created 2026-08-14: Feature 24308 + US 24310 (M1) / 24309 (M2) / 24311 (M3) / 24312 (M4); PRs back-linked
 - [ ] PR 10799 needs a reviewer (no vote yet as of 2026-08-14)
 
