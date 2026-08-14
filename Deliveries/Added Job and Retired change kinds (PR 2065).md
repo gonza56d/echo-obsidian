@@ -20,6 +20,53 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
 
 # Added Job and Retired change kinds (PR 2065)
 
+## ⏪ Where things stand — snapshot 2026-08-14, read this first when back
+
+**TL;DR: backend is 100% done and deployed everywhere. The feature is inert,
+waiting on: (1) reviews for the two profiles_api PRs, (2) the FE story (M2),
+then deploy 10799 → run the 10818 wave.**
+
+Milestone map (Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308)):
+
+| M | Ticket | State | What's left |
+|---|---|---|---|
+| M1 backend | US [24310](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24310) (Developed) | ✅ merged on ALL 5 branches 2026-08-14 (#2065 dev, #2066 kforce-dev, #2067 qa, #2068 main, #2070 kforce-master); enum verified live in BOTH dev DBs | Verify PROD DBs post-deploy (echo-prod + kforce-prod: 4 enum labels + heads `h4vq8sk2wnre`/`n3rw8xq2kd7p`). Note: #2070 also carried the gated #2051 org_people DROP — whoever merged owned those preconditions; sanity-check kforce prod |
+| M2 FE | US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (New, unassigned) | ⏳ FE TL's court | **Confirm it was actually sent to the FE TL**; it hard-gates the M3 deploy (unmapped values render as raw strings) |
+| M3 classifier | US [24311](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311) (Active) | Code done on [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) (incl. own nit round `04af83f`) | **NO REVIEWER VOTE YET** — assign Pedro/Leo. Deploy only after M2 merges |
+| M4 backfill | US [24312](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312) (New) | Script done on [PR 10818](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818) (`25053dc` + self-review fixes `ac226ed`: real `--environment` values + zero-match warning, resume-safe cursor, empty-batch guard) | **Also unreviewed.** Merge-safe anytime; RUN only after 10799 deploys. Runbook in the US comment |
+
+**Corrected sizing** (earlier notes overstated): the wave is **73,241 linked
+mapping legs / 69,739 profiles** (248,075 was ALL contact_mappings incl.
+never-linked `profile_id IS NULL` rows). Env values in `contact_mappings` are
+`development` / `kforce-development` (+ stray QA/taller/taller3 rows that
+warn+skip) — NOT "dev". Duplicate-notification exposure: 188 contacts in dev
+(tiny → likely accept one-off; re-size on prod pre-wave).
+
+Next-week checklist, in order of value:
+
+1. Get votes on 10799 + 10818 (nothing merges itself); confirm US 24309
+   reached the FE TL.
+2. Verify prod enums (one psql each; prod reads got classifier-blocked once —
+   may need to run by hand).
+3. Run the M4 sizing queries on prod (notification exposure + wave size) so
+   the suppression decision is made with prod numbers.
+4. Fix `echo-flows-docs/03-contacts.md`: wrong "Hot Lead Score" description +
+   document the two new kinds and Update-filter values.
+5. Share the PRD with the team + close answered open questions (backfill
+   "cómo" settled by 10818; drift settled by tests; Warm-Leads ranking for new
+   kinds still genuinely open).
+6. File the AC-leak suite cleanup ticket (import-time `ENABLE_ACCESS_CONTROL`
+   + module-teardown restore = the local TestClient-404 flake factory).
+7. PAT: needs **Packaging read** (uv sync for profiles_api) and **Build**
+   scope (CI status via API). Until then, local profiles_api tests need the
+   PYTHONPATH stub trick (stub `position_classifier` + a functional `outbox`
+   package — the session scratchpad copy is gone; recipe: import-satisfying
+   classes, `OutboxEvent`/`OutboxDelivery` as kwargs→attrs records with
+   auto `id`).
+8. Parked (post-feature cleanup batch, unticketed): badge date ≠ event date,
+   dashboard vs warm-leads mismatch, three FE label vocabularies, "is now
+   Retired" copy (PM call).
+
 ## What
 
 M1 (backend, Taller dev) of the **Contact job-update signals** feature
@@ -108,8 +155,9 @@ resolves to the newly added position for added_job notifications;
 - [x] Both dev deploys verified 2026-08-14: enum live (Taller dev head `h4vq8sk2wnre`, kforce-dev head `n3rw8xq2kd7p`) → 10799's only remaining gate is M2
 - [x] Promotions ALL MERGED 2026-08-14 ~16:30 UTC: [#2067](https://github.com/taller-projects/echo-backend/pull/2067) → qa, [#2068](https://github.com/taller-projects/echo-backend/pull/2068) → main, [#2070](https://github.com/taller-projects/echo-backend/pull/2070) → kforce-master (incl. gated #2051 DROP + #2057) — **M1 is on every branch**
 - [ ] FE mappings M2 (both FEs) — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309)** (handed to FE TL; labels/colors/icons + tiles + notification labels + `types/contact.ts` union)
-- [ ] profiles_api PR 10799 (M3 classifier) review + merge — **deploy gated
-      on #2065 + #2066 deployed** (declared in the PR description)
+- [ ] profiles_api PR 10799 (M3 classifier) review + merge — M1 gate now
+      SATISFIED everywhere; **remaining deploy gate = M2 (US 24309) merged on
+      both FE branches**
 - [x] ~~profiles_api classifier v2 (M3) implementation~~ — shipped as PR
       10799; `retired` heuristic = word-boundary retired/retiree.
       Dev data (2026-08-13, `profile.profiles`, 1,776,213 rows): **16,247
