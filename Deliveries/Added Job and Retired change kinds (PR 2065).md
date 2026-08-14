@@ -104,7 +104,9 @@ resolves to the newly added position for added_job notifications;
 
 - [x] #2065 merged to dev 2026-08-14 (`8d96aa6c`)
 - [x] #2066 merged to kforce-dev 2026-08-14 (`8a741dae`)
-- [ ] Verify both dev deploys ran the migration (enum live) → then PR 10799 unblocks
+- [x] Both dev deploys verified 2026-08-14: enum live (Taller dev head `h4vq8sk2wnre`, kforce-dev head `n3rw8xq2kd7p`) → 10799's only remaining gate is M2
+- [ ] Promote PRs [#2067](https://github.com/taller-projects/echo-backend/pull/2067) → qa + [#2068](https://github.com/taller-projects/echo-backend/pull/2068) → main **OPEN 2026-08-14** (clean cherries of `8d96aa6c`; parent `k3n8owxr2p9m` already on both via #2059/#2060; MERGE COMMIT, qa first)
+- [ ] kforce-master promotion of #2066 — not requested yet
 - [ ] FE mappings M2 (both FEs) — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309)** (handed to FE TL; labels/colors/icons + tiles + notification labels + `types/contact.ts` union)
 - [ ] profiles_api PR 10799 (M3 classifier) review + merge — **deploy gated
       on #2065 + #2066 deployed** (declared in the PR description)
@@ -120,7 +122,7 @@ resolves to the newly added position for added_job notifications;
       (volume matters for tiles/notifications/backfill).
 - [ ] Backfill / re-sync wave (M4) + duplicate-notification plan
 - [x] ~~Azure tickets~~ full set created 2026-08-14: Feature 24308 + US 24310 (M1) / 24309 (M2) / 24311 (M3) / 24312 (M4); PRs back-linked
-- [ ] qa/main promotion after merge
+- [ ] PR 10799 needs a reviewer (no vote yet as of 2026-08-14)
 
 ## Related
 
