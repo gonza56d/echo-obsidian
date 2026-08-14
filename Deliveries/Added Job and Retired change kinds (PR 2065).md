@@ -12,6 +12,9 @@ fe_prs: []
 tickets:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24310
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312
 prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
 ---
 
@@ -29,7 +32,7 @@ this lands the backend surface first because of the deploy-order gate.
 
 Full investigation + feature context:
 [[Contact job-update signals — Changed Jobs vs Promoted (investigation)]].
-Azure: Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308) (anchor, assigned Gonzalo) + FE US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (M2, unassigned — for the FE TL; created 2026-08-14). M4/backfill still unticketed.
+Azure (full milestone set under Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308), one US per milestone à la Feature 24051): M1 [24310](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24310) (backend, **Developed** — PRs merged, inert until M3) · M2 [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (FE, unassigned for the FE TL) · M3 [24311](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311) (profiles_api classifier, Active, PR 10799) · M4 [24312](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312) (backfill wave, New). PR bodies back-linked to their US (2065/2066 → 24310; 10799 → 24311).
 
 ## PRs
 
@@ -115,7 +118,7 @@ resolves to the newly added position for added_job notifications;
       (~25%) hold ≥2 concurrent open jobs** → added_job will be a BIG bucket
       (volume matters for tiles/notifications/backfill).
 - [ ] Backfill / re-sync wave (M4) + duplicate-notification plan
-- [x] ~~Azure tickets~~ Feature 24308 + FE US 24309 created 2026-08-14; M4/backfill ticket still pending
+- [x] ~~Azure tickets~~ full set created 2026-08-14: Feature 24308 + US 24310 (M1) / 24309 (M2) / 24311 (M3) / 24312 (M4); PRs back-linked
 - [ ] qa/main promotion after merge
 
 ## Related
