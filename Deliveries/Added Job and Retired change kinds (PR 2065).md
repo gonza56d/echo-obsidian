@@ -9,7 +9,9 @@ prs:
   - https://github.com/taller-projects/echo-backend/pull/2066
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799
 fe_prs: []
-tickets: []
+tickets:
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309
 prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
 ---
 
@@ -27,7 +29,7 @@ this lands the backend surface first because of the deploy-order gate.
 
 Full investigation + feature context:
 [[Contact job-update signals — Changed Jobs vs Promoted (investigation)]].
-No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
+Azure: Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308) (anchor, assigned Gonzalo) + FE US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (M2, unassigned — for the FE TL; created 2026-08-14). M4/backfill still unticketed.
 
 ## PRs
 
@@ -99,8 +101,7 @@ resolves to the newly added position for added_job notifications;
 - [x] #2065 merged to dev 2026-08-14 (`8d96aa6c`)
 - [x] #2066 merged to kforce-dev 2026-08-14 (`8a741dae`)
 - [ ] Verify both dev deploys ran the migration (enum live) → then PR 10799 unblocks
-- [ ] FE mappings M2 (both FEs) — labels/colors/icons + tiles + notification
-      labels + `types/contact.ts` union
+- [ ] FE mappings M2 (both FEs) — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309)** (handed to FE TL; labels/colors/icons + tiles + notification labels + `types/contact.ts` union)
 - [ ] profiles_api PR 10799 (M3 classifier) review + merge — **deploy gated
       on #2065 + #2066 deployed** (declared in the PR description)
 - [x] ~~profiles_api classifier v2 (M3) implementation~~ — shipped as PR
@@ -114,7 +115,7 @@ resolves to the newly added position for added_job notifications;
       (~25%) hold ≥2 concurrent open jobs** → added_job will be a BIG bucket
       (volume matters for tiles/notifications/backfill).
 - [ ] Backfill / re-sync wave (M4) + duplicate-notification plan
-- [ ] Azure tickets once the PRD is shared with the team
+- [x] ~~Azure tickets~~ Feature 24308 + FE US 24309 created 2026-08-14; M4/backfill ticket still pending
 - [ ] qa/main promotion after merge
 
 ## Related
