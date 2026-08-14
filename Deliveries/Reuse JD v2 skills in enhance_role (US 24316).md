@@ -22,7 +22,7 @@ Pedro's US: `enhance_role` made **two sequential Team Builder calls** in the cri
 
 ## PRs
 
-- [#2079](https://github.com/taller-projects/echo-backend/pull/2079) → dev — **OPEN, in review** (branch `24316/reuse_jd_v2_skills`; `3ed6fe97` feature + `f6d140c8` review-round-1 fixes & tech-only gate, 2026-08-14)
+- [#2079](https://github.com/taller-projects/echo-backend/pull/2079) → dev — **APPROVED (Pedro, READY WITH NITS), merging on green CI** (branch `24316/reuse_jd_v2_skills`; `3ed6fe97` feature + `f6d140c8` review-round-1 fixes & tech-only gate + `6df54f66` Pedro's nits, 2026-08-14)
 
 ## How
 
@@ -58,10 +58,16 @@ Pre-merge (branch not deployed), so instead of Loki: **replayed 5 dev roles agai
 - Parity script gotcha: run with `PYTHONPATH=<repo>` (script lives in scratchpad → `sys.path[0]` is wrong) and strip the psql `\timing` footer before `json.load`.
 - Full-suite verification: 30 local failures on the branch = **byte-identical** to a pristine `origin/dev` clone run (known TestClient-404 local class); baseline via `git clone` of the local repo into scratchpad + checkout `607a61f3` (no git-write on the main repo).
 
+## Review (Pedro, 2026-08-14)
+
+Review `4940869981`: **APPROVED — READY WITH NITS**, 0 blockers, ticket compliance 15/15. His 6 nits addressed in `6df54f66` (PR comment `5298012666`):
+guard block → typed `_jd_skills_update()` helper (nits 3+6), `test_regenerate_job_description_does_not_persist_v2_skills` (empty-skills role: JD lands, skills stay empty — catches even a future guarded populate; service-level to dodge the local-404 route class) (nit 2), `DEFAULT_INDUSTRY` constant in `_pipeline_service` (nit 4), `solution_service.py` import aligned to `app.modules.tenant.industry` (nit 5). **Nit 1 (check-then-act not atomic) skipped as the follow-up Pedro framed it as** — ms window, strictly smaller than `_generate_skills`' status quo; conditional-UPDATE hardening noted on the Azure ticket.
+
 ## Pending
 
-- PR #2079 review (Pedro) + merge → dev. Parity gate CLEARED (see section above); round-1 rubric self-review findings all addressed in `f6d140c8`.
+- Merge #2079 on green CI (squash; Pedro already approved).
 - Post-merge sanity in dev: grep `enhance.skills_from_jd` in Loki — should appear for tech tenants only.
+- Follow-up (unticketed, noted on US 24316): conditional `UPDATE … WHERE skills empty` to close the ms check-then-act window in the JD-stage guard.
 - qa/main promotion after dev QA.
 
 ## Related
