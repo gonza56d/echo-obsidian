@@ -31,8 +31,8 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 
 ## PRs
 
-- BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **OPEN, in review** (2026-08-13, commit `502ec0b3`)
-- BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **OPEN, in review** (2026-08-13, `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
+- BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **APPROVED (Leo, READY WITH NITS) — nits fixed `dcc30f67` 2026-08-14, awaiting CI → merge**
+- BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **APPROVED (Leo, READY WITH NITS) — nits fixed `c89e343f` 2026-08-14, awaiting CI → merge** (originally `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
 - profiles_api classifier v2 (M3): [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) → dev — **OPEN, in review** (2026-08-13, branch `feat/change-kind-added-job-retired`). **DO-NOT-MERGE gate declared in the PR**: deploy after BOTH echo PRs (#2065 + #2066 — ECHO_SYNC_TARGETS pushes to both envs). Rules: retired-title word-boundary first, then oldest→NULL, same-company→promotion, open-older-neighbor→added_job, else changed_job. 12 new unit tests (55 total green locally via PYTHONPATH stubs for the 2 private packages — real feed runs in CI).
 - FE (M2, both apps): not started — mapping must land before profiles_api emits (M3)
 
@@ -64,6 +64,21 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
   bulk POST, so an unknown enum 422 leaves contacts jobless until retry.
 - `retired` feeds `hot_lead` like every other kind (closed with Pedro in the
   PRD §8).
+
+## Review round 1 (Leo, both APPROVED READY WITH NITS — fixed 2026-08-14)
+
+Fixed on both twins (`dcc30f67` dev / `c89e343f` kforce): the migration
+test's ADD VALUE assertion was **vacuous** under the create_all schema →
+now `RENAME VALUE`s both labels away before `upgrade()` (residue
+`*_pre_migration` labels stay, unused); negative 90-day/open-job gate
+cases (stale added_job + ended retired emit nothing); a
+`@subscribe`-binding test against `app.core.events._subscription_registry`
+(typo in the event-name string would silently drop events); return
+annotation on `latest_start_date()`; dev also got `_set_tenant` teardown.
+Skipped with reason: polyfactory in the kforce module (mirrors suite
+convention + dev twin). Questions answered on the PRs: `current_job`
+resolves to the newly added position for added_job notifications;
+"is now Retired" copy flagged as PM call.
 
 ## Gotchas
 
