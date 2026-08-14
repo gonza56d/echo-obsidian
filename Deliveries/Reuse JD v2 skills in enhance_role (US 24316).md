@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-14
 tags: [feature, roles, enhancement-pipeline, team-builder, performance]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2079"
@@ -22,7 +22,7 @@ Pedro's US: `enhance_role` made **two sequential Team Builder calls** in the cri
 
 ## PRs
 
-- [#2079](https://github.com/taller-projects/echo-backend/pull/2079) → dev — **APPROVED (Pedro, READY WITH NITS), merging on green CI** (branch `24316/reuse_jd_v2_skills`; `3ed6fe97` feature + `f6d140c8` review-round-1 fixes & tech-only gate + `6df54f66` Pedro's nits, 2026-08-14)
+- [#2079](https://github.com/taller-projects/echo-backend/pull/2079) → dev — **MERGED 2026-08-14** (squash `2d71babe`, CI green 9m44s, Pedro approved; branch `24316/reuse_jd_v2_skills`: `3ed6fe97` feature + `f6d140c8` review-round-1 fixes & tech-only gate + `6df54f66` Pedro's nits)
 
 ## How
 
@@ -65,10 +65,9 @@ guard block → typed `_jd_skills_update()` helper (nits 3+6), `test_regenerate_
 
 ## Pending
 
-- Merge #2079 on green CI (squash; Pedro already approved).
-- Post-merge sanity in dev: grep `enhance.skills_from_jd` in Loki — should appear for tech tenants only.
+- Post-deploy sanity in dev: grep `enhance.skills_from_jd` in Loki — should appear for tech tenants only, with no `get_technologies` call on the tech happy path.
 - Follow-up (unticketed, noted on US 24316): conditional `UPDATE … WHERE skills empty` to close the ms check-then-act window in the JD-stage guard.
-- qa/main promotion after dev QA.
+- qa/main promotion after dev QA (US 24316 is **Ready to Test**).
 
 ## Related
 
