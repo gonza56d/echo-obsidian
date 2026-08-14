@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-08-14
 tags: [contact, jobs, change-kind, dashboard, notifications, warm-leads, profiles-api]
 prs:
   - https://github.com/taller-projects/echo-backend/pull/2065
@@ -31,8 +31,8 @@ No Azure tickets yet (PRD-stage work; tickets when the PRD is shared).
 
 ## PRs
 
-- BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **APPROVED (Leo, READY WITH NITS) — nits fixed `dcc30f67` 2026-08-14, awaiting CI → merge**
-- BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **APPROVED (Leo, READY WITH NITS) — nits fixed `c89e343f` 2026-08-14, awaiting CI → merge** (originally `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
+- BE M1 (dev): [#2065](https://github.com/taller-projects/echo-backend/pull/2065) — **MERGED to dev 2026-08-14** (squash `8d96aa6c`; Leo approved, nits fixed `dcc30f67`, CI green 11m)
+- BE M1b (kforce twin): [#2066](https://github.com/taller-projects/echo-backend/pull/2066) — **MERGED to kforce-dev 2026-08-14** (squash `8a741dae`; Leo approved, nits fixed `c89e343f`, CI green) (originally `213ec382`; migration `n3rw8xq2kd7p` off `z8kqr3nw2p6t`; copy+adapt — kforce timestamps method has no `handle_commit_errors` decorator, tests use raw models + org-as-tenant, no AC/tenant fixtures)
 - profiles_api classifier v2 (M3): [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) → dev — **OPEN, in review** (2026-08-13, branch `feat/change-kind-added-job-retired`). **DO-NOT-MERGE gate declared in the PR**: deploy after BOTH echo PRs (#2065 + #2066 — ECHO_SYNC_TARGETS pushes to both envs). Rules: retired-title word-boundary first, then oldest→NULL, same-company→promotion, open-older-neighbor→added_job, else changed_job. 12 new unit tests (55 total green locally via PYTHONPATH stubs for the 2 private packages — real feed runs in CI).
 - FE (M2, both apps): not started — mapping must land before profiles_api emits (M3)
 
@@ -96,8 +96,9 @@ resolves to the newly added position for added_job notifications;
 
 ## Pending
 
-- [ ] #2065 review + merge
-- [ ] #2066 (kforce twin) review + merge
+- [x] #2065 merged to dev 2026-08-14 (`8d96aa6c`)
+- [x] #2066 merged to kforce-dev 2026-08-14 (`8a741dae`)
+- [ ] Verify both dev deploys ran the migration (enum live) → then PR 10799 unblocks
 - [ ] FE mappings M2 (both FEs) — labels/colors/icons + tiles + notification
       labels + `types/contact.ts` union
 - [ ] profiles_api PR 10799 (M3 classifier) review + merge — **deploy gated
