@@ -69,7 +69,13 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   MERGE-COMMIT not squash per release convention; merge order: #2114 dev
   first). Flip false in prod Vault only during the wave, restore after
   (blackout mutes genuine job-change notifications while off). Both PRs
-  commented on US 24312.
+  commented on US 24312. **Review nits addressed 2026-08-20 (`d104e2b4` on
+  #2114, cherried to #2115 `59d779af` / #2116 `2f0c52a5`)**: disabled-flag
+  test rewritten — direct synchronous calls to the 4 subscriber handlers
+  (contact_promoted/job_changed/job_added/retired) with hand-built
+  ContactJobUpdateEvent, covering ALL 4 kinds and dropping the flaky
+  time.sleep(0.5); docstring now matches what's verified. Tests green on
+  all 3 branches.
 
 ## Previous snapshot — 2026-08-20 midday
 
