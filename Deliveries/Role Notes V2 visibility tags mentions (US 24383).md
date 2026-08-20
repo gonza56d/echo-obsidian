@@ -31,6 +31,14 @@ Pato's PR [#2113](https://github.com/taller-projects/echo-backend/pull/2113) add
 - **B3 tag leak**: `get_tags` is viewer-aware (`viewer_is_vendor` → external-only) — vendors could enumerate internal-note tags.
 - **Nits**: POST resolves parent role first (`ensure_role_exists` → 404; was 400 w/ raw pg constraint detail leaking tenant UUID); mentionable-users 404s unknown/foreign roles; response slimmed to application's `MentionableUserResponse` + `load_only` covers `full_name` (killed per-row deferred SELECT); `filter_vendor_ids` moved to `UserService`/`UserRepository`; backfill `created_at` via exception-safe `pg_temp.try_timestamptz` (malformed ts → now(), no migration abort); mentionable-users declared before `/{note_id}`; `TimestampOrmBaseModel`; TYPE_CHECKING `User` import; ~11 new tests.
 
+## Round-3 nit fixes (`362c1343`)
+- **User query ownership**: mentionable-users' User/AccessRole query moved to `UserRepository.get_mentionable_users(permission, include_user_ids, search, pagination, exclude_vendors)` behind `UserService`; role note repo keeps only `get_role_manager_ids` (404 on missing/foreign role). Reusable by application comments later.
+- **Input caps**: `content` = `NotEmptyString` (core base_schemas; strips + rejects whitespace-only) max 20k; `tags` ≤ 20 items, each 1–100 stripped chars.
+- **Visibility-aware mentions list**: `?visibility=internal` on mentionable-users excludes vendors (closes compose-then-400 gap; FE 24384 should pass it).
+- **Typing**: `tags: Mapped[list[str]]`; service → `Page[MentionableUserResponse]`.
+- **Rejected nits (rationale)**: explicit `registry.register` — repos never register here (registry = singleton scheduler services only, auto_bind is the pattern); moving tests to `tests/system/` — CI runs ONLY tests/unit and the whole unit suite is DB-backed by design, moving = losing CI coverage; visibility index — 2-value column, role-scoped queries.
+- +5 tests (blank content 422 POST+PATCH, nonexistent note 404s, `-created_at` default ordering, vendor exclusion via visibility param).
+
 ## How
 - **Visibility (B3 fix)**: the PR's org filter was a functional no-op (`User.organization_id` is a `column_property` == `Tenant.organization_id`, so every tenant user shares one org). Re-modeled: INTERNAL notes hidden from vendor users (`User.vendor_id IS NOT NULL`); vendors can't set internal visibility; internal notes can't mention vendor users. `organization_id` stays denormalized on the row for future multi-org scoping.
 - **Override (B4 fix)**: reverted the unseeded `Permission.NotesManage` (dead code — not in templates or any tenant's `available_permissions`) to the ticket's `UserRole.ADMIN` check in the service.
