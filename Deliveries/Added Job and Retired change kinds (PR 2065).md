@@ -28,19 +28,23 @@ PRs merged to dev 2026-08-20 (10799 `818af23d` 12:51 UTC, 10818 `4cda3bea`
 12:54 UTC). What's left is operational: (1) confirm profiles_api dev deploy
 actually rolled (as of 2026-08-20 ~13:00 UTC Taller dev has ZERO
 added_job/retired rows — baseline: changed_job 195,019 / promotion 115,007 /
-NULL 39,468), (2) resolve the US 24309-Removed FE question (unmapped enum
-values render as raw strings in `Tag` — was the M3 hard gate), (3) run the
-M4 wave in dev per the US 24312 runbook, validate distribution pre/post +
-zero dead-letters, then (4) prod: enum verify, re-size notification exposure,
-deploy profiles_api prod, run prod wave. Ticket hygiene: 24311 still Active,
-24312 still New, Feature 24308 still New — advance them.**
+NULL 39,468), (2) run the M4 wave in dev per the US 24312 runbook, validate
+distribution pre/post + zero dead-letters, then (3) prod: enum verify,
+re-size notification exposure, deploy profiles_api prod, run prod wave.
+The US 24309 question is RESOLVED (2026-08-20): FE mappings ARE merged and
+deployed everywhere — `added_job` present on both echo-frontend branches
+(constants/contacts.ts, types/contact.ts, notificationHelpers.ts, verified
+by grep on origin/dev + origin/kforce-dev); the ticket was Removed because
+the work shipped under another ticket, not descoped. No FE gate remains.
+Ticket hygiene: 24311 still Active, 24312 still New, Feature 24308 still
+New — advance them.**
 
 Milestone map (Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308)):
 
 | M | Ticket | State | What's left |
 |---|---|---|---|
 | M1 backend | US [24310](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24310) (Developed) | ✅ merged on ALL 5 branches 2026-08-14 (#2065 dev, #2066 kforce-dev, #2067 qa, #2068 main, #2070 kforce-master); enum verified live in BOTH dev DBs | Verify PROD DBs post-deploy (echo-prod + kforce-prod: 4 enum labels + heads `h4vq8sk2wnre`/`n3rw8xq2kd7p`). Note: #2070 also carried the gated #2051 org_people DROP — whoever merged owned those preconditions; sanity-check kforce prod |
-| M2 FE | US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (**Removed** as of 2026-08-18) | ❓ gate GONE | **Find out why it was removed** (descoped? folded elsewhere?) — the rationale was FE `Tag` rendering unmapped values as raw strings. Confirm that risk is accepted/handled before prod exposure |
+| M2 FE | US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (Removed — work shipped under another ticket) | ✅ FE merged + deployed everywhere (confirmed 2026-08-20: `added_job` on origin/dev + origin/kforce-dev — constants, types, notification helpers) | Nothing |
 | M3 classifier | US [24311](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311) (Active — advance it) | ✅ [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) **MERGED → dev 2026-08-20** (`818af23d`, Pedro approved) | Confirm dev deploy rolled (no organic added_job/retired rows yet as of merge day); then prod deploy |
 | M4 backfill | US [24312](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312) (New — advance it) | ✅ [PR 10818](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818) **MERGED → dev 2026-08-20** (`4cda3bea`) | **RUN the wave**: dev first (dry-run → real, `--environment development` / `kforce-development`), validate pre/post distribution + zero dead-letters; prod after prod sizing + deploy |
 
@@ -163,7 +167,11 @@ resolves to the newly added position for added_job notifications;
 - [x] #2066 merged to kforce-dev 2026-08-14 (`8a741dae`)
 - [x] Both dev deploys verified 2026-08-14: enum live (Taller dev head `h4vq8sk2wnre`, kforce-dev head `n3rw8xq2kd7p`) → 10799's only remaining gate is M2
 - [x] Promotions ALL MERGED 2026-08-14 ~16:30 UTC: [#2067](https://github.com/taller-projects/echo-backend/pull/2067) → qa, [#2068](https://github.com/taller-projects/echo-backend/pull/2068) → main, [#2070](https://github.com/taller-projects/echo-backend/pull/2070) → kforce-master (incl. gated #2051 DROP + #2057) — **M1 is on every branch**
-- [ ] FE mappings M2 — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) REMOVED as of 2026-08-18**; find out why and confirm the unmapped-`Tag` risk is accepted/handled (labels/colors/icons + tiles + notification labels + `types/contact.ts` union never landed)
+- [x] FE mappings M2 — DONE and deployed everywhere (confirmed 2026-08-20 by
+      grep: `added_job` on echo-frontend origin/dev + origin/kforce-dev in
+      `constants/contacts.ts`, `types/contact.ts`, `notificationHelpers.ts` +
+      dashboard/filter tests). US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309)
+      was Removed because the work shipped under another ticket — NOT descoped
 - [x] profiles_api PR 10799 (M3 classifier) **MERGED → dev 2026-08-20 12:51 UTC** (`818af23d`, Pedro approved). The M2 gate dissolved with 24309's removal
 - [ ] Confirm profiles_api dev deploy rolled: as of 2026-08-20 ~13:00 UTC
       Taller dev `contact_job` has ZERO added_job/retired (baseline for
