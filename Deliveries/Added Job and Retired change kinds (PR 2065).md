@@ -82,6 +82,17 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   time.sleep(0.5); docstring now matches what's verified. Tests green on
   all 3 branches.
 
+**KFORCE DESCOPED (Gonzalo, 2026-08-20): no kforce wave, no kforce flag
+twin, no kforce-prod enum check.** Only the Taller prod wave matters.
+Caveat noted: the shared profiles_api prod deployment still classifies
+kforce-prod mappings ORGANICALLY (if the prod contact_mappings table has
+kforce env rows) — safe because M1 merged to kforce-master via #2070, but
+nobody is running a kforce backfill.
+
+**Echo PROD pre-wave baseline (2026-08-20 ~16:15 UTC, before any wave):**
+changed_job 267,949 / promotion 150,832 / NULL 54,395 / added_job 0 /
+retired 0 — total 473,176 rows.
+
 ## Previous snapshot — 2026-08-20 midday
 
 **TL;DR: ALL code is merged — backend on all 5 branches, and BOTH profiles_api
