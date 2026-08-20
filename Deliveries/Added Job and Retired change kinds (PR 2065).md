@@ -8,6 +8,7 @@ prs:
   - https://github.com/taller-projects/echo-backend/pull/2065
   - https://github.com/taller-projects/echo-backend/pull/2066
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799
+  - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818
 fe_prs: []
 tickets:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308
@@ -20,20 +21,28 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
 
 # Added Job and Retired change kinds (PR 2065)
 
-## ⏪ Where things stand — snapshot 2026-08-14, read this first when back
+## ⏪ Where things stand — snapshot 2026-08-20, read this first when back
 
-**TL;DR: backend is 100% done and deployed everywhere. The feature is inert,
-waiting on: (1) reviews for the two profiles_api PRs, (2) the FE story (M2),
-then deploy 10799 → run the 10818 wave.**
+**TL;DR: ALL code is merged — backend on all 5 branches, and BOTH profiles_api
+PRs merged to dev 2026-08-20 (10799 `818af23d` 12:51 UTC, 10818 `4cda3bea`
+12:54 UTC). What's left is operational: (1) confirm profiles_api dev deploy
+actually rolled (as of 2026-08-20 ~13:00 UTC Taller dev has ZERO
+added_job/retired rows — baseline: changed_job 195,019 / promotion 115,007 /
+NULL 39,468), (2) resolve the US 24309-Removed FE question (unmapped enum
+values render as raw strings in `Tag` — was the M3 hard gate), (3) run the
+M4 wave in dev per the US 24312 runbook, validate distribution pre/post +
+zero dead-letters, then (4) prod: enum verify, re-size notification exposure,
+deploy profiles_api prod, run prod wave. Ticket hygiene: 24311 still Active,
+24312 still New, Feature 24308 still New — advance them.**
 
 Milestone map (Feature [24308](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308)):
 
 | M | Ticket | State | What's left |
 |---|---|---|---|
 | M1 backend | US [24310](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24310) (Developed) | ✅ merged on ALL 5 branches 2026-08-14 (#2065 dev, #2066 kforce-dev, #2067 qa, #2068 main, #2070 kforce-master); enum verified live in BOTH dev DBs | Verify PROD DBs post-deploy (echo-prod + kforce-prod: 4 enum labels + heads `h4vq8sk2wnre`/`n3rw8xq2kd7p`). Note: #2070 also carried the gated #2051 org_people DROP — whoever merged owned those preconditions; sanity-check kforce prod |
-| M2 FE | US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (New, unassigned) | ⏳ FE TL's court | **Confirm it was actually sent to the FE TL**; it hard-gates the M3 deploy (unmapped values render as raw strings) |
-| M3 classifier | US [24311](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311) (Active) | Code done on [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) (incl. own nit round `04af83f`) | **NO REVIEWER VOTE YET** — assign Pedro/Leo. Deploy only after M2 merges |
-| M4 backfill | US [24312](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312) (New) | Script done on [PR 10818](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818) (`25053dc` + self-review fixes `ac226ed`: real `--environment` values + zero-match warning, resume-safe cursor, empty-batch guard) | **Also unreviewed.** Merge-safe anytime; RUN only after 10799 deploys. Runbook in the US comment |
+| M2 FE | US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) (**Removed** as of 2026-08-18) | ❓ gate GONE | **Find out why it was removed** (descoped? folded elsewhere?) — the rationale was FE `Tag` rendering unmapped values as raw strings. Confirm that risk is accepted/handled before prod exposure |
+| M3 classifier | US [24311](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24311) (Active — advance it) | ✅ [PR 10799](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799) **MERGED → dev 2026-08-20** (`818af23d`, Pedro approved) | Confirm dev deploy rolled (no organic added_job/retired rows yet as of merge day); then prod deploy |
+| M4 backfill | US [24312](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24312) (New — advance it) | ✅ [PR 10818](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818) **MERGED → dev 2026-08-20** (`4cda3bea`) | **RUN the wave**: dev first (dry-run → real, `--environment development` / `kforce-development`), validate pre/post distribution + zero dead-letters; prod after prod sizing + deploy |
 
 **Corrected sizing** (earlier notes overstated): the wave is **73,241 linked
 mapping legs / 69,739 profiles** (248,075 was ALL contact_mappings incl.
@@ -154,10 +163,19 @@ resolves to the newly added position for added_job notifications;
 - [x] #2066 merged to kforce-dev 2026-08-14 (`8a741dae`)
 - [x] Both dev deploys verified 2026-08-14: enum live (Taller dev head `h4vq8sk2wnre`, kforce-dev head `n3rw8xq2kd7p`) → 10799's only remaining gate is M2
 - [x] Promotions ALL MERGED 2026-08-14 ~16:30 UTC: [#2067](https://github.com/taller-projects/echo-backend/pull/2067) → qa, [#2068](https://github.com/taller-projects/echo-backend/pull/2068) → main, [#2070](https://github.com/taller-projects/echo-backend/pull/2070) → kforce-master (incl. gated #2051 DROP + #2057) — **M1 is on every branch**
-- [ ] FE mappings M2 (both FEs) — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309)** (handed to FE TL; labels/colors/icons + tiles + notification labels + `types/contact.ts` union)
-- [ ] profiles_api PR 10799 (M3 classifier) review + merge — M1 gate now
-      SATISFIED everywhere; **remaining deploy gate = M2 (US 24309) merged on
-      both FE branches**
+- [ ] FE mappings M2 — **US [24309](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24309) REMOVED as of 2026-08-18**; find out why and confirm the unmapped-`Tag` risk is accepted/handled (labels/colors/icons + tiles + notification labels + `types/contact.ts` union never landed)
+- [x] profiles_api PR 10799 (M3 classifier) **MERGED → dev 2026-08-20 12:51 UTC** (`818af23d`, Pedro approved). The M2 gate dissolved with 24309's removal
+- [ ] Confirm profiles_api dev deploy rolled: as of 2026-08-20 ~13:00 UTC
+      Taller dev `contact_job` has ZERO added_job/retired (baseline for
+      pre/post validation: changed_job 195,019 / promotion 115,007 /
+      NULL 39,468)
+- [ ] Run the M4 wave in dev (dry-run → real; `--environment development`,
+      then `kforce-development`), validate distribution shift + zero
+      dead-letters
+- [ ] Prod path: verify prod enums (still unchecked), run prod sizing queries
+      (notification exposure → suppression decision), profiles_api prod
+      deploy, prod wave
+- [ ] Advance tickets: US 24311 (Active) + US 24312 (New) + Feature 24308 (New)
 - [x] ~~profiles_api classifier v2 (M3) implementation~~ — shipped as PR
       10799; `retired` heuristic = word-boundary retired/retiree.
       Dev data (2026-08-13, `profile.profiles`, 1,776,213 rows): **16,247
@@ -170,7 +188,8 @@ resolves to the newly added position for added_job notifications;
       (volume matters for tiles/notifications/backfill).
 - [ ] Backfill / re-sync wave (M4) — **plan scoped 2026-08-14** (US 24312 comment): dev sizing **corrected by review**: 69,739 linked profiles / **73,241 linked mapping rows = actual jobs legs** (the earlier "248,075 mappings" figure = ALL `contact_mappings` incl. `profile_id IS NULL` never-linked rows — wave is ~3.4× smaller than first stated); recommend a jobs-only enqueue variant (full `enqueue_for_profile` doubles echo calls with contact+DM legs); duplicate-notification exposure in dev is tiny (188 contacts / ~189 notifications) → likely accept the one-off, re-size on prod first; validation = change_kind distribution pre/post + zero dead-letters. **Script SHIPPED as [profiles_api PR 10818](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818) → dev, OPEN 2026-08-14** (`25053dc`): `enqueue_jobs_resync` producer method (jobs-only legs, lean snapshot, ~half the echo calls) + `scripts/backfill_resync_job_histories.py` (keyset pagination, --dry-run/--limit/--start-after/--environment; dry-run verified vs dev data). Merge-safe anytime; RUN gated on M3 deploy. **Self-review 2026-08-14 (fresh-eyes, fixes pushed `ac226ed` + PR description corrected)**: verified lean snapshot vs deliverer jobs-leg reads (signature computed inside `sync_jobs_for_mapping`, NOT over the snapshot → fast-path intact), mapping selection matches organic (`find_matching_mappings` ignores `is_tracked`; NULL `profile_id` never synced), constructor wiring, stray-env legs degrade to warn+skip no-ops. **Gotchas found**: `contact_mappings.environment` values are `development` / `kforce-development` (+strays `QA`/`taller`/`taller3`) — the docstring example said `--environment dev` which matches ZERO rows (fixed: real values in docs/help + zero-match warning); resume cursor now = last profile actually enqueued (pre-commit UUID; safe with `--limit` mid-batch); empty-batch guard. **Verification gap**: unit tests not re-runnable locally — PAT lacks Packaging read scope for the `taller-python` feed (and Build scope, so CI not visible via API); ruff + py_compile clean
 - [x] ~~Azure tickets~~ full set created 2026-08-14: Feature 24308 + US 24310 (M1) / 24309 (M2) / 24311 (M3) / 24312 (M4); PRs back-linked
-- [ ] PR 10799 needs a reviewer (no vote yet as of 2026-08-14)
+- [x] ~~PR 10799 needs a reviewer~~ Pedro approved; merged 2026-08-20. PR
+      10818 also merged 2026-08-20 12:54 UTC (`4cda3bea`)
 
 ## Related
 
