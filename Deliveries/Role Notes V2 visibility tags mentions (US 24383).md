@@ -23,7 +23,13 @@ Pato's PR [#2113](https://github.com/taller-projects/echo-backend/pull/2113) add
 - PRD: Chiron Eidetic plan (https://chiron.taller.ai/projects/yCFJ68zsAXhh3wIbxJlt/plan/view)
 
 ## PRs
-- [#2113](https://github.com/taller-projects/echo-backend/pull/2113) → dev — OPEN. Pato's base (`4205fd33`, `ac9d5523`) + my review-fix commits `0c2c3866` (blockers, migrations, tests) and `e13ccd3f` (vendor-mention rule).
+- [#2113](https://github.com/taller-projects/echo-backend/pull/2113) → dev — OPEN. Pato's base (`4205fd33`, `ac9d5523`) + my review-fix commits `0c2c3866` (blockers, migrations, tests), `e13ccd3f` (vendor-mention rule), and `28929264` (round-2 fixes, 2026-08-20).
+
+## Round-2 review fixes (`28929264`)
+- **B1 atomic mentions**: `mention_user_ids` deduped via schema `field_validator` (dupes 500'd on the mention PK); `create()` uses `repo.save(commit=False)` → add mentions → `repo.commit()` so note+mentions are one transaction.
+- **B2 visibility flip**: PATCH → internal with omitted `mention_user_ids` now 400s if the note holds vendor mentions (only incoming ids were checked); clearing them in the same PATCH is legal.
+- **B3 tag leak**: `get_tags` is viewer-aware (`viewer_is_vendor` → external-only) — vendors could enumerate internal-note tags.
+- **Nits**: POST resolves parent role first (`ensure_role_exists` → 404; was 400 w/ raw pg constraint detail leaking tenant UUID); mentionable-users 404s unknown/foreign roles; response slimmed to application's `MentionableUserResponse` + `load_only` covers `full_name` (killed per-row deferred SELECT); `filter_vendor_ids` moved to `UserService`/`UserRepository`; backfill `created_at` via exception-safe `pg_temp.try_timestamptz` (malformed ts → now(), no migration abort); mentionable-users declared before `/{note_id}`; `TimestampOrmBaseModel`; TYPE_CHECKING `User` import; ~11 new tests.
 
 ## How
 - **Visibility (B3 fix)**: the PR's org filter was a functional no-op (`User.organization_id` is a `column_property` == `Tenant.organization_id`, so every tenant user shares one org). Re-modeled: INTERNAL notes hidden from vendor users (`User.vendor_id IS NOT NULL`); vendors can't set internal visibility; internal notes can't mention vendor users. `organization_id` stays denormalized on the row for future multi-org scoping.
@@ -48,6 +54,9 @@ Pato's PR [#2113](https://github.com/taller-projects/echo-backend/pull/2113) add
 
 ## Pending
 - CI + Pedro/Gonzalo re-review → merge to dev.
+- **Prod pre-flight queries before deploy** (from round-2 review, DB check was permission-blocked): (a) `SELECT count(*) FROM tenant WHERE organization_id IS NULL` — NULL rows silently skip the backfill and their users 500 on POST create; (b) duplicate legacy note ids across roles (`GROUP BY note->>'id' HAVING count(*)>1`) — `ON CONFLICT DO NOTHING` silently drops the second.
+- Open design Q: vendor author of a note later flipped internal by ADMIN can still PATCH it (author trumps visibility on mutation) — confirm intended.
+- Open design Q: mentionable-users pick-list is not visibility-aware (vendor appears, 400 only at submit) — FE US 24384 may want a `visibility` param.
 - Ticket 24383 wording: "misma org" → vendor-based semantics; move state from "Being defined".
 - FE US 24384: consume `/roles/{role_id}/note-tags`, JSONB→API migration; no `accessControl.ts` change needed anymore (notes_manage dropped).
 - `role.notes` JSONB column drop — separate step after FE migrates.
