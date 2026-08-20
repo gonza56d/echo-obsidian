@@ -89,6 +89,15 @@ kforce-prod mappings ORGANICALLY (if the prod contact_mappings table has
 kforce env rows) — safe because M1 merged to kforce-master via #2070, but
 nobody is running a kforce backfill.
 
+**FLAG FLIPPED FALSE in BOTH dev and prod (Gonzalo, 2026-08-20 ~17:00 UTC)**
+— prod wave gate #2 CLEARED. Verified consistent in dev: zero contact-kind
+notifications during today's wave (12.3k legs delivered); note the last
+organic contact notification in dev was 06-18, so dev couldn't show a
+before/after edge — no spam either way. REMEMBER: restore the flag to true
+in BOTH envs after the waves (while false, genuine job-change notifications
+are muted). Kinds stored as `contact_changed_job`/`contact_promotion`
+(lowercase) in the notification table.
+
 **PROD profiles DB pre-checks DONE (2026-08-20, host
 `postgresql-echo-scrapers-prod-001.postgres.database.azure.com`; creds from
 Vault, used inline only — NEVER stored):** wave env value is **`production`**
