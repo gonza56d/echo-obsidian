@@ -54,7 +54,7 @@ Pato's PR [#2113](https://github.com/taller-projects/echo-backend/pull/2113) add
 
 ## Pending
 - CI + Pedro/Gonzalo re-review → merge to dev.
-- **Prod pre-flight queries before deploy** (from round-2 review, DB check was permission-blocked): (a) `SELECT count(*) FROM tenant WHERE organization_id IS NULL` — NULL rows silently skip the backfill and their users 500 on POST create; (b) duplicate legacy note ids across roles (`GROUP BY note->>'id' HAVING count(*)>1`) — `ON CONFLICT DO NOTHING` silently drops the second.
+- ~~Prod pre-flight queries~~ **DONE 2026-08-20**: NULL `tenant.organization_id` = 0 in prod/qa/dev; duplicate legacy note ids = none in prod/qa, 1 in dev (Pato's identical "TEst" note copied onto 2 roles — `ON CONFLICT` skip is harmless). 805 prod / 2 qa / 612 dev legacy notes, zero malformed timestamps or empty content anywhere. Migration is data-safe in all envs.
 - Open design Q: vendor author of a note later flipped internal by ADMIN can still PATCH it (author trumps visibility on mutation) — confirm intended.
 - Open design Q: mentionable-users pick-list is not visibility-aware (vendor appears, 400 only at submit) — FE US 24384 may want a `visibility` param.
 - Ticket 24383 wording: "misma org" → vendor-based semantics; move state from "Being defined".
