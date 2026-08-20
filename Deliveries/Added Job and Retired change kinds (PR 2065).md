@@ -9,6 +9,7 @@ prs:
   - https://github.com/taller-projects/echo-backend/pull/2066
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818
+  - https://github.com/taller-projects/echo-backend/pull/2114
 fe_prs: []
 tickets:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308
