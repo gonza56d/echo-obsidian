@@ -32,7 +32,11 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   101 legs enqueued, ~95+ delivered, ZERO errors; echo dev gained its first
   **14 `added_job` rows** (no `retired` in 100 — expected, ~0.9% base rate).
   321 contact_job rows rewritten. Canary cursor: `00883583-35fc-4e6c-99b5-cb2f0b194a30`.
-- **Full Taller-dev wave RUNNING in background** since ~13:45 UTC
+- **Taller-dev wave ENQUEUE COMPLETE 2026-08-20 18:39 UTC**: 49,488
+  profiles / 49,893 legs (+100/101 canary = full 49,588 sizing matched).
+  Drain at completion time: 30,240 success / 19,794 pending, **dead-letters
+  UNCHANGED at 2,162** (zero new). Drain rate ~1.65 legs/s → complete
+  ~22:15 UTC. Was RUNNING in background since ~13:45 UTC
   (`--environment development --start-after <canary cursor>`; log:
   scratchpad `wave-dev.log`). Real enqueue rate ~2.5 profiles/s (RTT-bound,
   NOT the dry-run's 83/s) → ~5.5h for 49,588 profiles. Resume-safe via
