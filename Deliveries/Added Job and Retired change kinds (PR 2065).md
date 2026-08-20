@@ -89,6 +89,14 @@ kforce-prod mappings ORGANICALLY (if the prod contact_mappings table has
 kforce env rows) — safe because M1 merged to kforce-master via #2070, but
 nobody is running a kforce backfill.
 
+**PROD profiles DB pre-checks DONE (2026-08-20, host
+`postgresql-echo-scrapers-prod-001.postgres.database.azure.com`; creds from
+Vault, used inline only — NEVER stored):** wave env value is **`production`**
+(52,888 profiles / 53,332 legs — same scale as Taller dev, expect ~5.5h
+enqueue + overnight drain); `kforce-production` exists too (126,810 profiles,
+DESCOPED — confirms organic kforce flow). Outbox dead-letter baseline: **473
+dead** / 4,709,378 success — validation target is dead stays at 473.
+
 **Echo PROD pre-wave baseline (2026-08-20 ~16:15 UTC, before any wave):**
 changed_job 267,949 / promotion 150,832 / NULL 54,395 / added_job 0 /
 retired 0 — total 473,176 rows.
