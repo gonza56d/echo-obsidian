@@ -10,6 +10,8 @@ prs:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10799
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10818
   - https://github.com/taller-projects/echo-backend/pull/2114
+  - https://github.com/taller-projects/echo-backend/pull/2115
+  - https://github.com/taller-projects/echo-backend/pull/2116
 fe_prs: []
 tickets:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24308
@@ -61,9 +63,13 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   TestContactJobNotificationsDisabled (2 passed locally w/ Docker).
   PR link commented on US 24312. **Kforce twin NOT created** — needed before
   the KFORCE prod wave (same duplicate risk); Taller-only for now per scope.
-  Ops: needs promotion dev→qa→main BEFORE the prod wave; flip false in prod
-  Vault only during the wave, restore after (blackout mutes genuine job-change
-  notifications while off).
+  Ops: promotion PRs OPEN 2026-08-20: [#2115](https://github.com/taller-projects/echo-backend/pull/2115)
+  → qa + [#2116](https://github.com/taller-projects/echo-backend/pull/2116) → main
+  (clean cherries of `fbc87500`; tests re-run green on BOTH branches;
+  MERGE-COMMIT not squash per release convention; merge order: #2114 dev
+  first). Flip false in prod Vault only during the wave, restore after
+  (blackout mutes genuine job-change notifications while off). Both PRs
+  commented on US 24312.
 
 ## Previous snapshot — 2026-08-20 midday
 
