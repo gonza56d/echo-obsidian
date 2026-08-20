@@ -50,6 +50,19 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   precedent) in echo-backend before the PROD wave. Note: the flag gates the
   WAVE only — merging 10889 (classifier live organically) is safe without it,
   organic re-scrapes trickle normal notifications.
+- **Flag SHIPPED 2026-08-20: [echo-backend PR #2114](https://github.com/taller-projects/echo-backend/pull/2114)
+  → dev OPEN** (branch `24312/contact_job_notifications_flag`, commit `fbc87500`).
+  `CONTACT_JOB_NOTIFICATIONS_ENABLED` (default true, inert) next to
+  ROLE_NOTIFICATIONS_ENABLED in config; guard at the TOP of
+  `_create_contact_job_notifications` (notification/service.py) — one guard
+  covers the 4 `contact.job.*` subscribers, publisher untouched (mirrors the
+  role-flag placement: gate the subscriber, not the event). Test:
+  TestContactJobNotificationsDisabled (2 passed locally w/ Docker).
+  PR link commented on US 24312. **Kforce twin NOT created** — needed before
+  the KFORCE prod wave (same duplicate risk); Taller-only for now per scope.
+  Ops: needs promotion dev→qa→main BEFORE the prod wave; flip false in prod
+  Vault only during the wave, restore after (blackout mutes genuine job-change
+  notifications while off).
 
 ## Previous snapshot — 2026-08-20 midday
 
