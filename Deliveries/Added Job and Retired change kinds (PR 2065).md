@@ -38,11 +38,16 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
   NOT the dry-run's 83/s) → ~5.5h for 49,588 profiles. Resume-safe via
   cursor in log. kforce-development wave (23,243 profiles, ~2.5h) queued
   after dev validates.
-- **Release PR OPEN: profiles_api [PR 10889](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10889)
-  dev → master** ("release: …(#10799, #10818)" per repo convention; work items
-  24311/24312 linked; gates listed in description). Merging master
-  AUTO-DEPLOYS prod (azure-pipelines triggers on master). Diff carries ONLY
-  this feature (7 commits, verified).
+- **Release PR 10889 MERGED → master 2026-08-20 (`a2b3192`) and PROD
+  DEPLOY PIPELINE GREEN**: build 27034 (definition `profiles-api` =
+  azure-pipelines-api.yaml, the ONLY registered pipeline for this repo —
+  azure-pipelines.yaml is orphaned/legacy) ran tests, image build+push,
+  prod DB migrations (no-op for this release) and DeployArgoCD; pushed
+  `update tag: 27034_master` to taller-ttit-kubernetes
+  `applications/profiles-api/values-prod.yaml` at 15:08:37 UTC (`7de1b68a`,
+  = infra HEAD). Argo auto-syncs from HEAD → pods roll within its poll
+  interval. Note: pre-merge PR build 27030 FAILED at 13:39 but the
+  post-merge master build succeeded — failure cause unexamined.
 - **Prod enum Taller: VERIFIED** (`contact_job_change_kind_enum` has
   added_job + retired). **kforce-prod enum: UNVERIFIED — no local creds**
   (no pg_service entry; manual check pending).
