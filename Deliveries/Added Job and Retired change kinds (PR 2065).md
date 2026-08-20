@@ -21,7 +21,37 @@ prd: https://app.notion.com/p/3bbaedca11f0814392fdc104776f3c37
 
 # Added Job and Retired change kinds (PR 2065)
 
-## ⏪ Where things stand — snapshot 2026-08-20, read this first when back
+## ⏪ Where things stand — snapshot 2026-08-20 EOD (prod promotion in flight), read this first when back
+
+**Promotion status:**
+
+- **Dev canary VALIDATED end-to-end** (2026-08-20 ~13:37 UTC): 100 profiles /
+  101 legs enqueued, ~95+ delivered, ZERO errors; echo dev gained its first
+  **14 `added_job` rows** (no `retired` in 100 — expected, ~0.9% base rate).
+  321 contact_job rows rewritten. Canary cursor: `00883583-35fc-4e6c-99b5-cb2f0b194a30`.
+- **Full Taller-dev wave RUNNING in background** since ~13:45 UTC
+  (`--environment development --start-after <canary cursor>`; log:
+  scratchpad `wave-dev.log`). Real enqueue rate ~2.5 profiles/s (RTT-bound,
+  NOT the dry-run's 83/s) → ~5.5h for 49,588 profiles. Resume-safe via
+  cursor in log. kforce-development wave (23,243 profiles, ~2.5h) queued
+  after dev validates.
+- **Release PR OPEN: profiles_api [PR 10889](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/profiles_api/pullrequest/10889)
+  dev → master** ("release: …(#10799, #10818)" per repo convention; work items
+  24311/24312 linked; gates listed in description). Merging master
+  AUTO-DEPLOYS prod (azure-pipelines triggers on master). Diff carries ONLY
+  this feature (7 commits, verified).
+- **Prod enum Taller: VERIFIED** (`contact_job_change_kind_enum` has
+  added_job + retired). **kforce-prod enum: UNVERIFIED — no local creds**
+  (no pg_service entry; manual check pending).
+- **Prod notification sizing DONE (Taller)**: up to **2,876 duplicate
+  notifications across 42 recipients (~68 each worst case)** — vs 189 in dev.
+  Order of magnitude bigger → RECOMMEND the temporary
+  `CONTACT_JOB_NOTIFICATIONS_ENABLED` flag (ROLE_NOTIFICATIONS_ENABLED
+  precedent) in echo-backend before the PROD wave. Note: the flag gates the
+  WAVE only — merging 10889 (classifier live organically) is safe without it,
+  organic re-scrapes trickle normal notifications.
+
+## Previous snapshot — 2026-08-20 midday
 
 **TL;DR: ALL code is merged — backend on all 5 branches, and BOTH profiles_api
 PRs merged to dev 2026-08-20 (10799 `818af23d` 12:51 UTC, 10818 `4cda3bea`
