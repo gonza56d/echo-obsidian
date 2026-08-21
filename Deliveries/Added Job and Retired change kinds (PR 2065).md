@@ -105,6 +105,18 @@ promotion 150,832 / NULL 54,395; outbox dead baseline 473 (+ small
 explainable tenant-key 401s tolerated). AFTER VALIDATION: flip
 CONTACT_JOB_NOTIFICATIONS_ENABLED back to TRUE in BOTH envs.
 
+**PROD WAVE INTERRUPTED at ~91.6% by LOCAL NETWORK (2026-08-21 ~17:43 UTC)**:
+enqueue died on SSL timeout mid-INSERT after 5h; then BOTH Azure PG hostnames
+(dev + prod) NXDOMAIN even via 1.1.1.1 while general internet worked → local
+DNS/VPN/Wi-Fi issue on the laptop, NOT Azure. Committed state safe: 48,400
+profiles / 48,807 legs (+ canary 100/101), last cursor
+`eac3b2f1-871d-4a61-9018-043f353d49cd`; failed batch rolled back, first
+resume attempt enqueued 0. THE DRAIN IS UNAFFECTED (in-cluster) and keeps
+delivering the committed legs. Auto-resume ARMED in background: polls DNS
+every 60s (4h deadline) then resumes the remaining ~4,466 profiles (~30
+min). Note: the DB cred is never written to disk — resume runs as an inline
+background command.
+
 **DEV WAVE VALIDATION: PASS (2026-08-21)** — drain 100% complete
 (50,030/50,035 legs = 99.99%; 0 pending events). Final distribution:
 added_job 9,593 / retired 429 / changed_job 232,428 / promotion 142,684 /
