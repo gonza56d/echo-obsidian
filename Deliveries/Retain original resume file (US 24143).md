@@ -45,7 +45,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 
 ## Pending
 - Merge #2127 (CI + review).
-- M2 (FE-owned): upload original with tags `resume,app` on add-candidate + replace-resume; expose view/download distinct from Echo export. No FE ticket filed yet.
+- M2 (FE-owned): [Task 24461](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24461) filed 2026-08-21 (child of the US, unassigned) — upload original with tags `resume,app` on add-candidate + replace-resume; expose view/download distinct from Echo export.
 - PRD open questions 2–5 (history vs latest-only, UI placement, doc title, size hardening) + Capa 1 formalization.
 - Security follow-up ticket for unauthenticated CloudFront document access (unfiled).
 - qa/main promotion after dev QA; Kforce port OUT unless requested.
