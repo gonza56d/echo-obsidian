@@ -21,7 +21,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 - PRD: [Retener el CV original subido (US 24143) — PRD Técnico](https://app.notion.com/p/3c3aedca11f081ad974ff672582238a2) — Tier B, **In development**; Opción A decidida 2026-08-21
 
 ## PRs
-- [#2127](https://github.com/taller-projects/echo-backend/pull/2127) → dev — OPEN (2026-08-21). M1: tag convention constants + first-ever route tests for `/talents/{id}/documents`. /pr-review r1 (full, 3 reviewers): READY WITH NITS, 0 blockers; nits landed in `5c15a511`.
+- [#2127](https://github.com/taller-projects/echo-backend/pull/2127) → dev — OPEN, **Leo APPROVED 2026-08-21** (review r1 `5c15a511`: RESUME_SOURCE_APP renamed `app`→`echo-app`, `-id` tie-break on DocumentFilter.order_by, file renamed test_talent_documents_routes.py; r2 nits `83bc9e25`: direct same-created_at tie-break test + cross-tenant upload rejection test; nit 2 = order_by default now `-created_at,-id` for org/project listings too — FE radar, no change). 10/10 file tests green. /pr-review r1 (full, 3 reviewers): READY WITH NITS, 0 blockers; nits landed in `5c15a511`.
 
 ## How
 - **Option A** (decided): FE re-uploads the original to the existing `POST /talents/{talent_id}/documents` after talent create/patch; backend contract = tag convention only. Option B (multipart on `POST/PATCH /talents`, public-API parity) documented in the PRD as fallback if hard server-side retention is ever required.
