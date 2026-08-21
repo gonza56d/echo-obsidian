@@ -6,6 +6,7 @@ delivered:
 tags: [feature, proposals, export, rfq, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2120"
+  - "https://github.com/taller-projects/echo-backend/pull/2124"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298"
@@ -16,13 +17,17 @@ prd: "https://app.notion.com/p/3c2aedca11f081df8476c9ea8301721c"
 
 # RFQ proposal export (Feature 23298)
 
-New proposal export type for Projects: **RFQ (Request For Quotation)** — portrait, document-style, **PDF-only**. Requested by Navitec, who sent their format + example (`Yale_AI_Contract_Review_RFQ.pdf`, 7 pages / 8 numbered sections). Mirrors the post-US-23670 proposal architecture: generic Echo-branded template for all tenants + per-tenant custom template keyed by `tenant.proposal_template`. Two milestones: **M1 plumbing + generic template** ([Task 24436](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24436), [#2120](https://github.com/taller-projects/echo-backend/pull/2120)), **M2 Navitec-branded template** ([Task 24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437), not started).
+New proposal export type for Projects: **RFQ (Request For Quotation)** — portrait, document-style, **PDF-only**. Requested by Navitec, who sent their format + example (`Yale_AI_Contract_Review_RFQ.pdf`, 7 pages / 8 numbered sections). Mirrors the post-US-23670 proposal architecture: generic Echo-branded template for all tenants + per-tenant custom template keyed by `tenant.proposal_template`. Two milestones: **M1 plumbing + generic template** ([Task 24436](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24436), [#2120](https://github.com/taller-projects/echo-backend/pull/2120)), **M2 Navitec-branded template** ([Task 24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437), [#2124](https://github.com/taller-projects/echo-backend/pull/2124) stacked on M1).
 
 ## Status
 
 - **M1 — PR [#2120](https://github.com/taller-projects/echo-backend/pull/2120) → dev OPEN, in review** (2026-08-20). 245 export unit tests green (56 new), lint clean, real WeasyPrint render visually verified vs the Yale example.
 - Azure: [Feature 23298](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298) description replaced with the real scope (its original body was just a Drive link); Tasks [24436](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24436) (In development, PR linked) + [24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437) created under it, Sprint 39.
 - PRD técnico (Capa 2, Tier B): [PRD Técnico — RFQ Proposal Export (Projects)](https://app.notion.com/p/3c2aedca11f081df8476c9ea8301721c) — Draft, in Echo Product Roadmap. No Capa 1 exists (Feature ticket + Navitec example act as the business source, flagged in the frontmatter).
+
+## Status (M2)
+
+- **M2 — PR [#2124](https://github.com/taller-projects/echo-backend/pull/2124) → base `23298/rfq_proposal_export` OPEN (stacked; merge order #2120 → #2124)**, 2026-08-21. `tenant/navitec_rfq.jinja` (red `#b82025`, black serif section bands, Montserrat body, full-width red header rule, brand rate card + contact card) + `NAVITEC_RFQ_CONTENT` (prepared_by + tagline). Render verified page-by-page vs the Yale example. 247 export tests green. No code change needed in `export_rfq` — the M1 TemplateNotFound fallback simply stops firing for Navitec once the file exists. Task [24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437) → In development, PR linked.
 
 ## How (M1)
 
@@ -53,7 +58,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 ## Pending
 
 - M1: CI + review → merge [#2120](https://github.com/taller-projects/echo-backend/pull/2120); move Task 24436 when merged.
-- **M2 ([Task 24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437))**: `tenant/navitec_rfq.jinja` (red `#b82025`, black section bands, serif display, Montserrat body, brand wordmarks/panels), `NAVITEC_RFQ_CONTENT` (prepared_by "Navitec Business Office, Bozeman, MT" + tagline), visual pass vs the Yale example, Navitec standard-proposal regression.
+- M2: CI + review → retarget to dev after #2120 merges (stacked) → merge [#2124](https://github.com/taller-projects/echo-backend/pull/2124); move Task 24437.
 - **FE follow-up (FE-owned)**: UI affordance to send `proposal_type=rfq` — no FE ticket yet; flag to Producto/FE.
 - qa/main promotion after dev QA; QA estimate 4-6h (in the PRD).
 - Verify TB's `consultants` copy on real Navitec data in dev (SOURCE column soft-fails to "—").
