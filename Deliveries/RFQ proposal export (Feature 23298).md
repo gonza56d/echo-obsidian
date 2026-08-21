@@ -22,6 +22,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 ## Status
 
 - **M1 — PR [#2120](https://github.com/taller-projects/echo-backend/pull/2120) → dev OPEN, in review** (2026-08-20). 245 export unit tests green (56 new), lint clean, real WeasyPrint render visually verified vs the Yale example.
+- **M1 review (2026-08-21)** — exhaustive `/pr-review` → **READY WITH NITS** (0 blockers; 13/13 PRD reqs; arch 15 PASS/1 N/A; tests 12 PASS/4 N/A). Nit fixes committed `c8723ba0`, pushed to `23298/rfq_proposal_export` (#2120): explicit `rated_any` flag so a team rated at exactly $0 shows a $0 combined rate instead of dropping the row; hoisted `assets` in `export_proposal` to drop a duplicate `get_proposal_assets` call; +2 unit tests (zero-rated team keeps a rate; empty resource table omits the Team section without a band-numbering gap). Deferred non-code notes: PRD "8-9 sections" is descriptive (7 numbered bands generic / 8 with a brand rate card); `investment_complete` is an RFQ-only log field.
 - Azure: [Feature 23298](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298) description replaced with the real scope (its original body was just a Drive link); Tasks [24436](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24436) (In development, PR linked) + [24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437) created under it, Sprint 39.
 - PRD técnico (Capa 2, Tier B): [PRD Técnico — RFQ Proposal Export (Projects)](https://app.notion.com/p/3c2aedca11f081df8476c9ea8301721c) — Draft, in Echo Product Roadmap. No Capa 1 exists (Feature ticket + Navitec example act as the business source, flagged in the frontmatter).
 
@@ -58,6 +59,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Gotchas
 
+- **Shared worktree / wrong branch (2026-08-21)** — the nit fixes are M1 code but the worktree was on the M2 branch (`23298/rfq_navitec_template`, #2124) with a peer session's uncommitted `navitec_rfq.jinja`. Committing on the current branch would have landed the fix in the wrong PR; spun a fresh worktree on `23298/rfq_proposal_export` to commit into #2120, then reverted the stray edits in the shared tree.
 - **pydantic + `typing.TypedDict`**: `RfqModel.timeline_phases: list[TimelinePhase]` blew up on py3.11 ("use typing_extensions.TypedDict") — field typed `list[dict]` instead.
 - **Adding a Query param breaks direct-call router tests**: the `Query(...)` sentinel leaks as the default when tests call the endpoint function directly → every existing `assert_called_once_with` on `export_proposal` needed the explicit `proposal_type=ProposalType.STANDARD` kwarg (15 insertions across 2 test files). A bulk regex insert also leaked one into a `ProposalRequest(...)` construction — removed by hand.
 - `./scripts/lint.sh` in the worktree reformatted the untouched `reporting_dashboard/repository.py` (dev isn't format-clean) — reverted to keep the diff in scope (same recurring scope-creep as PRs #2107/#2110/#2111).
@@ -66,6 +68,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Pending
 
+- **M2 rebase (2026-08-21)**: #2124 (`23298/rfq_navitec_template`) is stacked on M1; rebase it onto updated M1 (`c8723ba0`) so it carries the nit fixes — coordinate with the peer session working M2.
 - M1: CI + review → merge [#2120](https://github.com/taller-projects/echo-backend/pull/2120); move Task 24436 when merged.
 - M2: CI + review → retarget to dev after #2120 merges (stacked) → merge [#2124](https://github.com/taller-projects/echo-backend/pull/2124); move Task 24437.
 - **FE follow-up (FE-owned)**: UI affordance to send `proposal_type=rfq` — no FE ticket yet; flag to Producto/FE.
