@@ -93,6 +93,18 @@ kforce-prod mappings ORGANICALLY (if the prod contact_mappings table has
 kforce env rows) — safe because M1 merged to kforce-master via #2070, but
 nobody is running a kforce backfill.
 
+**PROD WAVE LAUNCHED 2026-08-21 (explicit go from Gonzalo)**: dry-run clean
+(52,966 profiles / 53,411 legs, matches sizing + organic growth); canary 100
+profiles → 101/101 delivered, ZERO errors, prod dispatcher drains much
+faster than dev; echo prod already at added_job 2,006 / retired 98 (canary +
+~20h of ORGANIC classification since the deploy). Full wave enqueue running
+in background since ~12:50 UTC (--start-after canary cursor
+`00804454-97a0-4083-8743-fb219c920a4e`, log: scratchpad wave-prod.log,
+~5.9h ETA). Validation targets: echo-prod baseline changed_job 267,949 /
+promotion 150,832 / NULL 54,395; outbox dead baseline 473 (+ small
+explainable tenant-key 401s tolerated). AFTER VALIDATION: flip
+CONTACT_JOB_NOTIFICATIONS_ENABLED back to TRUE in BOTH envs.
+
 **DEV WAVE VALIDATION: PASS (2026-08-21)** — drain 100% complete
 (50,030/50,035 legs = 99.99%; 0 pending events). Final distribution:
 added_job 9,593 / retired 429 / changed_job 232,428 / promotion 142,684 /
