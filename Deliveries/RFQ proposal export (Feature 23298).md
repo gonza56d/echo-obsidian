@@ -29,6 +29,15 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 - **M2 — PR [#2124](https://github.com/taller-projects/echo-backend/pull/2124) → base `23298/rfq_proposal_export` OPEN (stacked; merge order #2120 → #2124)**, 2026-08-21. `tenant/navitec_rfq.jinja` (red `#b82025`, black serif section bands, Montserrat body, full-width red header rule, brand rate card + contact card) + `NAVITEC_RFQ_CONTENT` (prepared_by + tagline). Render verified page-by-page vs the Yale example. 247 export tests green. No code change needed in `export_rfq` — the M1 TemplateNotFound fallback simply stops firing for Navitec once the file exists. Task [24437](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437) → In development, PR linked.
 
+## Review & nits (M2) — 2026-08-21
+
+- **/pr-review on #2124** (full mode, Taller): 3 parallel reviewers (architecture, tests-security, prd). Verdict **READY WITH NITS**, CI green, zero blockers, zero scope creep (diff = exactly the 4 files). Render-context contract + `rate_card`/`contact_block` dict shapes verified field-by-field; `{% autoescape true %}` confirmed live (no `|safe`); PRD M2 fully code-satisfiable except the manual visual-fidelity QA gate.
+- **Nits addressed** in commit `d3c8c162` (pushed to `23298/rfq_navitec_template`, 2 files, +23/-13):
+  1. Removed the unreachable `{% elif contact %}` dynamic-contact fallback in `navitec_rfq.jinja` (Navitec always resolves a brand `contact_block`; carried over verbatim from `generic_rfq.jinja`).
+  2. Strengthened `test_navitec_full_document_numbering_is_sequential` to assert the rate-card band is actually counted (`len(navitec) == len(generic) + 1`), not just gap-free.
+  3. Added `test_navitec_soft_fails_on_incomplete_data` (empty timeline + unrated team) so the hand-copied template can't drift its section guards uncaught.
+- **Shared-worktree hazard**: a concurrent session had unrelated uncommitted work in this same worktree (`rfq.py` zero-rate `rated_any` fix, `service.py` `get_proposal_assets` resolve-once refactor, `test_rfq_model.py` zero-rate test, plus an extra `test_empty_team_table_...` in the RFQ render test file). Committed **only my nit hunks** via partial `git add -p` staging; left the other session's WIP untouched. Reverted a `reporting_dashboard/repository.py` lint-reformat artifact (same recurring worktree scope-creep).
+
 ## How (M1)
 
 - **API**: `proposal_type=standard|rfq` query param on `POST /projects/{project_id}/export/proposal` (default `standard`, back-compat total). `rfq` + format != pdf → 422 handwritten guard with top-level string `detail` (a `Literal[...]` on format can't express a cross-param constraint).
