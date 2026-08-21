@@ -105,6 +105,17 @@ promotion 150,832 / NULL 54,395; outbox dead baseline 473 (+ small
 explainable tenant-key 401s tolerated). AFTER VALIDATION: flip
 CONTACT_JOB_NOTIFICATIONS_ENABLED back to TRUE in BOTH envs.
 
+**ROOT CAUSE CONFIRMED (2026-08-21 ~22:00 UTC): Azure Private Link + VPN.**
+DoH lookup shows the prod PG host CNAMEs to
+`e9cd6ac859e9.privatelink.postgres.database.azure.com` — resolvable ONLY
+through the VPN's DNS. The 5h of successful enqueue = VPN was up; it dropped
+~17:43 UTC. Fix = reconnect VPN; watcher re-armed (8h) to auto-resume the
+last ~4,466 profiles. MEANWHILE THE DRAIN FINISHED: echo prod grew to
+**added_job 9,819 / retired 446** with only ~227 rows/2h now (organic
+trickle) — the committed 91.6% is fully delivered and live in prod.
+LESSON for the note: profiles Azure PG (dev + prod) requires VPN; Supabase
+echo DBs do not.
+
 **PROD WAVE INTERRUPTED at ~91.6% by LOCAL NETWORK (2026-08-21 ~17:43 UTC)**:
 enqueue died on SSL timeout mid-INSERT after 5h; then BOTH Azure PG hostnames
 (dev + prod) NXDOMAIN even via 1.1.1.1 while general internet worked → local
