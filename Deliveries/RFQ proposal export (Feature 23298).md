@@ -39,6 +39,11 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
   3. Added `test_navitec_soft_fails_on_incomplete_data` (empty timeline + unrated team) so the hand-copied template can't drift its section guards uncaught.
 - **Shared-worktree hazard**: a concurrent session had unrelated uncommitted work in this same worktree (`rfq.py` zero-rate `rated_any` fix, `service.py` `get_proposal_assets` resolve-once refactor, `test_rfq_model.py` zero-rate test, plus an extra `test_empty_team_table_...` in the RFQ render test file). Committed **only my nit hunks** via partial `git add -p` staging; left the other session's WIP untouched. Reverted a `reporting_dashboard/repository.py` lint-reformat artifact (same recurring worktree scope-creep).
 
+## Updates
+
+- **2026-08-21 font bump (user request)**: all reading sizes +~1px, display sizes (title/investment figure) +2px on BOTH templates — generic on M1 (`a2bded71`), Navitec on M2 (`d480b30f`, after merging M1 into the stacked branch — merge, not rebase, to avoid force-push). Endpoint-regenerated PDFs re-verified.
+- **2026-08-21 review fix on M1 (Gonzalo, `c8723ba0`)**: compute_investment tracks "any member rated" with an explicit flag (a team fully rated at $0 now renders the $0 combined-rate row); export_proposal resolves brand assets once above the format branch.
+
 ## How (M1)
 
 - **API**: `proposal_type=standard|rfq` query param on `POST /projects/{project_id}/export/proposal` (default `standard`, back-compat total). `rfq` + format != pdf → 422 handwritten guard with top-level string `detail` (a `Literal[...]` on format can't express a cross-param constraint).
