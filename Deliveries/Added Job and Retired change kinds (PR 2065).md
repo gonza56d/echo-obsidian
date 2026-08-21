@@ -93,6 +93,22 @@ kforce-prod mappings ORGANICALLY (if the prod contact_mappings table has
 kforce env rows) — safe because M1 merged to kforce-master via #2070, but
 nobody is running a kforce backfill.
 
+**DEV WAVE VALIDATION: PASS (2026-08-21)** — drain 100% complete
+(50,030/50,035 legs = 99.99%; 0 pending events). Final distribution:
+added_job 9,593 / retired 429 / changed_job 232,428 / promotion 142,684 /
+NULL 49,968 (totals GREW vs baseline — the wave backfills full histories,
+expected). Retired samples all genuine ("Retired", "(Retired)", "Semi
+Retired"...), zero false positives seen. The 5 dead legs FULLY EXPLAINED,
+no data loss: 4 = contacts in synthetic/test tenants ("Synthesis
+Technologies Pty Ltd", "Cortez Group - Synthetic") whose api keys aren't in
+the dispatcher's ECHO_API_KEYS_BY_TENANT → HTTP 401 on
+/internal/contacts/<id>/jobs/bulk; 1 = stale mapping to a deleted contact.
+KEY MECHANISM CONFIRMED: a failed bulk POST leaves the OLD history intact
+(atomic server-side) — the "jobless contact" failure mode does NOT occur.
+PROD NOTE: tenants missing from the prod dispatcher key map will likewise
+dead-letter harmlessly (no reclassification for them) — expect a small
+explainable dead count.
+
 **FLAG FLIPPED FALSE in BOTH dev and prod (Gonzalo, 2026-08-20 ~17:00 UTC)**
 — prod wave gate #2 CLEARED. Verified consistent in dev: zero contact-kind
 notifications during today's wave (12.3k legs delivered); note the last
