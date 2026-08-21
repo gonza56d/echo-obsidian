@@ -46,7 +46,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 
 ## Pending
 - M2 (FE-owned): [Task 24461](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24461) filed 2026-08-21 (child of the US, unassigned) — upload original with tags `resume,echo-app` on add-candidate + replace-resume; expose view/download distinct from Echo export.
-- PRD open questions 2–5 (history vs latest-only, UI placement, doc title, size hardening) + Capa 1 formalization. Review also flagged two PRD wording fixes still pending: annex says `RESUME_POLICY` but the endpoint enforces `DOCUMENT_POLICY` (XLSX/CSV could become "the original"), and the soft-fail warning-log criterion has no backend home under Option A (re-home to M2/FE).
+- PRD open questions 3–5 (UI placement, doc title, size hardening) + Capa 1 formalization. **Q2 RESOLVED 2026-08-21: full history retained — replace never deletes the prior original (PRD changelog row; Task 24461 updated).** Review also flagged two PRD wording fixes still pending: annex says `RESUME_POLICY` but the endpoint enforces `DOCUMENT_POLICY` (XLSX/CSV could become "the original"), and the soft-fail warning-log criterion has no backend home under Option A (re-home to M2/FE).
 - Security follow-up ticket for unauthenticated CloudFront document access (unfiled).
 - qa/main promotion after dev QA; Kforce port OUT unless requested.
 
