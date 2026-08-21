@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-21
 tags: [feature, documents, talent, battle-tested]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2127"
@@ -21,7 +21,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 - PRD: [Retener el CV original subido (US 24143) — PRD Técnico](https://app.notion.com/p/3c3aedca11f081ad974ff672582238a2) — Tier B, **In development**; Opción A decidida 2026-08-21
 
 ## PRs
-- [#2127](https://github.com/taller-projects/echo-backend/pull/2127) → dev — OPEN, **Leo APPROVED 2026-08-21** (review r1 `5c15a511`: RESUME_SOURCE_APP renamed `app`→`echo-app`, `-id` tie-break on DocumentFilter.order_by, file renamed test_talent_documents_routes.py; r2 nits `83bc9e25`: direct same-created_at tie-break test + cross-tenant upload rejection test; nit 2 = order_by default now `-created_at,-id` for org/project listings too — FE radar, no change). 10/10 file tests green. /pr-review r1 (full, 3 reviewers): READY WITH NITS, 0 blockers; nits landed in `5c15a511`.
+- [#2127](https://github.com/taller-projects/echo-backend/pull/2127) → dev — **MERGED 2026-08-21** (squash `3f133298`; Leo approved (review r1 `5c15a511`: RESUME_SOURCE_APP renamed `app`→`echo-app`, `-id` tie-break on DocumentFilter.order_by, file renamed test_talent_documents_routes.py; r2 nits `83bc9e25`: direct same-created_at tie-break test + cross-tenant upload rejection test; nit 2 = order_by default now `-created_at,-id` for org/project listings too — FE radar, no change). 10/10 file tests green. /pr-review r1 (full, 3 reviewers): READY WITH NITS, 0 blockers; nits landed in `5c15a511`.
 
 ## How
 - **Option A** (decided): FE re-uploads the original to the existing `POST /talents/{talent_id}/documents` after talent create/patch; backend contract = tag convention only. Option B (multipart on `POST/PATCH /talents`, public-API parity) documented in the PRD as fallback if hard server-side retention is ever required.
@@ -45,8 +45,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 - Ticket description said `POST /talent/resume` — actual route is `POST /talents/resume`, and it has no `talent_id` (corrected via ticket comment).
 
 ## Pending
-- Merge #2127 (review round 1 clean; CI on `5c15a511` pending at last check).
-- M2 (FE-owned): [Task 24461](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24461) filed 2026-08-21 (child of the US, unassigned) — upload original with tags `resume,app` on add-candidate + replace-resume; expose view/download distinct from Echo export.
+- M2 (FE-owned): [Task 24461](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24461) filed 2026-08-21 (child of the US, unassigned) — upload original with tags `resume,echo-app` on add-candidate + replace-resume; expose view/download distinct from Echo export.
 - PRD open questions 2–5 (history vs latest-only, UI placement, doc title, size hardening) + Capa 1 formalization. Review also flagged two PRD wording fixes still pending: annex says `RESUME_POLICY` but the endpoint enforces `DOCUMENT_POLICY` (XLSX/CSV could become "the original"), and the soft-fail warning-log criterion has no backend home under Option A (re-home to M2/FE).
 - Security follow-up ticket for unauthenticated CloudFront document access (unfiled).
 - qa/main promotion after dev QA; Kforce port OUT unless requested.
