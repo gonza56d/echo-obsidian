@@ -6,6 +6,7 @@ delivered: 2026-08-21
 tags: [feature, documents, talent, battle-tested]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2127"
+  - "https://github.com/taller-projects/echo-backend/pull/2137"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24143"
@@ -21,6 +22,7 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 - PRD: [Retener el CV original subido (US 24143) — PRD Técnico](https://app.notion.com/p/3c3aedca11f081ad974ff672582238a2) — Tier B, **In development**; Opción A decidida 2026-08-21
 
 ## PRs
+- [#2137](https://github.com/taller-projects/echo-backend/pull/2137) → dev — **OPEN 2026-08-24** (branch `24143/harden_document_upload_size`, commit `b8311246`). Open question 5 (server-side 5 MB hardening): `UploadPolicy` gains optional `max_size_bytes` (default `None`); `validate_upload` rejects oversize with 400 (`detail`, consistent with existing validation errors), measuring **actual stream bytes** not the spoofable `Content-Length`; `DOCUMENT_POLICY` + `RESUME_POLICY` capped at 5 MB (`MAX_DOCUMENT_SIZE_BYTES`), `BLOB_POLICY` left uncapped (data-team large CSV/JSON). No schema/migration/endpoint change. 7 new unit tests in `tests/unit/core/test_file_validation.py` (64/64 green locally). NB: the talent-documents route tests still fail locally with the known TestClient-404 env gotcha (green in CI) — unrelated to this diff (verified against clean `dev` baseline).
 - [#2127](https://github.com/taller-projects/echo-backend/pull/2127) → dev — **MERGED 2026-08-21** (squash `3f133298`; Leo approved (review r1 `5c15a511`: RESUME_SOURCE_APP renamed `app`→`echo-app`, `-id` tie-break on DocumentFilter.order_by, file renamed test_talent_documents_routes.py; r2 nits `83bc9e25`: direct same-created_at tie-break test + cross-tenant upload rejection test; nit 2 = order_by default now `-created_at,-id` for org/project listings too — FE radar, no change). 10/10 file tests green. /pr-review r1 (full, 3 reviewers): READY WITH NITS, 0 blockers; nits landed in `5c15a511`.
 
 ## How
@@ -46,7 +48,8 @@ Battle Tested customer request (Jake Gomez, Aug 2026): opening the "original" re
 
 ## Pending
 - M2 (FE-owned): [Task 24461](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24461) filed 2026-08-21 (child of the US, unassigned) — upload original with tags `resume,echo-app` on add-candidate + replace-resume; expose view/download distinct from Echo export.
-- PRD open questions 3–5 (UI placement, doc title, size hardening) + Capa 1 formalization. **Q2 RESOLVED 2026-08-21: full history retained — replace never deletes the prior original (PRD changelog row; Task 24461 updated).** Review also flagged two PRD wording fixes still pending: annex says `RESUME_POLICY` but the endpoint enforces `DOCUMENT_POLICY` (XLSX/CSV could become "the original"), and the soft-fail warning-log criterion has no backend home under Option A (re-home to M2/FE).
+- **Q5 RESOLVED 2026-08-24 (Gonzalo): hardened server-side too — PR [#2137](https://github.com/taller-projects/echo-backend/pull/2137) (5 MB cap on `DOCUMENT_POLICY`/`RESUME_POLICY`). Q3/Q4 deferred to the FE tickets.**
+- PRD open questions 3–4 (UI placement, doc title — FE-owned) + Capa 1 formalization. **Q2 RESOLVED 2026-08-21: full history retained — replace never deletes the prior original (PRD changelog row; Task 24461 updated).** Review also flagged two PRD wording fixes still pending: annex says `RESUME_POLICY` but the endpoint enforces `DOCUMENT_POLICY` (XLSX/CSV could become "the original"), and the soft-fail warning-log criterion has no backend home under Option A (re-home to M2/FE).
 - Security follow-up ticket for unauthenticated CloudFront document access (unfiled).
 - qa/main promotion after dev QA; Kforce port OUT unless requested.
 
