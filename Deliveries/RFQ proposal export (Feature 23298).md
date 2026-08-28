@@ -1,12 +1,13 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-08-21
 tags: [feature, proposals, export, rfq, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2120"
   - "https://github.com/taller-projects/echo-backend/pull/2124"
+  - "https://github.com/taller-projects/echo-backend/pull/2179"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298"
@@ -54,6 +55,16 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 - **`ProjectService.export_proposal`** — RFQ branch: filename `… - RFQ`, **skips the case-studies render** (RFQ has no case-studies section → one fewer TB call), feeds `payload.project.team` (quantity + `_resolve_bill_rate` output) into the model.
 - No schema changes, no migration.
 
+## Follow-up fix — empty sections (PR #2179, 2026-08-28)
+
+- **Trigger**: dev-generated `Kforce Test - Kforce Inc - RFQ.pdf` showed a "Contact Echo" card with no lines. Team Builder returns `contact` as an object with **every field `null`** (not `null` itself), so `RfqModel.contact` was a truthy dict and `{% elif contact %}` rendered the empty card.
+- **PR [#2179](https://github.com/taller-projects/echo-backend/pull/2179) → dev OPEN** (branch `rfq_hide_empty_sections`, no Azure ticket — user-reported, no ticket given). Audit of every band for the same failure class; three fixed, rest already guarded or fall back to "To be confirmed in SOW":
+  1. Contact card → `_contact_or_none()` in `rfq.py`: `None` unless ≥1 field is a non-blank string (template untouched).
+  2. Executive Summary band → gated on `executive_summary or stat_tiles` in BOTH `generic_rfq.jinja` and `navitec_rfq.jinja`.
+  3. Next Steps → `_non_blank()` filters blank entries from `paragraphs` / `outcomes` / `pain_points` / `stages`; an all-blank stages list collapses to `None` so the brand default steps render.
+  - Not fixed (cosmetic, user declined for now): empty `responsibilities` cell in the Team table; phase with empty `activities` / `"Weeks TBD"`.
+- **Testing the pre-PDF HTML**: `test_export_rfq_render.py::_render` stubs `service.exporters[PDF]` to return the HTML → new `TestRfqRenderedDom` parses it with `lxml.html` (transitive dep via python-docx/pptx, not declared directly) and asserts structure: every `h2.section-band` owns a body (siblings until the next band), band numbers contiguous, no empty `.contact-card/.step/.stat-tile/<p>/<li>`, exact contact lines / stat tiles / default steps. Parametrized over generic + Navitec and over the sparsest TB payload (`_empty_proposal()`). 275 export tests green.
+
 ## Decisions
 
 - **Backend-derived data** (user call, 2026-08-20): reuse TB `generate_proposal` + project data; no TB dependency. Scope-in bullets = objectives outcomes (fallback pain_points); assumptions hardcoded per brand.
@@ -64,6 +75,8 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Gotchas
 
+- **TB `contact` is never `null`, its fields are** — `ProposalContact()` with all-None fields is truthy; any `if contact` guard on the dict is a no-op. Normalize in the view model, not the template (fixed in #2179).
+- lxml `xpath("//...")` on a sub-element searches the WHOLE document — use `.//` for scoped queries (bit me in the DOM tests).
 - **Shared worktree / wrong branch (2026-08-21)** — the nit fixes are M1 code but the worktree was on the M2 branch (`23298/rfq_navitec_template`, #2124) with a peer session's uncommitted `navitec_rfq.jinja`. Committing on the current branch would have landed the fix in the wrong PR; spun a fresh worktree on `23298/rfq_proposal_export` to commit into #2120, then reverted the stray edits in the shared tree.
 - **pydantic + `typing.TypedDict`**: `RfqModel.timeline_phases: list[TimelinePhase]` blew up on py3.11 ("use typing_extensions.TypedDict") — field typed `list[dict]` instead.
 - **Adding a Query param breaks direct-call router tests**: the `Query(...)` sentinel leaks as the default when tests call the endpoint function directly → every existing `assert_called_once_with` on `export_proposal` needed the explicit `proposal_type=ProposalType.STANDARD` kwarg (15 insertions across 2 test files). A bulk regex insert also leaked one into a `ProposalRequest(...)` construction — removed by hand.
@@ -73,13 +86,12 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Pending
 
-- **M2 rebase (2026-08-21)**: #2124 (`23298/rfq_navitec_template`) is stacked on M1; rebase it onto updated M1 (`c8723ba0`) so it carries the nit fixes — coordinate with the peer session working M2.
-- M1: CI + review → merge [#2120](https://github.com/taller-projects/echo-backend/pull/2120); move Task 24436 when merged.
-- M2: CI + review → retarget to dev after #2120 merges (stacked) → merge [#2124](https://github.com/taller-projects/echo-backend/pull/2124); move Task 24437.
+- **#2179 (empty sections fix)**: CI + review → merge to dev → promote qa/main with the next batch.
+- M1 [#2120](https://github.com/taller-projects/echo-backend/pull/2120) + M2 [#2124](https://github.com/taller-projects/echo-backend/pull/2124) MERGED to dev 2026-08-21; check whether qa/main promotion already happened (batch train) and move Tasks 24436/24437 accordingly.
 - **FE follow-up (FE-owned)**: UI affordance to send `proposal_type=rfq` — no FE ticket yet; flag to Producto/FE.
-- qa/main promotion after dev QA; QA estimate 4-6h (in the PRD).
 - Verify TB's `consultants` copy on real Navitec data in dev (SOURCE column soft-fails to "—").
-- `Yale_AI_Contract_Review_RFQ.pdf` sits untracked in the MAIN checkout root — don't ever commit it; consider moving it out.
+- Cosmetic empty cells (Team `responsibilities`, phase `activities`) — unticketed, user to decide.
+- `Yale_AI_Contract_Review_RFQ.pdf` + `Kforce Test - Kforce Inc - RFQ.pdf` sit untracked in the MAIN checkout root — never commit them.
 
 ## Related
 
