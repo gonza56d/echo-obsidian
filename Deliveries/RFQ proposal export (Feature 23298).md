@@ -58,7 +58,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 ## Follow-up fix — empty sections (PR #2179, 2026-08-28)
 
 - **Trigger**: dev-generated `Kforce Test - Kforce Inc - RFQ.pdf` showed a "Contact Echo" card with no lines. Team Builder returns `contact` as an object with **every field `null`** (not `null` itself), so `RfqModel.contact` was a truthy dict and `{% elif contact %}` rendered the empty card.
-- **PR [#2179](https://github.com/taller-projects/echo-backend/pull/2179) → dev OPEN** (branch `rfq_hide_empty_sections`, no Azure ticket — user-reported, no ticket given). Audit of every band for the same failure class; three fixed, rest already guarded or fall back to "To be confirmed in SOW":
+- **PR [#2179](https://github.com/taller-projects/echo-backend/pull/2179) → dev MERGED 2026-08-28 (`ff7a44a2`); verified live on dev.api.tallerecho.com the same day** — RFQ for `Project - Kforce Inc` (5ffe606c…) ends at 06 Next Steps, no empty contact card (branch `rfq_hide_empty_sections`, no Azure ticket — user-reported, no ticket given). Audit of every band for the same failure class; three fixed, rest already guarded or fall back to "To be confirmed in SOW":
   1. Contact card → `_contact_or_none()` in `rfq.py`: `None` unless ≥1 field is a non-blank string (template untouched).
   2. Executive Summary band → gated on `executive_summary or stat_tiles` in BOTH `generic_rfq.jinja` and `navitec_rfq.jinja`.
   3. Next Steps → `_non_blank()` filters blank entries from `paragraphs` / `outcomes` / `pain_points` / `stages`; an all-blank stages list collapses to `None` so the brand default steps render.
