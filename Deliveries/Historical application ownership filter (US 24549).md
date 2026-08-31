@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
 delivered: 2026-08-31
 tags: [feature, talents, filters, applications, ownership, jazz-retirement, performance]
@@ -29,7 +29,7 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 
 ## PRs
 
-- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — Leo APPROVED 2026-08-31 (branch `24549/application_owner_filter`). `4c1c5df7` filter + 6 query-level unit tests; `1ecef92a` self-review nit fixes (empty-list = match-nothing, DISTINCT subquery, `status=None` fixture pins, +2 tests); `11e27546` Leo's nits 2+3 (endpoint tests through `GET /talents` + dedup contract test) — 11 tests total. His nit 1 (move to tests/system) declined: CI runs tests/unit only, the file would never execute.
+- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — **MERGED 2026-08-31** (squash `d4d4b957`, Leo approved, CI green). `4c1c5df7` filter + 6 query-level unit tests; `1ecef92a` self-review nit fixes (empty-list = match-nothing, DISTINCT subquery, `status=None` fixture pins, +2 tests); `11e27546` Leo's nits 2+3 (endpoint tests through `GET /talents` + dedup contract test) — 11 tests total. His nit 1 (move to tests/system) declined: CI runs tests/unit only, the file would never execute. Merge noted on the US (comment 28704439); state left In development.
 
 ## How
 
@@ -102,7 +102,7 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 
 ## Pending
 
-- Merge [#2180](https://github.com/taller-projects/echo-backend/pull/2180) (review), then qa/main promotion per release flow.
+- qa/main promotion per release flow (merged to dev only so far).
 - FE change filed as [Task 24664](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24664)
   (child of US 24549, unassigned — frontend-owned): expose the param as the
   "owner at any point" mode of the recruiter filter (FE
