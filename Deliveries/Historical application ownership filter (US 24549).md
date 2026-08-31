@@ -29,7 +29,7 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 
 ## PRs
 
-- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — OPEN 2026-08-31 (branch `24549/application_owner_filter`). `4c1c5df7` filter + 6 query-level unit tests; `1ecef92a` review-nit fixes (self-review via /pr-review, verdict READY WITH NITS → all 4 nits addressed): empty-list = match-nothing, DISTINCT subquery, `status=None` pinned in test fixtures, +2 tests (empty-list boundary, combined owner modes AND) — 8 total.
+- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — Leo APPROVED 2026-08-31 (branch `24549/application_owner_filter`). `4c1c5df7` filter + 6 query-level unit tests; `1ecef92a` self-review nit fixes (empty-list = match-nothing, DISTINCT subquery, `status=None` fixture pins, +2 tests); `11e27546` Leo's nits 2+3 (endpoint tests through `GET /talents` + dedup contract test) — 11 tests total. His nit 1 (move to tests/system) declined: CI runs tests/unit only, the file would never execute.
 
 ## How
 
@@ -88,6 +88,17 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 - Bruno request added: Echo collection (`~/taller/Echo`) → `Talents` →
   "List by application owner (24549)" ({{HOST}}/{{AUTH}}; example uuid is
   dev's busiest recruiter `b5200d9d…`, expected total 826).
+- **The local TestClient-404 artifact on talent endpoints is avoidable**: the
+  rehire-filter tests' pattern — module fixture toggling
+  `settings.ENABLE_ACCESS_CONTROL = False` at fixture run time (not import
+  time) — makes `GET /talents` endpoint tests pass locally. Update the old
+  "validate at service level" reflex when that toggle applies.
+- Two applications for the same talent need distinct roles:
+  `uq_application_tenant_role_talent`. `mocked_role_factory` (conftest)
+  mints extra roles cheaply.
+- A dedup test on the outer results is vacuous: the filter is a WHERE on
+  Talent (can't duplicate rows), so locking the subquery `.distinct()`
+  requires asserting `SELECT DISTINCT` in the compiled SQL.
 
 ## Pending
 
