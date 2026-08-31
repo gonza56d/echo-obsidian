@@ -29,7 +29,7 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 
 ## PRs
 
-- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — OPEN 2026-08-31 (branch `24549/application_owner_filter`, commit `4c1c5df7`). Filter + 6 query-level unit tests.
+- [#2180](https://github.com/taller-projects/echo-backend/pull/2180) → dev — OPEN 2026-08-31 (branch `24549/application_owner_filter`). `4c1c5df7` filter + 6 query-level unit tests; `1ecef92a` review-nit fixes (self-review via /pr-review, verdict READY WITH NITS → all 4 nits addressed): empty-list = match-nothing, DISTINCT subquery, `status=None` pinned in test fixtures, +2 tests (empty-list boundary, combined owner modes AND) — 8 total.
 
 ## How
 
@@ -56,7 +56,17 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 - No ownership-transitions table exists anywhere (checked code + dev DB);
   "history" = the per-application sticky `owner_id`. If the Phase-1 migration
   ever adds transition rows, this filter is unaffected (owner sequence display
-  would be a separate feature).
+  would be a separate feature). Review flagged the flip side: within-app
+  transfers (`ApplicationService.transfer_owner`) overwrite `owner_id` in
+  place (old owner only in Loki logs) — when Phase 2's sibling US builds the
+  transition store, this filter should union over it or a transferred-away
+  recruiter loses the candidate again. Noted as PRD/sibling-US follow-up,
+  not this PR.
+- **Empty list matches nothing** (review nit, `1ecef92a`): `?application_owner_id__in=`
+  parses to `[]`; originally consumed as absent → unrestricted, the opposite
+  of the generic `__in` contract (`IN ()` → zero rows). Guard is now
+  `is None`, `[]` flows into `in_([])` = always-false. Settled pre-FE so the
+  wire contract never flips.
 
 ## Gotchas
 
@@ -82,9 +92,11 @@ filter modes: current owner = existing filter, owner-at-any-point = this one).
 ## Pending
 
 - Merge [#2180](https://github.com/taller-projects/echo-backend/pull/2180) (review), then qa/main promotion per release flow.
-- **FE change unfiled**: expose the param as the "owner at any point" mode of
-  the recruiter filter (FE `recruiterFilterConfig.tsx` currently sends only
-  `owner_id__in`). FE is frontend-owned; backend param is live once merged.
+- FE change filed as [Task 24664](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24664)
+  (child of US 24549, unassigned — frontend-owned): expose the param as the
+  "owner at any point" mode of the recruiter filter (FE
+  `recruiterFilterConfig.tsx` currently sends only `owner_id__in`). Linked in
+  the PR body.
 - Real-data usefulness gated on [US 24546](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24546) (per-process ownership migration from Jazz) — today most historical apps carry the collapsed snapshot owner.
 - Kforce sibling: N/A (Remove Jazz epic is Taller-specific).
 
