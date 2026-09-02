@@ -2,10 +2,11 @@
 type: delivery
 status: in-review
 env: taller
-delivered:
+delivered: 2026-09-02
 tags: [bugfix, tenant, super-admin, access-control]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2206"
+  - "https://github.com/taller-projects/echo-backend/pull/2209"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24696"
 ---
@@ -18,7 +19,8 @@ Access Control → Tenants (super-admin tab): typing in the search box did nothi
 - [Bug 24696](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24696) — reported by Flor 2026-09-02, assigned to me. PR link posted as a comment.
 
 ## PRs
-- [#2206](https://github.com/taller-projects/echo-backend/pull/2206) → dev — OPEN 2026-09-02 (branch `24696/tenant_search_filter`; `23a40dc2` fix + `60b15408` test hardening after self-review). CI green on `23a40dc2`.
+- [#2206](https://github.com/taller-projects/echo-backend/pull/2206) → dev — **MERGED 2026-09-02** by Pedro as `0344228a` (squash of `23a40dc2`), ~20 min after opening, while the self-review was still running.
+- [#2209](https://github.com/taller-projects/echo-backend/pull/2209) → dev — OPEN 2026-09-02 (branch `24696/tenant_search_tests`, `d784fe46`): test-only follow-up carrying the review nits (`total` asserts + empty `search=` test).
 - FE: none needed. FE already sends `search` and reads `Page[T]`; contract only gains an optional query param.
 
 ## How
@@ -36,12 +38,15 @@ Access Control → Tenants (super-admin tab): typing in the search box did nothi
 - Local testing: `localhost:8000` is the AF-Local-Dev Supabase **Kong** gateway (returns 401 `Invalid authentication credentials` for any Bearer) — Echo had to run on 8010; Bruno `Localhost` env `HOST` switched to 8010 (revert when the AF stack is down). Bruno request: `Tenants (Admin)/Search tenants (24696)`.
 
 ## Review (self, /pr-review 2026-09-02)
-- Verdict READY WITH NITS → all 3 nits fixed same day (`60b15408` + PR body): assert `total`, add empty-string search test, drop the false `/internal/tenants` claim.
+- Verdict READY WITH NITS → all 3 nits fixed same day: assert `total` + empty-string search test (landed as #2209 because #2206 was already merged), and the false `/internal/tenants` claim dropped from the #2206 body.
 - Out-of-scope observations, **unfiled**: the same `search_model_fields`-without-`search` trap exists in `OrganizationFilter`, `OrganizationPublicFilter`, `ProjectFilter`, `APIKeyFilter`, `PositionFilter` and 5 `public_api` filters (whose docstring advertises a search that does not work); dead `tenant/internal_routers.py`; CLAUDE.md "FE only hits the root app" is wrong (Access Control hits `/admin/tenants`).
 - Fixture-collision check: polyfactory constrained strings are hex-only, so random tenant names can never contain `zyxq`.
 
+## Gotcha (process)
+- Pushed the nit commit to the #2206 branch *after* it had been squash-merged: the remote branch had been auto-deleted, so the push silently re-created an orphan branch and the closed PR never picked it up (`gh pr view` head stayed at `23a40dc2`). Always check `gh pr view --json state` before pushing to an existing PR. Orphan branch deleted, commit cherry-picked onto dev as #2209.
+
 ## Pending
-- Merge to dev (review done, waiting on a teammate approval).
+- #2209 review + merge to dev.
 - File follow-up ticket for the sibling-filter search bug + dead internal router.
 - qa/main promotion (rides the next batch).
 - Flip Bug 24696 to Ready to Test after dev deploy.
