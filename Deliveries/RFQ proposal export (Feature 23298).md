@@ -8,12 +8,14 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2120"
   - "https://github.com/taller-projects/echo-backend/pull/2124"
   - "https://github.com/taller-projects/echo-backend/pull/2179"
+  - "https://github.com/taller-projects/echo-backend/pull/2201"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24436"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24639"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24698"
 prd: "https://app.notion.com/p/3c2aedca11f081df8476c9ea8301721c"
 ---
 
@@ -68,6 +70,19 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 - **Leo's review (APPROVED on `f78b2cad`, 2 non-blocking nits) → commit `bc207e5b`**: (a) `isinstance(value, str)` branch in `_contact_or_none` unreachable (fields are `str | None`) → simplified to a truthiness check. (b) Jinja `Environment` (`export/service.py:157`) has no top-level autoescape; RFQ templates rely on explicit `{% autoescape true %}` blocks. Agreed with Leo: OUT OF SCOPE for #2179 — 13/16 `.jinja` templates render unescaped and 3 (`basic`, `snapshot_challenge`, `snapshot_interview`) inject HTML via `| safe`; a global flip needs a per-template audit for markup injected without `| safe`, and `select_autoescape` must be told about the `.jinja` extension. Hardening ticket NOT filed yet.
 - **Testing the pre-PDF HTML**: `test_export_rfq_render.py::_render` stubs `service.exporters[PDF]` to return the HTML → new `TestRfqRenderedDom` parses it with `lxml.html` (declared in the `dev` dependency group since `f78b2cad`; before that only transitive via python-pptx) and asserts structure: every `h2.section-band` owns a body (siblings until the next band), band numbers contiguous, no empty `.contact-card/.step/.stat-tile/<p>/<li>`, exact contact lines / stat tiles / default steps. Parametrized over generic + Navitec and over the sparsest TB payload (`_empty_proposal()`). 275 export tests green.
 
+## Follow-up fix — literal Markdown + Navitec running header (PR #2201, 2026-09-02)
+
+- **Trigger**: prod Navitec RFQ for project `52746b15-7cf0-43a6-96df-e7538da66577` ("Ab Initio-to-Spark Modernization Assessment", client Capital One). Two defects: (1) timeline activities printed `– **Role:** activity` literally; (2) the top-right running title rendered as a 6-line one-word-per-line column overflowing above the page top. User first also reported the footer as "too large" then retracted — **footer untouched** (its 0.9in bottom margin / top-aligned text is by design; a `vertical-align: middle` attempt was reverted).
+- **Root causes**: (1) Team Builder now emits `- **Role:** activity` bullets (older projects used a trailing `(Role)` suffix that `_strip_role` removes); the parser keeps inline emphasis and both RFQ templates interpolated the raw string inside `{% autoescape %}`. (2) `navitec_rfq.jinja` forces `.masthead { width: 6.6in }` so the red rule spans the page — the separate `@top-right` margin box got zero width. Generic template has no masthead width → unaffected (verified: same long title rendered on one line).
+- **Fix — PR [#2201](https://github.com/taller-projects/echo-backend/pull/2201) → dev OPEN** (branch `24698/rfq_markdown_and_navitec_header`, [Bug 24698](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24698) child of Feature 23298, Sprint 45 — no Sprint 46 iteration defined yet, Active):
+  1. `export/service.py`: module-level `_inline_markdown()` registered as Jinja filter `inline_markdown` — `markupsafe.escape` first, then regex `**bold**` / `*italic*` / `` `code` `` → `<strong>/<em>/<code>`, returns `Markup`. Deliberately no `_italic_` (snake_case), no block syntax. Arithmetic `5 * 3`, intra-word `a*b*c`, unterminated `**x` untouched.
+  2. Both RFQ templates: filter on TB prose only — activities, executive-summary paragraphs, in-scope bullets, `row.responsibilities` (replaces `or ""`), next-step stages, projected outcome (cover box + Value delivered). Titles/rates/weeks plain.
+  3. `navitec_rfq.jinja`: `.masthead` > `.masthead-row` (display:table, fixed layout) > `.masthead-logo` (1.6in) + `.masthead-title` (right-aligned, 8.5px); `@top-right` and `.running-title` removed (also from `@page :first`). Long titles wrap to 2–3 lines above the rule; ~5 lines fit before the 1.05in margin overflows.
+  4. Tests: `tests/unit/export/test_inline_markdown.py` (12 cases) + `TestRfqInlineMarkdown` / `TestRfqRunningHeader` DOM classes in `test_export_rfq_render.py`, parametrized generic+navitec. 298 export tests green.
+- **Verification**: scratch WeasyPrint render with the prod timeline (captured read-only via `GET /projects/{id}` with the prod JWT) before/after; then end-to-end via local uvicorn on **:8010** (Docker holds :8000) against the dev DB — Taller project "Test Nico" `96e02df5…` (generic; `rfq_markdown_local.pdf`) and Navitec project `57803157…` renamed by the user to a 160-char title (`rfq_long_header_local.pdf`; title = "Proposal to Taller for … · Taller" ~190 chars → 2 lines). Both PDFs untracked in the main checkout root — never commit.
+- **Gotchas**: dev `+navitec` account had **no live `auth.sessions` row** and `ENFORCE_SESSION_LIVENESS` defaults True → local app restarted with `ENFORCE_SESSION_LIVENESS=False`; minting a JWT with `AUTH_JWT_SECRET` was **blocked by the Claude permission classifier** — user supplied a real dev JWT instead. Taller JWT → 404 on a Navitec project (tenant-scoped lookup, as designed). `pdftoppm` zero-pads page numbers by page-count digits (`-02` vs `-2`). Extreme cover titles push the draft notice alone onto page 2 (cover `page-break-after: always`) — not fixed, only with artificial names.
+- **Out of scope (flagged in PR)**: `generic_proposal.jinja` / `navitec_proposal.jinja` and the PPTX renderer consume the same `project.timeline` and still print literal `**`; PPTX would need run-splitting. Team Builder duplicates the client in the running title ("Proposal to Capital One for … · Capital One") — TB copy, not ours.
+
 ## Decisions
 
 - **Backend-derived data** (user call, 2026-08-20): reuse TB `generate_proposal` + project data; no TB dependency. Scope-in bullets = objectives outcomes (fallback pain_points); assumptions hardcoded per brand.
@@ -89,6 +104,7 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Pending
 
+- **#2201 (inline markdown + Navitec header)**: CI + peer review → merge dev → qa/main batch; move Bug 24698 Resolved/Closed. Restore dev project `57803157…` name (user renamed it for the header test). Decide on porting `inline_markdown` to the standard proposal templates / PPTX.
 - **#2179 (empty sections fix)**: self-review fixes pushed `f78b2cad` 2026-08-28 → CI + peer review → merge to dev → promote qa/main with the next batch. Unfiled follow-ups: export Jinja `Environment` autoescape hardening (Leo's nit, all 16 templates); proposal-path all-null contact (hoist `_contact_or_none` to a shared export helper if ever needed); RFQ template `{% extends %}` refactor.
 - M1 [#2120](https://github.com/taller-projects/echo-backend/pull/2120) + M2 [#2124](https://github.com/taller-projects/echo-backend/pull/2124) MERGED to dev 2026-08-21; check whether qa/main promotion already happened (batch train) and move Tasks 24436/24437 accordingly.
 - **FE follow-up (FE-owned)**: UI affordance to send `proposal_type=rfq` — no FE ticket yet; flag to Producto/FE.
