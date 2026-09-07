@@ -45,6 +45,11 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - Nits fixed: legacy `X-Echo-internal` dropped from test fixture; `query_text` max_length=10k; typed returns (`list[Row]`, `List[float] | None`); Spanish docstring aside removed.
 - OPEN QUESTIONS from review (not code): (1) tie-breakers `primary_has_description`/`last_status_update` are in code + TB's original SQL but NOT in the US text — ticket needs updating; (2) `priority_rank` projects only `sort[0]` while ordering now uses ALL sort rules (CTE projects `sort_rank_i` per rule — ordering is fully correct, the *projected* field describes rule 0 only); (3) Case Studies PRD changelog entry still pending.
 
+## Review round 2 (2026-09-07, Pedro rocha-p — APPROVED with nits)
+- Nits addressed at `c944c879`: typed private helpers (`row: Row`, `*extra_columns: ColumnElement`), tests for 2-year boundary (729/732-day probes — leap-safe), described cap 30, empty project → 200 empty. File suite 23 passed.
+- REBUTTED (with reply on PR): test placement — `tests/unit` is DB-backed by design here and CI runs ONLY tests/unit, so moving to tests/system would remove the isolation probes from CI.
+- Parity question answered on PR: extra tiebreakers port TB's original SQL; Navitec 3-project validation covers it; US to be updated to record them.
+
 ## Gotchas
 - `parse_matching_config` silently degrades bad configs — this endpoint must NOT (caller is a service): strict subclasses `CaseStudyFilterRule`/`CaseStudySortRule`/`CaseStudyCandidateRules` with `extra="forbid"`.
 - `ExternalApiException` takes kwargs only (`status_code=`, `detail=`) — positional arg TypeErrors.
