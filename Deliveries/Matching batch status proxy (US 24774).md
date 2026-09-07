@@ -42,8 +42,12 @@ Backend half of [Feature 24773](https://dev.azure.com/TallerInternTools/Echo%20C
 - `MatchService.__new__` fixture in test_industry_propagation needed `evaluate_application_batch.return_value = None` (MagicMock fails RematchResponse validation) — the known `__new__` collaborator trap.
 - Anonymous-401 route tests are impossible in this harness: conftest overrides `AuthenticatedUser.current_user_id` app-wide.
 
+## Review (2026-09-07)
+- Leo APPROVED (review 5134256170, 9 nits) + own /pr-review (2 blockers = Leo's nits 1-2, several nits). **All addressed in `6eca2aed`**: bounded status GET (15s/0 retries, kwargs pinned by test); `capture_batch_id` opt-in — only rematch pays sync cost, create + per-role loop back to fire_and_forget (kills the N×25s amplification); `logger.opt(exception=True)` on swallow; upstream 404 unified into `batch_not_found` (no existence oracle); mount-level gate only (endpoint `Protected` was double-gating); `extra="ignore"` explicit; str-vs-UUID note; tests for 503 passthrough, response-level null, single swallow, no-upstream-tenant 404, ctx-None 404, malformed-id 422, fire-and-forget default.
+- Untestable in harness (documented): anonymous 401 / negative-permission 403 (conftest overrides auth app-wide).
+
 ## Pending
-- CI + review → merge #2225.
+- CI green on `6eca2aed` → squash-merge #2225 (authorized by Gonzalo).
 - FE US 24775 (poll + UI; decide which screens beyond rematch).
 - Dev e2e once merged: rematch a role on dev → poll the proxy until `completed`.
 - qa/main promotion.
