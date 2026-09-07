@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-09-07
 tags: [feature, matching, vectorizer, polling, fe-contract]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2225"
@@ -23,7 +23,7 @@ Backend half of [Feature 24773](https://dev.azure.com/TallerInternTools/Echo%20C
 - Upstream contract: matching service Swagger `/docs` is authoritative; PRD "Cola de Matching" artifact `06511816-fa64-4e0f-8f11-eff46ea99cb3`
 
 ## PRs
-- [#2225](https://github.com/taller-projects/echo-backend/pull/2225) → dev — OPEN 2026-09-07
+- [#2225](https://github.com/taller-projects/echo-backend/pull/2225) → dev — MERGED 2026-09-07 (squash `86f1ad35`; Leo approved, nits fixed `6eca2aed`)
 
 ## How
 - `VectorizerService.evaluate_application(_batch)` → `_enqueue_evaluation`: synchronous POST, `read_timeout=settings.MATCHING_EVALUATE_READ_TIMEOUT` (new, 15s) + `max_retries=0`, exceptions swallowed → `str | None` batch_id (`.get()` — absent = queue off / legacy).
@@ -47,7 +47,6 @@ Backend half of [Feature 24773](https://dev.azure.com/TallerInternTools/Echo%20C
 - Untestable in harness (documented): anonymous 401 / negative-permission 403 (conftest overrides auth app-wide).
 
 ## Pending
-- CI green on `6eca2aed` → squash-merge #2225 (authorized by Gonzalo).
 - FE US 24775 (poll + UI; decide which screens beyond rematch).
 - Dev e2e once merged: rematch a role on dev → poll the proxy until `completed`.
 - qa/main promotion.
