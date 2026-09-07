@@ -21,13 +21,14 @@ Nico Lizondo (Data / matching-products) request, PRD artifact "Application Comme
 - PRD: Claude artifact `90755dba-2652-48f2-9f61-0355d7579ab5` (Application Comments para Matching); sibling artifact `0c0d6d3b-94b4-4bab-a8c2-82585ae8957b` (batch-status polling guide — NOT picked up, optional, would land in `vectorizer_service`)
 
 ## PRs
-- [#2224](https://github.com/taller-projects/echo-backend/pull/2224) → dev — OPEN 2026-09-07
+- [#2224](https://github.com/taller-projects/echo-backend/pull/2224) → dev — OPEN 2026-09-07; self-review (skill /pr-review, full mode) 2026-09-07: 0 blockers, verdict READY WITH NITS; nits addressed in `c72f1b80`
 
 ## How
 - `ApplicationComment` gained an `application` relationship (the composite FK `(application_id, tenant_id)` already existed — no migration).
 - `ApplicationCommentListResponse` + `ApplicationCommentReplyResponse` gained `role_id` / `role_name` via `AliasPath("application", "role_id")` and `AliasPath("application", "role", "name")` — the schema-driven planner (`app/modules/db/`) derives the joins from the 3-segment path, so the SELECT projects them with no repo/service changes.
-- Fields are `| None = None` (additive safety), though `application.role_id` is NOT NULL in practice.
-- Tests: roots + replies carry the fields; per-application role correctness across two applications of the same talent (`tests/unit/test_application_comments_internal.py`).
+- Fields are `| None = None` (additive safety), though `application.role_id` is NOT NULL in practice — deliberate: if the planner ever stops projecting the join, validation degrades to `None` instead of a 500 (why-comment now in `schemas.py`).
+- Tests: roots + replies carry the fields; per-application role correctness across two applications of the same talent; deleted comment masks `content` but keeps role fields (`tests/unit/test_application_comments_internal.py`).
+- Review nit fix (`c72f1b80`): `Role.role_workflow_step` is mapper-level `lazy="joined"`, so joining `Application.role` dragged all ~20 of its columns twice (root + replies paths). Suppressed in `ApplicationCommentSQLRepository._base_query` via `defaultload(...).lazyload(Role.role_workflow_step)` — compiled SQL verified: role_workflow_step joins 2 → 0, application/role joins intact. A generic planner-level suppression of un-requested eager rels was deliberately NOT done (global blast radius; e.g. surfaces relying on `role_workflow_step.allows_new_applications`).
 
 ## Decisions
 - Fields also appear on the public `GET /applications/{id}/comments` (same schema) — harmless/additive, FE ignores extra fields.
@@ -39,6 +40,8 @@ Nico Lizondo (Data / matching-products) request, PRD artifact "Application Comme
 - Kforce fork is GONE (unified 2026-09-03; kforce-dev/kforce-master frozen) — one PR to dev now serves all deployments.
 
 ## Pending
+- Ask Nico: does the matching client treat `role_name: null` as "field absent" (i.e. would it silently fall back to 1+N lookups)? OpenAPI advertises the fields nullable.
+- Follow-up (unticketed, out of PR scope): cross-tenant negative test for the internal by-talent listing in `tests/multitenancy/` (pre-existing gap); pre-existing commented-out `application` relationship stub in `app/modules/application/status_history/models.py:32-34` — implement or delete.
 - CI + review → merge #2224.
 - Post-merge verification per PRD: Loki `{app="matching-products-api-<env>"} |~ "\[APP_COMMENTS\]"` — role-lookup lines disappear; zero `GET /internal/applications/{id}` with UA `python-httpx`.
 - US 24772 → Ready to Test after dev deploy.
