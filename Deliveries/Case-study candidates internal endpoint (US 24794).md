@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: shipped
 env: taller
-delivered:
+delivered: 2026-09-07
 tags: [feature, internal-api, talent, matching, team-builder, case-studies]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2231"
@@ -17,11 +17,11 @@ prd: ""
 Team Builder's Inspired case-study source read echo-backend's Postgres directly (3 SQL queries in its `project_export/echo_backend_db.py`): 5 prod DB secrets in its Vault, RLS bypassed with manual `tenant_id` filters, and ~150-line CTEs duplicating application/workflow/experience semantics. Shipped `POST /internal/talents/case-study-candidates` (X-Echo-Api-Key, tenant from key) with three modes replacing those queries one-to-one; Team Builder switches transport, not algorithm. Proposal + agreed answers live in the shared artifact (claude.ai/code/artifact/df45ea55-889c-440c-afc9-77f171b3c2f3, updated 2026-09-07 with echo-backend's responses).
 
 ## Azure / docs
-- [US 24794](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24794) — Active, PR linked in comment.
+- [US 24794](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24794) — **Closed 2026-09-07**; merge + tie-breaker clarification recorded in ticket comments.
 - Proposal doc: Team Builder technical proposal (artifact above; Estado "Acordado · en implementación").
 
 ## PRs
-- [#2231](https://github.com/taller-projects/echo-backend/pull/2231) → dev — OPEN 2026-09-07.
+- [#2231](https://github.com/taller-projects/echo-backend/pull/2231) → dev — **MERGED** (squash `d90aef95`, 2026-09-07; approved by Pedro). Deploys dev + kforce-dev.
 
 ## How
 - Single endpoint, `mode` as Pydantic **discriminated union** (`application` / `vector` / `similar`), all request models `extra="forbid"` → foreign-mode field or unknown rule key = 422.
@@ -57,8 +57,8 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - KForce scale: N/A-ish — queries are project-gated over talent/application/experience, none of the contact-scale tables.
 
 ## Pending
-- PR [#2231](https://github.com/taller-projects/echo-backend/pull/2231) merge to dev (review r1 addressed at `bdceffc7`; CI re-run pending).
-- Changelog entry in the Case Studies technical PRD (this reverts its "talent queries stay direct-DB" decision).
+- Changelog entry in the Case Studies technical PRD (this reverts its "talent queries stay direct-DB" decision) — pre-cutover gate.
+- Verify dev + kforce-dev deploy of `d90aef95`, then hand endpoint to Team Builder for validation.
 - Team Builder side (their repo): HTTP client, Navitec yaml `candidate_rules`, N-tier `_select_application`, delete `echo_backend_db.py` + 5 `ECHO_POSTGRES_DB_*` Vault secrets — gated on their dev validation (3 Navitec projects, endpoint rows vs old queries).
 - qa/main promotion after dev validation.
 
