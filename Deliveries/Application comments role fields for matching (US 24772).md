@@ -48,3 +48,5 @@ Nico Lizondo (Data / matching-products) request, PRD artifact "Application Comme
 
 ## Related
 - [[Map - JazzHR integration]] · matching-products consumer: `taller_ttit_matching_products/api/src/candidate_matching.py`
+
+> US moved to **Closed** 2026-09-07 (after dev merge).

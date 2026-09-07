@@ -53,3 +53,5 @@ Backend half of [Feature 24773](https://dev.azure.com/TallerInternTools/Echo%20C
 
 ## Related
 - [[Application comments role fields for matching (US 24772)]] — sibling PRD from the same matching-products batch.
+
+> US moved to **Closed** 2026-09-07 (after dev merge).
