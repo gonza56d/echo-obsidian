@@ -26,11 +26,11 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 ## How
 - Single endpoint, `mode` as Pydantic **discriminated union** (`application` / `vector` / `similar`), all request models `extra="forbid"` → foreign-mode field or unknown rule key = 422.
 - `application`: `ApplicationRepository.get_case_study_candidate_rows` — pool = applications with `matching_score` set + `matching_status='ok'` on the project's roles; ROW_NUMBER per role ordered by priority rules → score → `advancement_rank` (WorkflowStepStage weight ×1000 + step `order`; NotHired 0, no step 1, Intake 2 … Final 6) → primary-exp-described → `last_status_update`; cut `per_role_cap` (1–50, default 3); global order repeats the keys.
-- `vector` / `similar`: `TalentRepository.get_case_study_candidates_by_vector` — cosine over `profile_vector`, EXISTS-gate to talents with an application on the project, `tid_literal` bindparam kept for partial HNSW indexes; `similar` uses the anchor's vector (anchor excluded; missing/unvectorized → 200 empty). Vectorization backend-side via `VectorizerService` + tenant industry (503 on failure).
+- `vector` / `similar`: `TalentRepository.get_case_study_candidates_by_vector` — gated pool (EXISTS on project applications) built in a **MATERIALIZED CTE**, exact top-N distance sort over it; `similar` uses the anchor's vector (anchor excluded; missing/unvectorized → 200 empty). Vectorization backend-side via `VectorizerService` + tenant industry (503 on failure). The original `tid_literal`/HNSW shape was REMOVED after review: EXPLAIN on dev showed the partial HNSW index scan with the project gate as post-filter — with `hnsw.iterative_scan=off` + `ef_search=40` a narrow project silently under-returns. Exact CTE plan: 93ms warm on the worst dev project (3,038-talent pool).
 - Rules reuse `MatchFilterRule`/`MatchSortRule` grammar (`app/modules/match/config.py`); new `build_sort_rank_case`/`build_priority_rank_case` expose the CASE for the projected `priority_rank`. STRICT — no `parse_matching_config` fallback.
 - Experiences: 3 batch queries in `TalentRepository` (primary DISTINCT ON, described ≤30, eligible ≤10 within 2y — application mode only); `organization_insight.industry` LEFT JOINed via the **bare table** (`OrganizationInsight.__table__`) — joining the polymorphic entity collides with the base `Organization` join.
 - Orchestration in `TalentService.get_case_study_candidates`; `ApplicationService` fetched via `self.inject.get(...)` (constructor DI circular). Response carries **no talent PII**.
-- Tests: `tests/unit/test_case_study_candidates.py` (17). Full unit+multitenancy suite green locally (4542 passed).
+- Tests: `tests/unit/test_case_study_candidates.py` (20 after review round: + stage-weight ladder, default per_role_cap, eligible cap, limit=51, vector/similar isolation probes).
 
 ## Decisions
 - Route under `/internal/talents/` (resource returned is talents; application ranking is an implementation detail).
@@ -39,6 +39,12 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - **Accepted semantic change**: vector/similar order `priority_rank` BEFORE distance; identical to TB's current behavior when `rules` absent.
 - Navitec's "tag A first" moves from TB config to per-request `rules` — new tenants with own rules = TB yaml change, no backend deploy.
 
+## Review round 1 (2026-09-07, /pr-review)
+- Verdict CHANGES REQUESTED — 1 blocker (AC6 EXPLAIN evidence; EXPLAIN then surfaced the real HNSW recall bug above), 5 nits. All addressed in `bdceffc7`; AC6 plans posted as PR comment (issuecomment-5574956587).
+- kforce-dev AC6 evidence: talent=2 / vectorized=0 / application=0 / experience=0 / role=0 — queries touch none of the KForce-scale tables; 0.15ms.
+- Nits fixed: legacy `X-Echo-internal` dropped from test fixture; `query_text` max_length=10k; typed returns (`list[Row]`, `List[float] | None`); Spanish docstring aside removed.
+- OPEN QUESTIONS from review (not code): (1) tie-breakers `primary_has_description`/`last_status_update` are in code + TB's original SQL but NOT in the US text — ticket needs updating; (2) `priority_rank` projects only `sort[0]` while ordering now uses ALL sort rules (CTE projects `sort_rank_i` per rule — ordering is fully correct, the *projected* field describes rule 0 only); (3) Case Studies PRD changelog entry still pending.
+
 ## Gotchas
 - `parse_matching_config` silently degrades bad configs — this endpoint must NOT (caller is a service): strict subclasses `CaseStudyFilterRule`/`CaseStudySortRule`/`CaseStudyCandidateRules` with `extra="forbid"`.
 - `ExternalApiException` takes kwargs only (`status_code=`, `detail=`) — positional arg TypeErrors.
@@ -46,7 +52,7 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - KForce scale: N/A-ish — queries are project-gated over talent/application/experience, none of the contact-scale tables.
 
 ## Pending
-- PR [#2231](https://github.com/taller-projects/echo-backend/pull/2231) review + merge to dev (deploys dev + kforce-dev).
+- PR [#2231](https://github.com/taller-projects/echo-backend/pull/2231) merge to dev (review r1 addressed at `bdceffc7`; CI re-run pending).
 - Changelog entry in the Case Studies technical PRD (this reverts its "talent queries stay direct-DB" decision).
 - Team Builder side (their repo): HTTP client, Navitec yaml `candidate_rules`, N-tier `_select_application`, delete `echo_backend_db.py` + 5 `ECHO_POSTGRES_DB_*` Vault secrets — gated on their dev validation (3 Navitec projects, endpoint rows vs old queries).
 - qa/main promotion after dev validation.
