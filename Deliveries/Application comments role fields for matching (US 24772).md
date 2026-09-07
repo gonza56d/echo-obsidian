@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-09-07
 tags: [feature, application, comments, matching, internal-api]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2224"
@@ -21,7 +21,7 @@ Nico Lizondo (Data / matching-products) request, PRD artifact "Application Comme
 - PRD: Claude artifact `90755dba-2652-48f2-9f61-0355d7579ab5` (Application Comments para Matching); sibling artifact `0c0d6d3b-94b4-4bab-a8c2-82585ae8957b` (batch-status polling guide — NOT picked up, optional, would land in `vectorizer_service`)
 
 ## PRs
-- [#2224](https://github.com/taller-projects/echo-backend/pull/2224) → dev — OPEN 2026-09-07; self-review (skill /pr-review, full mode) 2026-09-07: 0 blockers, verdict READY WITH NITS; nits addressed in `c72f1b80`. Leo APPROVED 2026-09-07 16:02 (0 blockers); his nits (role_name-per-app assertion, deleted-reply masking, public-surface line in body) addressed in `f4a49b17` + PR body edit
+- [#2224](https://github.com/taller-projects/echo-backend/pull/2224) → dev — MERGED 2026-09-07 squash `c50ef0ed` (CI green 12m03s); self-review (skill /pr-review, full mode) 2026-09-07: 0 blockers, verdict READY WITH NITS; nits addressed in `c72f1b80`. Leo APPROVED 2026-09-07 16:02 (0 blockers); his nits (role_name-per-app assertion, deleted-reply masking, public-surface line in body) addressed in `f4a49b17` + PR body edit
 
 ## How
 - `ApplicationComment` gained an `application` relationship (the composite FK `(application_id, tenant_id)` already existed — no migration).
@@ -42,7 +42,6 @@ Nico Lizondo (Data / matching-products) request, PRD artifact "Application Comme
 ## Pending
 - Ask Nico: does the matching client treat `role_name: null` as "field absent" (i.e. would it silently fall back to 1+N lookups)? OpenAPI advertises the fields nullable.
 - Follow-up (unticketed, out of PR scope): cross-tenant negative test for the internal by-talent listing in `tests/multitenancy/` (pre-existing gap); pre-existing commented-out `application` relationship stub in `app/modules/application/status_history/models.py:32-34` — implement or delete.
-- CI on `f4a49b17` → squash-merge #2224 (approved).
 - Post-merge verification per PRD: Loki `{app="matching-products-api-<env>"} |~ "\[APP_COMMENTS\]"` — role-lookup lines disappear; zero `GET /internal/applications/{id}` with UA `python-httpx`.
 - US 24772 → Ready to Test after dev deploy.
 - Sibling PRD (batch-status polling) unscheduled — no ticket filed.
