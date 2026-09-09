@@ -6,9 +6,11 @@ delivered: 2026-09-07
 tags: [feature, internal-api, talent, matching, team-builder, case-studies]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2231"
+  - "https://github.com/taller-projects/echo-backend/pull/2241"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24794"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24857"
 prd: ""
 ---
 
@@ -50,6 +52,13 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - REBUTTED (with reply on PR): test placement — `tests/unit` is DB-backed by design here and CI runs ONLY tests/unit, so moving to tests/system would remove the isolation probes from CI.
 - Parity question answered on PR: extra tiebreakers port TB's original SQL; Navitec 3-project validation covers it; US to be updated to record them.
 
+## Follow-up: described-experience tie-breaker (Task 24857, 2026-09-09)
+- TB ran rollout step 2 (`tools/compare_case_study_candidates.py` vs the endpoint on dev, 3 Navitec dev projects `448417f6`/`374ca11d`/`6ed61090`): `similar` + `vector` + anchor selection **identical**; `application` ranking differed — always the same 2 talents per project at the `per_role_cap=12` edge.
+- Cause: 4th tie-breaker shipped as "most recent experience has description" (scalar subquery, no org join). The retired SQL's `latest_exp` CTE ordered description-present DESC first, so it effectively computed "has ANY described experience with a company" — which is also what TB anchors on (`described_experiences[0]`) and what Navitec prod sees.
+- Fix: PR [#2241](https://github.com/taller-projects/echo-backend/pull/2241) → dev **OPEN** ([Task 24857](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24857), In development, Related-linked to the US): scalar subquery → EXISTS over described experiences joined to `organization`; label renamed `has_described_experience`. Contract/shape unchanged; TB untouched.
+- Pinned test `test_application_mode_any_described_experience_beats_recency` — **verified it fails on the old implementation** (the never-described talent gets a LATER `last_status_update`, so recency can't mask the key; talent_id tiebreak can't save it either).
+- Exit: after dev deploy TB re-runs the comparison on the same 3 projects; identical per role = the gate for their transport merge (rollout step 3). Artifact updated with the full analysis (section "Ajuste tras la comparación en dev").
+
 ## Gotchas
 - `parse_matching_config` silently degrades bad configs — this endpoint must NOT (caller is a service): strict subclasses `CaseStudyFilterRule`/`CaseStudySortRule`/`CaseStudyCandidateRules` with `extra="forbid"`.
 - `ExternalApiException` takes kwargs only (`status_code=`, `detail=`) — positional arg TypeErrors.
@@ -57,10 +66,11 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - KForce scale: N/A-ish — queries are project-gated over talent/application/experience, none of the contact-scale tables.
 
 ## Pending
+- PR [#2241](https://github.com/taller-projects/echo-backend/pull/2241) (Task 24857): team review + merge + dev deploy, then TB re-runs the 3-project comparison (identical per role = their transport-merge gate).
 - Changelog entry in the Case Studies technical PRD (this reverts its "talent queries stay direct-DB" decision) — pre-cutover gate.
-- Verify dev + kforce-dev deploy of `d90aef95`, then hand endpoint to Team Builder for validation.
-- Team Builder side (their repo): HTTP client, Navitec yaml `candidate_rules`, N-tier `_select_application`, delete `echo_backend_db.py` + 5 `ECHO_POSTGRES_DB_*` Vault secrets — gated on their dev validation (3 Navitec projects, endpoint rows vs old queries).
-- qa/main promotion after dev validation.
+- Team Builder side (their repo): HTTP client, Navitec yaml `candidate_rules`, N-tier `_select_application`, delete `echo_backend_db.py` + 5 `ECHO_POSTGRES_DB_*` Vault secrets — gated on the post-#2241 re-comparison.
+- qa/main promotion after dev validation (now includes #2241).
+~~Verify dev + kforce-dev deploy of `d90aef95`~~ DONE — deployed 2026-09-08, TB comparison ran 2026-09-09.
 
 ## Related
 - [[Matching batch status proxy (US 24774)]] · [[Tenant list search param ignored (Bug 24696)]]
