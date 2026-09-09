@@ -58,6 +58,7 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - Fix: PR [#2241](https://github.com/taller-projects/echo-backend/pull/2241) → dev **OPEN** ([Task 24857](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24857), In development, Related-linked to the US): scalar subquery → EXISTS over described experiences joined to `organization`; label renamed `has_described_experience`. Contract/shape unchanged; TB untouched.
 - Pinned test `test_application_mode_any_described_experience_beats_recency` — **verified it fails on the old implementation** (the never-described talent gets a LATER `last_status_update`, so recency can't mask the key; talent_id tiebreak can't save it either).
 - Exit: after dev deploy TB re-runs the comparison on the same 3 projects; identical per role = the gate for their transport merge (rollout step 3). Artifact updated with the full analysis (section "Ajuste tras la comparación en dev").
+- Self /pr-review 2026-09-09 (scoped, 3 agents): **READY WITH NITS** — 0 blockers, 6/6 ticket reqs, CI green; reviewer independently re-verified the pinned test fails on dev's implementation. Nits addressed at `593a8ab0`: (1) why-comment stating the org join in the EXISTS is parity-only (`company_id` NOT NULL → never filters); (2) `test_application_mode_empty_string_description_is_not_described` pinning the `!= ''` half of the predicate (verified failing with that predicate removed). File suite 25 passed. Out-of-scope note recorded: whitespace-only descriptions count as described everywhere (old key, batch query, TB SQL) — do NOT "fix" before the TB re-comparison.
 
 ## Gotchas
 - `parse_matching_config` silently degrades bad configs — this endpoint must NOT (caller is a service): strict subclasses `CaseStudyFilterRule`/`CaseStudySortRule`/`CaseStudyCandidateRules` with `extra="forbid"`.
@@ -66,7 +67,7 @@ Team Builder's Inspired case-study source read echo-backend's Postgres directly 
 - KForce scale: N/A-ish — queries are project-gated over talent/application/experience, none of the contact-scale tables.
 
 ## Pending
-- PR [#2241](https://github.com/taller-projects/echo-backend/pull/2241) (Task 24857): team review + merge + dev deploy, then TB re-runs the 3-project comparison (identical per role = their transport-merge gate).
+- PR [#2241](https://github.com/taller-projects/echo-backend/pull/2241) (Task 24857): self-reviewed + nits landed `593a8ab0`; team review + merge + dev deploy, then TB re-runs the 3-project comparison (identical per role = their transport-merge gate).
 - Changelog entry in the Case Studies technical PRD (this reverts its "talent queries stay direct-DB" decision) — pre-cutover gate.
 - Team Builder side (their repo): HTTP client, Navitec yaml `candidate_rules`, N-tier `_select_application`, delete `echo_backend_db.py` + 5 `ECHO_POSTGRES_DB_*` Vault secrets — gated on the post-#2241 re-comparison.
 - qa/main promotion after dev validation (now includes #2241).
