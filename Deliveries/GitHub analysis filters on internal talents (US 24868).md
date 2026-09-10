@@ -21,7 +21,7 @@ The github-candidate-analyzer reads echo-backend's Postgres directly (5 DB secre
 - PRD: analyzer-side artifact "Análisis de GitHub pendientes por API" (claude.ai artifact a3a0b733-8a25-4c8c-b6da-fd0613fde687, 2026-09-10)
 
 ## PRs
-- [#2247](https://github.com/taller-projects/echo-backend/pull/2247) → dev — OPEN 2026-09-10
+- [#2247](https://github.com/taller-projects/echo-backend/pull/2247) → dev — OPEN 2026-09-10; Leo **APPROVED** 2026-09-10 (review 5169451906), nits addressed `79cbeeea` (other session: enum at the pending writer, empty-`__in` + whitespace-URL tests, multitenancy isolation cases) + `547b01ae` (combined eq+`__in` test, class-level consume-and-skip note)
   - `44a7d9b2` original feature
   - `79cbeeea` (2026-09-10) review-nit follow-up (self /pr-review, below)
 
