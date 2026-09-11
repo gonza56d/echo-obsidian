@@ -22,6 +22,7 @@ Every HTML email Echo sends now extends one Jinja shell (`email_shell.jinja`) ca
 ## PRs
 - [#2253](https://github.com/taller-projects/echo-backend/pull/2253) → dev — OPEN 2026-09-11. No FE impact (emails only).
 - Review r1 (2026-09-11, /pr-review, full mode): **0 blockers**, verdict ready-with-nits gated on Design/Product sign-off. Nits fixed in `685cddb6`: shell macros `paragraph`/`cta_button`/`footer_link` dedupe brand tokens out of child templates (all 6 renders verified **byte-identical** before/after); escaped-form `&lt;script&gt;` assertions on every XSS test; “Manage your notification preferences” absence asserted on non-preference emails; `support_message` + `more_count=0` branches covered; `echo_logo_url()` base pinned to `FRONTEND_URL`; ticketless TODO dropped in `_send_commitment_emails`. Review QUESTIONS routed to the design review: Manage-interview button→link demotion, ALLOCATION/INTERVIEW eyebrow labels, welcome copy drops (© year line, “Enjoy your experience!”) — noted on the US.
+- Leo APPROVED (review 5181186866, 0 blockers). His nits 1–3 fixed in `473f41e5`: AC2 golden snapshot test for single/list (fixtures `tests/unit/email_golden/`, regen `SAVE_GOLDEN=true`; guard verified to fail on perturbation), XSS payloads on role_title / list item.title+eyebrow / commitment subject, empty `items=[]` render. Nit 4 (mail_renderer home) deferred until a third non-notification consumer; nit 5 (PII in logs) filed as [Task 24891](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24891).
 
 ## How
 - `app/modules/notification/mail_renderer.py`: single Jinja env (`autoescape=True`) + `echo_logo_url()` — the only places email rendering config lives. Consumed by `notification/service.py`, `notification_email_scheduler_service.py`, `welcome_email_service.py`.
@@ -41,7 +42,7 @@ Every HTML email Echo sends now extends one Jinja shell (`email_shell.jinja`) ca
 - `tests/unit/test_interview_scheduled_email.py` fixtures imported `TEMPLATES_FOLDER` from the service (removed) — the `__new__`-fixture trap again; they now use `mail_template_env`.
 - The shell's Jinja comment can't contain literal `<style>`/`#1a73e8` — the guard test scans template SOURCE including comments.
 - Interview emails still hardcode ART timezone — explicitly out of scope, needs its own ticket (PRD open question, unfiled).
-- Pre-existing (review out-of-scope finding): `service.py:_send_commitment_emails` disabled-path logs full recipient email addresses (PII), vs domain-only policy in `sendgrid_service.py` — follow-up candidate, unfiled.
+- Pre-existing (review finding, Leo confirmed + welcome `to_email`): email send paths log recipient addresses (PII) vs domain-only policy in `sendgrid_service.py` — FILED as Task 24891.
 
 ## Pending
 - Team review / merge of [#2253](https://github.com/taller-projects/echo-backend/pull/2253).
