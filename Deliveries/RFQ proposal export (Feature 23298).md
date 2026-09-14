@@ -9,6 +9,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2124"
   - "https://github.com/taller-projects/echo-backend/pull/2179"
   - "https://github.com/taller-projects/echo-backend/pull/2201"
+  - "https://github.com/taller-projects/echo-backend/pull/2264"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23298"
@@ -16,6 +17,7 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24437"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24639"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24698"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24924"
 prd: "https://app.notion.com/p/3c2aedca11f081df8476c9ea8301721c"
 ---
 
@@ -84,6 +86,17 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 - **Out of scope (flagged in PR)**: `generic_proposal.jinja` / `navitec_proposal.jinja` and the PPTX renderer consume the same `project.timeline` and still print literal `**`; PPTX would need run-splitting. Team Builder duplicates the client in the running title ("Proposal to Capital One for … · Capital One") — TB copy, not ours.
 - **Review round 1 (2026-09-02)**: `/pr-review` → **READY WITH NITS** (0 blockers; ticket 13/14 rows implemented + R7 out-of-scope; arch 8 PASS/8 N/A; tests 6 PASS/10 N/A). Pedro ([rocha-p](https://github.com/rocha-p)) **APPROVED** with 4 optional nits (`***bi***` crossed tags, code spans not shielded from emphasis, missing code+bold / nesting guards, `if not text` vs `str | None`). All nits (Pedro's + mine) fixed in `b3b2e6ed`, pushed: code spans parked in NUL slots during the emphasis passes (input NUL stripped first so a slot can only be ours), new `_INLINE_BOLD_ITALIC_RE` runs before bold so `***x***` nests properly, `text is None or text == ""` guard, redundant outer `str()` dropped (inner one kept — defeats `escape()`'s `Markup` pass-through), `markupsafe<4.0.0,>=3.0.2` declared as a direct dep (`uv lock` also picked up one missing greenlet s390x wheel line — harmless), +10 filter cases (69 tests in the two files). PR retitled `fix(export): render inline markdown and Navitec running header in RFQ templates` via `gh api` (Conventional Commits; squash title). Known remaining edges, accepted: `**a **b**` → `<strong>a **b</strong>`, `***a** b*` crossed; not in TB output shape.
 
+## Follow-up fix — standard proposal templates + PPTX literal Markdown (PR #2264, 2026-09-14)
+
+- **Trigger**: QA screenshot of Export Projects — the generic proposal's "Delivery Phases" table printed `**Project Manager:** Define the PoC objectives…` literally. This is the half that [#2201](https://github.com/taller-projects/echo-backend/pull/2201) deliberately left out (RFQ templates only); the deferred follow-up was still unfiled → filed as [Bug 24924](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24924) (child of Feature 23298, Sprint 45) and fixed the same day.
+- **PR [#2264](https://github.com/taller-projects/echo-backend/pull/2264) → dev OPEN** (2026-09-14, branch `24924/proposal_pptx_inline_markdown`); Bug 24924 → In revision, PR linked.
+- **Shape**: filter + regexes hoisted from `export/service.py` into new `app/modules/export/inline_markdown.py` (one source of truth) exporting `inline_markdown_html` (the filter, behavior unchanged) plus two new APIs for non-HTML renderers: `parse_inline_markdown()` → `InlineSegment(text, bold, italic, code)` list (one combined alternation regex, recursive descent for nesting) and `strip_inline_markdown()` for text measurement.
+- **PDF**: `| inline_markdown` on every TB prose field in `generic_proposal.jinja` + `navitec_proposal.jinja` — summary paragraphs, pain points / outcomes, phase activities, case-study challenge / delivery, responsibilities (`| inline_markdown or "—"` — empty Markup is falsy, dash preserved), resource notes, and (navitec only) next-steps stages. Intended side effect: `navitec_proposal.jinja` has NO `{% autoescape %}` block, so these fields gain HTML escaping too.
+- **PPTX**: new `_write_prose()` writes one styled run per segment at every TB prose site (`_flow_paragraphs`, `_bullet_column`, `_fill_activities_cell`, next-steps stage boxes, `_notes_box`, and `_fill_cell(prose=True)` for case-study value cells + responsibilities); `_style_run` gains `italic`; `_wrapped_lines` / `_estimate_lines` measure marker-stripped text so row heights / overflow pagination stay accurate. Code spans render as plain text (backticks stripped, no monospace).
+- **Tests**: `test_inline_markdown.py` retargeted at the new module + segment/strip parametrizations; new `test_export_proposal_render.py` (lxml DOM on the pre-PDF HTML, both templates, mirrors `TestRfqRenderedDom`: strong/em/code rendered, no literal `**`, raw HTML escaped, `—` fallback intact); PPTX run-level tests (no markers in deck text, bold/italic runs where expected, both themes). Full unit suite 4698 green.
+- **Gotchas**: the worktree guard now also refuses `zsh -ic`, heredocs that read outside the tree, and any command whose text contains "git" (a github.com URL in `curl -d` counts) → Azure calls work with plain `curl -u ":$AZURE_DEVOPS_EXT_PAT"` (the Bash profile loads the var; no zsh -ic needed) and JSON bodies with URLs go via `-d @file`. Docker must be running before ANY tests/unit run (autouse Postgres container).
+- **Out of scope**: "Weeks 1" duration copy (TB wording, not a rendering bug); TB-sourced `title` / `row.role` / `row.source` / `phase.title` stay unfiltered by spec.
+
 ## Decisions
 
 - **Backend-derived data** (user call, 2026-08-20): reuse TB `generate_proposal` + project data; no TB dependency. Scope-in bullets = objectives outcomes (fallback pain_points); assumptions hardcoded per brand.
@@ -105,7 +118,9 @@ New proposal export type for Projects: **RFQ (Request For Quotation)** — portr
 
 ## Pending
 
-- **#2201 (inline markdown + Navitec header)**: MERGED dev `b22f4bb6` 2026-09-02, Bug 24698 Closed → promote qa/main with the next batch; verify on dev.api against the prod Navitec project shape. Restore dev project `57803157…` name (user renamed it for the header test). **File the follow-up Bug** for `generic_proposal.jinja` / `navitec_proposal.jinja` / PPTX still printing `**` (child of 23298), and note there that TB-sourced `title` / `row.role` / `row.source` / `phase.title` stay unfiltered by spec.
+- **#2264 (standard proposal + PPTX inline markdown)**: OPEN → review/merge, [Bug 24924](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24924) → Closed on merge, qa/main with the next batch, QA re-check of the Export Projects PDF.
+
+- **#2201 (inline markdown + Navitec header)**: MERGED dev `b22f4bb6` 2026-09-02, Bug 24698 Closed → promote qa/main with the next batch; verify on dev.api against the prod Navitec project shape. Restore dev project `57803157…` name (user renamed it for the header test). ~~File the follow-up Bug~~ DONE 2026-09-14: [Bug 24924](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24924) filed + fixed, PR [#2264](https://github.com/taller-projects/echo-backend/pull/2264) → dev OPEN (see follow-up section).
 - **#2179 (empty sections fix)**: self-review fixes pushed `f78b2cad` 2026-08-28 → CI + peer review → merge to dev → promote qa/main with the next batch. Unfiled follow-ups: export Jinja `Environment` autoescape hardening (Leo's nit, all 16 templates); proposal-path all-null contact (hoist `_contact_or_none` to a shared export helper if ever needed); RFQ template `{% extends %}` refactor.
 - M1 [#2120](https://github.com/taller-projects/echo-backend/pull/2120) + M2 [#2124](https://github.com/taller-projects/echo-backend/pull/2124) MERGED to dev 2026-08-21; check whether qa/main promotion already happened (batch train) and move Tasks 24436/24437 accordingly.
 - **FE follow-up (FE-owned)**: UI affordance to send `proposal_type=rfq` — no FE ticket yet; flag to Producto/FE.
