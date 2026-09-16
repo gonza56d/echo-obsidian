@@ -41,7 +41,7 @@ One role row that hydrates as Python `None` in fields the response schema types 
 - Bug 24132 → move to Resolved.
 - **Follow-up tickets NOT filed yet** (surfaced by review r1):
     1. `PublicRoleResponse` (`app/modules/public_api/schemas.py`) — same failure class: JSON null in `skills_required`/`skills_nice_to_have` would 500 the public career-page `Page[PublicRoleResponse]`.
-    2. `virtual_interview` DB default drift — live dev `column_default` is `'{}'::jsonb` vs model `server_default="[]"` (`app/modules/role/models.py:402`); a raw-SQL insert taking the server default yields `{}` → bypasses the None-guard and fails `list[Question]` validation → same one-row-500. Needs a small alignment migration.
+    2. ~~`virtual_interview` DB default drift~~ → **materialized as the 2026-09-16 dev /roles 500; filed + fixed as [[GET roles 500 virtual_interview default drift (Bug 24988)]]** (was: drift — live dev `column_default` is `'{}'::jsonb` vs model `server_default="[]"` (`app/modules/role/models.py:402`); a raw-SQL insert taking the server default yields `{}` → bypasses the None-guard and fails `list[Question]` validation → same one-row-500.)
     3. `ApplicationResponse` inherits `ApplicationCreate` (Bug 24010 side-finding) — same pattern could 500 application listings; not audited.
 
 ## Related
