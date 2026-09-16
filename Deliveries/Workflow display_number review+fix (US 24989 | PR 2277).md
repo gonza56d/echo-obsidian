@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-09-16
 tags: [review, feature, workflow, migration]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2277"
@@ -20,7 +20,7 @@ Pedro's PR [#2277](https://github.com/taller-projects/echo-backend/pull/2277) (U
 - [US 24989](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24989) — BE: Taller default workflow must reproduce today's stage UX (display numbers + grouping). Assigned Pedro, state New, **zero comments** (relevant: the On Hold deferral is unrecorded there).
 
 ## PRs
-- [#2277](https://github.com/taller-projects/echo-backend/pull/2277) → dev OPEN (Pedro). My fix commit `029bc0f9` pushed 2026-09-16; consolidated review comment posted same day.
+- [#2277](https://github.com/taller-projects/echo-backend/pull/2277) → dev **MERGED 2026-09-16** (squash `40247e97`, CI green). My fix commit `029bc0f9`; Pedro's review-response `0950a71c` (ge=1 + Field import, create_default_workflow symmetry, migration↔defs parity assert, downgrade comment, 0/-1 → 422 API test) verified in review round 2 — no new blockers. PR body records the On Hold scope decision + manual alembic throwaway run.
 
 ## How (the fix)
 - **Blocker found**: the migration's 4 data statements matched step names **tenant-wide** (`tenant_id IN (… LOWER(name)='taller')`), not per-workflow. Verified against real DBs: dev clean, **QA's Taller tenant has a generic `Default Workflow`** whose `Screening Scheduled` / `Technical Interview Scheduled` / `On Hold` would get display_number 1/8/29. Prod unverifiable (permission classifier blocks prod reads from Claude sessions).
@@ -37,9 +37,10 @@ Pedro's PR [#2277](https://github.com/taller-projects/echo-backend/pull/2277) (U
 - The stage move is NOT display-only: Offer > ClientProcess in both `STAGE_ORDER` (application filters) and `advancement_rank` (TB candidate ranking) — intended per ticket, disclosed in PR body.
 
 ## Pending
-- Pedro: `ge=1` validation blocker; nits (create_default_workflow drops display_number, migration↔defs parity assert, downgrade-inverse comment); record On Hold/Backup resolution + FE follow-up ticket link on US 24989; confirm manual `alembic upgrade head`/`downgrade -1` run.
-- Check **prod** for the Default Workflow collision before merge (query in the PR comment) — I could not read prod.
-- CI was pending at review time.
+- Record the On Hold/Backup resolution as a comment on US 24989 + open/link the FE follow-up ticket (render `${display_number}. ${name}` + On Hold section by step name) — still zero comments on the US at merge time; PR body tracks it.
+- Prod was never checked for the Default Workflow collision (my prod read permission-blocked) — the workflow-scoped SQL makes it moot for correctness, but sanity-check post-deploy that only Taller Pipeline rows got numbers.
+- Residuals accepted at merge: downgrade comment says "stage is display-only" (contradicts PR body — stage drives advancement_rank/STAGE_ORDER); parity assert lives in tests/system, which CI never runs.
+- qa/main promotion with the next batch.
 
 ## Related
 - [[GET roles 500 virtual_interview default drift (Bug 24988)]] — same workflow/roles neighborhood, migration `wxtz7gwf7wqb` is this PR's parent revision.
