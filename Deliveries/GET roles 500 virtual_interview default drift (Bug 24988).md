@@ -24,6 +24,13 @@ Dev at fix time: **141 poison rows**, all exactly `{}`, all `external_id IS NULL
 - Migration `wxtz7gwf7wqb` (parent `trwqpe2orkxb`): `SET DEFAULT '[]'::jsonb` + idempotent lossless heal (`WHERE virtual_interview='{}'::jsonb`). Downgrade restores `'{}'` default, does NOT un-heal (healed `[]` indistinguishable from legit empty).
 - `RoleListResponse._null_to_field_default` extended: `{}` coerces to field default **on list-typed fields only** (isinstance-of-list check on the declared default). Non-empty objects still fail loudly; `{}` stays valid for `interview_questions`/`code_challenge`; create/update contracts untouched (pinned by test).
 - 4 new tests in `tests/unit/test_roles.py`. Full unit+multitenancy 4856 green; migration exercised on throwaway pgvector Postgres (chain green, heal verified with seeded poison row, downgrade/upgrade round-trip).
+- Commit `18437270` (post-review, 2026-09-16): `tests/unit/test_role_virtual_interview_default_migration.py` — runs the REAL `wxtz7gwf7wqb` upgrade/downgrade in-suite (`_load_migration` pattern from test_role_note_migration.py; `downgrade()` first to re-create the drifted `'{}'` default, then upgrade: default fixed, poison healed, legit row untouched, idempotent re-run) + rejection test now pins `loc == virtual_interview`.
+
+## Review (round 1, 2026-09-16 — /pr-review, 3 subagents)
+Verdict **READY WITH NITS** — 0 blockers, 0 questions. Arch 12P/0F, Tests+Sec 12P/0F, ticket compliance 7/8 (+1 partial). CI green.
+- Nits 1+2 (migration heal test in-suite; pin rejection error loc) → **addressed in `18437270`**.
+- Nits 3+4 skipped by choice: e2e from_attributes/Page regression (dict-based style matches 24132 precedent); `public.role` vs `public."role"` quoting cosmetics.
+- Review confirmed: kf9cnv1tnt01:2587 is the ONLY jsonb default it codified — no sibling columns need healing; rollout race (old pods mid-deploy) absorbed by validator.
 
 ## Decisions / gotchas
 - Reverting a convergence-codified default is safe here: kf9cnv1tnt01 matched live shape, it did not choose `{}` semantically (no unification-ledger row).
@@ -31,8 +38,10 @@ Dev at fix time: **141 poison rows**, all exactly `{}`, all `external_id IS NULL
 - `PublicRoleResponse` does NOT expose `virtual_interview` — no public-api leg for this bug.
 
 ## Pending
-- PR #2275 review + merge; dev deploy verify (re-run the Slack repro); qa/main promotion later.
+- PR #2275 merge (review round 1 done, READY WITH NITS, nits addressed); dev deploy verify (re-run the Slack repro); qa/main promotion later.
 - Bug 24988 → Closed on merge.
+- **File follow-up ticket**: `app/modules/role/models.py:399` `Mapped[Dict]` → `Mapped[list]` — the type-level lie that ancestored this bug family (flagged independently by 2 reviewers).
+- **Ops at deploy**: record pre/post `'{}'` counts on qa/prod/kforce on the ticket (per its System-info note).
 - Still-unfiled siblings from 24132 review: #1 `PublicRoleResponse` JSON-null hardening (skills fields), #3 `ApplicationResponse` inherits-create-contract audit.
 
 ## Related
