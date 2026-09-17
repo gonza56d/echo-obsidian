@@ -9,6 +9,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2290"
   - "https://github.com/taller-projects/echo-backend/pull/2291"
   - "https://github.com/taller-projects/echo-backend/pull/2292"
+  - "https://github.com/taller-projects/echo-backend/pull/2293"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24996"
@@ -28,7 +29,7 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - [US 24999](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24999) — M2, In revision.
 - [US 25000](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25000) — M3, In revision.
 - [US 25001](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25001) — M4, In revision.
-- [US 25002](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25002) — M5, In development.
+- [US 25002](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25002) — M5, In revision.
 - PRD: [PRD Técnico — Referral Attribution](https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3) · business: [Referral Attribution (set at intake or by editing the source)](https://app.notion.com/p/3deaedca11f0812cb3d6eb0ae5f34f39) + Dami's [Editable Candidate Source & Referral Attribution](https://app.notion.com/p/3deaedca11f081e2a32dcae3ef1e28f3)
 
 ## PRs
@@ -36,6 +37,7 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - M2 [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → **stacked on M1 branch** — OPEN 2026-09-17. Branch `24999/referral-attribution-m2-referral-source-validation`. Retarget base to dev once #2289 merges.
 - M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → **stacked on M2 branch** — OPEN 2026-09-17. Branch `25000/referral-attribution-m3-conflict-cascade-ownership`.
 - M4 [#2292](https://github.com/taller-projects/echo-backend/pull/2292) → **stacked on M3 branch** — OPEN 2026-09-17. Branch `25001/referral-attribution-m4-referrer-suggestions`.
+- M5 [#2293](https://github.com/taller-projects/echo-backend/pull/2293) → **stacked on M4 branch** — OPEN 2026-09-17. Branch `25002/referral-attribution-m5-audit-trail`. LAST of the chain.
 
 ## How
 - `Permission.EditSource = "recruitment.edit_source"` in `app/user/schemas.py`, wired into `TenantModuleConfig.RECRUITING` (NOT ADMIN_PERMISSIONS) → appears in available-permissions for recruiting tenants.
@@ -61,6 +63,11 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - `GET /talents/referrers?search=`: Page[str] DISTINCT over talent.referral, `lower(unaccent())` LIKE both sides, ordered; same pattern as /talents/skills. Registered BEFORE `/{talent_id}` (UUID route would swallow it → 422).
 - `TalentRepository.find_canonical_referrer` (oldest talent wins) applied on dedicated PATCH + public intake (`TalentCreateInternal` exempt). Variant of own value = no-op; new names stored as typed.
 
+### M5 (audit trail)
+- Tables `talent_change_history` + `application_change_history` (migration `nq8ke2vwt5rz`): JSONB old/new, changed_by SET NULL, composite (parent, tenant) FK CASCADE, RLS "Allow access via parent" in the SAME revision. Verified upgrade/downgrade + policies on throwaway PG.
+- Writers: dedicated PATCH ({source, referred_by} snapshot), generic public PATCH (router passes changed_by; TalentUpdateInternal exempt), ApplicationService.transfer_source ({source} by name; covers cascade) + NEW no-op guard on transfer_source (same source_id → no write/history/log).
+- Read: GET /talents/{id}/change-history + GET /applications/{id}/change-history — Page, Protected(Talents), 404 via parent visibility (not empty page).
+
 ## Decisions
 - **Gate swap + backfill** (user picked over OR/PermissionSet and replace-only): satisfies PRD criterion "sin edit_source ⇒ 404" with zero regression.
 - Permission lives in RECRUITING module per PRD ⇒ **new tenants' Member/Full Access system roles get it by default** (Viewer excluded); existing tenants only via backfill (admins) or manual assignment. Flagged in PR for product sign-off.
@@ -81,7 +88,10 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) review + merge (after #2290).
 - Retry edge (documented in PR): partial failure between source write and owner assignment → retry 422s on owner_id; assign via ownership endpoint.
 - M4 [#2292](https://github.com/taller-projects/echo-backend/pull/2292) review + merge (after #2291).
-- M5 (audit trail tables + read endpoints) — in development, stacked on M4.
+- Merge the chain in order: [#2289](https://github.com/taller-projects/echo-backend/pull/2289) → [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → [#2292](https://github.com/taller-projects/echo-backend/pull/2292) → [#2293](https://github.com/taller-projects/echo-backend/pull/2293), retargeting each to dev as its base merges.
+- FE paired PR (ACCESS_LEVELS mirror, Add Candidates toggle, read-only states, suggestions typeahead, change-history views).
+- Feature-level QA in dev env (PRD: 6–8h, two tenants, four profiles) before qa/main promotion.
+- PRD changelog + resolve remaining open questions (ATS precedence confirmed by product; keep-referrer implemented as proposed).
 - FE paired PR (ACCESS_LEVELS mirror, toggle in Add Candidates, read-only states).
 - PRD open questions before M3: RLS Camino A/B; guard existing vs new conflict rule; keep-vs-clear referrer; ATS precedence.
 - qa/main promotion at feature level (after all milestones).
