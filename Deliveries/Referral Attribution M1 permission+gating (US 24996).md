@@ -62,5 +62,19 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - PRD open questions before M3: RLS Camino A/B; guard existing vs new conflict rule; keep-vs-clear referrer; ATS precedence.
 - qa/main promotion at feature level (after all milestones).
 
+## Review round 1 (2026-09-17)
+
+Self-review via /pr-review (3 agents). 1 blocker + nits, all fixed in `bf11dec0`:
+
+- **BLOCKER — module placement**: `manage_ownership` (old gate) is in `ADMIN_PERMISSIONS` = available to EVERY tenant; `edit_source` was RECRUITING-only, so talent-/solutioning-only tenants could never assign it → backfill stripped at the role ∩ available_permissions intersection, source edits locked out for good. Fix: added to TALENT + SOLUTIONING lists too (multi-list pattern like `email_template.create`). **Lesson: when swapping a gate, check which bucket the old permission lived in (ADMIN vs module) — availability, not just role membership.**
+- `TalentSourceUpdate` hardened: `str_strip_whitespace`, min 1 / max 255 — blank source no longer creates an empty-named `TalentSource` row; clearing is null-only.
+- `TalentService._resolve_source`: race-safe get-or-create (savepoint flush + re-read on unique violation), dedupes `update()` and `update_source()`. **M2's insensitive matching must build on this helper.**
+- Tests: outbox write/no-op contract, blank 422s, `referred_by: null` clear, module-disabled 404, viewer exclusion asserted against `EDIT_PERMISSION_SUFFIXES` + explicit `edit_source` check (3 modules), wiring test covers 3 lists.
+- Kept `referred_by` as the wire name (PRD contract); column stays `referral` — documented in PR body.
+- Open question routed to M3: `update_source` bypasses `_get_source_change_blocker` (active-application guard) — M3 must decide if EditSource holders bypass it.
+- Backlog (pre-existing, out of scope): `talent_source` has no RLS; `talent.source_id` FK not composite.
+
+Suites after fixes: 4914 passed (unit + multitenancy). CI green.
+
 ## Related
 - [[Map - Kforce]] (shared schema — talent_source per-tenant)
