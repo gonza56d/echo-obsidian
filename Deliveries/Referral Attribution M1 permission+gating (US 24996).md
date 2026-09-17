@@ -7,10 +7,12 @@ tags: [feature, talent, application, access-control, referral-attribution]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2289"
   - "https://github.com/taller-projects/echo-backend/pull/2290"
+  - "https://github.com/taller-projects/echo-backend/pull/2291"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24996"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24999"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25000"
 prd: "https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3"
 ---
 
@@ -20,12 +22,14 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 
 ## Azure / docs
 - [US 24996](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24996) — M1, In revision.
-- [US 24999](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24999) — M2, In revision. One US per milestone (M3–M5 created when each starts).
+- [US 24999](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24999) — M2, In revision.
+- [US 25000](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25000) — M3, In revision. One US per milestone (M4–M5 created when each starts).
 - PRD: [PRD Técnico — Referral Attribution](https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3) · business: [Referral Attribution (set at intake or by editing the source)](https://app.notion.com/p/3deaedca11f0812cb3d6eb0ae5f34f39) + Dami's [Editable Candidate Source & Referral Attribution](https://app.notion.com/p/3deaedca11f081e2a32dcae3ef1e28f3)
 
 ## PRs
 - M1 [#2289](https://github.com/taller-projects/echo-backend/pull/2289) → dev — OPEN 2026-09-17. Branch `24996/referral-attribution-m1-permission-gating`.
 - M2 [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → **stacked on M1 branch** — OPEN 2026-09-17. Branch `24999/referral-attribution-m2-referral-source-validation`. Retarget base to dev once #2289 merges.
+- M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → **stacked on M2 branch** — OPEN 2026-09-17. Branch `25000/referral-attribution-m3-conflict-cascade-ownership`.
 
 ## How
 - `Permission.EditSource = "recruitment.edit_source"` in `app/user/schemas.py`, wired into `TenantModuleConfig.RECRUITING` (NOT ADMIN_PERMISSIONS) → appears in available-permissions for recruiting tenants.
@@ -39,6 +43,13 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - `canonical_source_name`: Referral rows always stored as `Referral` regardless of first-write casing — otherwise the exact-match `talent_source__source=Referral` filter misses (caught by the multitenancy test).
 - 422 `referral_requires_referred_by`: `TalentCreateRequest` (public POST only), `TalentSourceUpdate` validator + post-merge invariant in `update_source` and `update()` (public `TalentUpdate` only — `TalentUpdateInternal` exempt so Jazz/internal keep their contract). Leaving Referral KEEPS the referrer (PRD proposed default).
 - POST /talents gating: FE sends `source: authUser.vendor.name` on every create (AddCandidate.tsx:89) — so only attribution-CHANGING writes are gated (referrer present, or source ≠ own vendor_name → 404 without permission).
+
+### M3 (conflict + cascade + ownership + RLS Camino A)
+- Conflict: source change away from an EXTERNAL-vendor source blocked (400 `external_source_active_process`) while an app in category active sits on a role whose step stage = Open. `referral_conflict_blocked` structlog event. Decisions (user): Camino A + new-rule-only (legacy 2-business-day blocker stays sync-only).
+- Ownership exception: `owner_id` on TalentSourceUpdate accepted ONLY when from-source external + no active process + new source Referral → reuses `transfer_owner` (member assert + jazz lockstep). Else 422 `owner_assignment_outside_referral_exception` before any write.
+- Cascade: on marking Referral, active non-external apps get the Referral source via `ApplicationService.transfer_source` per app (validation + logs). External/inactive apps keep theirs.
+- Camino A: `VendorRepository.link_source_to_internal_vendors` (pg INSERT ON CONFLICT DO NOTHING) ensured on every referral marking + intake; `external_source_ids` defines "external source". RLS verified at data level (testcontainers don't enforce RLS).
+- App endpoint: PATCH /applications/{id}/source to a Referral source 422s unless the talent carries a referrer.
 
 ## Decisions
 - **Gate swap + backfill** (user picked over OR/PermissionSet and replace-only): satisfies PRD criterion "sin edit_source ⇒ 404" with zero regression.
@@ -57,7 +68,9 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 ## Pending
 - PR [#2289](https://github.com/taller-projects/echo-backend/pull/2289) (M1) review + merge, then retarget [#2290](https://github.com/taller-projects/echo-backend/pull/2290) (M2) to dev and merge.
 - Per-tenant duplicate case-variant source check in dev/qa before prod (PRD risk mitigation for the insensitive lookup).
-- M3 (conflict rules + cascade + ownership exception + RLS decision A/B), M4 (`GET /talents/referrers`), M5 (audit trail tables + read endpoints) — stacked.
+- M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) review + merge (after #2290).
+- Retry edge (documented in PR): partial failure between source write and owner assignment → retry 422s on owner_id; assign via ownership endpoint.
+- M4 (`GET /talents/referrers`), M5 (audit trail tables + read endpoints) — stacked.
 - FE paired PR (ACCESS_LEVELS mirror, toggle in Add Candidates, read-only states).
 - PRD open questions before M3: RLS Camino A/B; guard existing vs new conflict rule; keep-vs-clear referrer; ATS precedence.
 - qa/main promotion at feature level (after all milestones).
