@@ -125,3 +125,21 @@ Suites after fixes: 4914 passed (unit + multitenancy). CI green.
 
 ## Related
 - [[Map - Kforce]] (shared schema — talent_source per-tenant)
+
+
+## M3 review round 1 (2026-09-17)
+
+Self-review of #2291 via /pr-review (3 agents: arch, PRD, tests-sec). **Verdict: READY WITH NITS, zero blockers.** PRD compliance 6/6; arch 15 PASS/0 FAIL; tests-sec 10 PASS/0 FAIL. Migration-absence claim verified (composite PK `vendor_sources_pkey (vendor_id, source_id)` from `a141397e73dc` → `ON CONFLICT DO NOTHING` valid; `vendor.kind` from `2b1454dfdc70`; both predate this PR).
+
+Two actionable nits fixed in `9697162c` (pushed):
+- **[arch A9] update_source length**: extracted the prospective source/referral resolution into `_prospective_source` staticmethod — shrinks the orchestrator body.
+- **[tests] missing coverage**: added `test_explicit_owner_id_null_is_ignored_not_rejected` — proves an explicit `owner_id: null` is ignored (not rejected), the `TalentSourceUpdate` docstring contract. Test file now 19 passed.
+
+Nits deliberately NOT fixed (out of scope / follow-up):
+- Foreign-ORM read coupling in `_has_active_open_application`/`_referral_cascade_targets` (reads `Application`/`Role`/`RoleStage` off `get_applications_with_roles`) — pre-existing pattern debt, all *writes* route through owning services; codebase-wide, not this PR's to fix.
+- Cascade per-app commits → partial-cascade on mid-loop failure, self-heals on next marking — flagged as possible follow-up ticket if it bites at volume.
+
+Open questions (non-blocking, surfaced by review):
+- `create_talent` intake link uses `commit=True` (standalone commit) vs `update_source`'s `commit=False` — confirmed intentional (talent row already persisted at that point).
+- FE milestone must consume 3 new `error.code`s (`external_source_active_process`, `owner_assignment_outside_referral_exception`, `referral_requires_referred_by`) + additive `owner_id` body field. Backend contract intact (202 + detail/error.code preserved).
+- Notion Tech PRD is auth-gated — open-question resolutions (Camino A, new-rule-only) confirmed against PR body, not re-fetched from Notion.
