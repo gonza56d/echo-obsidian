@@ -86,6 +86,19 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - PRD open questions before M3: RLS Camino A/B; guard existing vs new conflict rule; keep-vs-clear referrer; ATS precedence.
 - qa/main promotion at feature level (after all milestones).
 
+## M2 review round 1 (2026-09-17)
+
+Self-review of #2290 via /pr-review (3 agents: arch, PRD, tests-sec). PRD compliance 12/12. 3 blockers + nits, all fixed in `16698b34` (pushed; M1 #2289 had merged to dev `8ee501cb`, so #2290 auto-retargeted to dev):
+
+- **BLOCKER — atomicity**: `TalentSourceRepository.get_or_create` used `save()` (commit=True) → creating a row mid-`update()` COMMITTED pending experiences/custom-fields without their outbox event when a later 422 hit; the DuplicateError race path did a FULL session rollback discarding pending state. Fix: `commit=False` mode = savepoint + raw add/flush (M1's `_resolve_source` mechanics moved into the repo layer — save()'s `handle_commit_errors` does a full rollback on IntegrityError, so the savepoint path must NOT go through save()). Both `update()` and `update_source()` pass commit=False (also kills the orphan-row-on-422).
+- **BLOCKER — legacy variant rows defeat the filter**: pre-M2 `referral`/`REFERRAL` row absorbs new referred talents (oldest-row-wins) while exact-match `talent_source__source=Referral` misses them (writes succeed, reads silently fail — AC 4). Fix: migration `xj4qk9wr2vbn` (canonical = exact row else oldest; repoints talent/application/vendor_sources; merges dups; renames survivor). Verified converged + idempotent on throwaway Postgres (alembic full chain NOT runnable locally — needs Supabase `auth.users`; tested the migration in isolation via `Operations.context`). Data: dev = 1 canonical row, kforce-dev = 0, prod/kforce-prod UNVERIFIED (session read blocked) → **spot-check before promotion**.
+- **BLOCKER — dead code**: `Talent.get_source` (only caller was the dropped `_resolve_source`) — deleted.
+- Nits fixed: POST own-vendor gate compares via `normalize_source_name` both sides; `set_source` hook insert = `ON CONFLICT DO NOTHING` + re-read; `TalentCreateRequest` caps source/referral 255 (public only — shared `TalentRecruitmentFields` untouched so integrations keep their contract); vacuous multitenancy leak test fixed (foreign talent now on other tenant's Referral row + asserts 202); `test_interviews` → `TalentService.__new__` (needed `art_tz` set manually — `__init__` won't run).
+- 9 new tests incl. both get_or_create race paths (MagicMock gotcha: `begin_nested.return_value.__exit__.return_value = False` or the mock CM swallows the IntegrityError).
+- Test-order gotchas found: module-scoped tenant accumulates committed Referral rows across tests → `_clear_referral_rows` helper for tests needing the creation path / exact filter; multitenancy fixture made get-or-create for the same reason.
+- FE heads-up recorded in PR: dual 422 shapes (schema-level = list detail, no error.code; service-level = `referral_requires_referred_by`); POST field `referral` vs PATCH `referred_by`.
+- Local full-suite run hit `psycopg2.errors.DiskFull` (Docker VM disk full → 2806 cascade ERRORs, NOT the diff); pruned ~12GB and reran; user watches CI upstream.
+
 ## Review round 1 (2026-09-17)
 
 Self-review via /pr-review (3 agents). 1 blocker + nits, all fixed in `bf11dec0`:
