@@ -7,6 +7,7 @@ tags: [bugfix, talent, referral-attribution, jazzhr]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2304"
   - "https://github.com/taller-projects/echo-backend/pull/2306"
+  - "https://github.com/taller-projects/echo-backend/pull/2307"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25028"
@@ -27,7 +28,8 @@ Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling o
 
 ## PRs
 - [#2304](https://github.com/taller-projects/echo-backend/pull/2304) → dev — MERGED 2026-09-18 `98ce1715` (branch `25028/sync-preserves-referral-attribution`, commits `47c33c2c` + review follow-up `34cc5f35`).
-- Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa — OPEN 2026-09-18 evening, reviewer rocha-p (Slack DM sent). Carries #2301 + #2302 + #2304 (= all of `qa..dev`). Replaces the closed [#2303](https://github.com/taller-projects/echo-backend/pull/2303). Pre-check: `git merge-tree --write-tree origin/qa origin/dev` clean + ScriptDirectory heads on the merged tree = single `wm3rp9kzt2ve`. qa == main today → prod release = qa → main PR AFTER #2306 merges (convention: user closed dev→main #2297; rocha-p did #2299 qa→main).
+- Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa — OPEN 2026-09-18 evening, reviewer rocha-p (Slack DM sent). Carries #2301 + #2302 + #2304 (= all of `qa..dev`). Replaces the closed [#2303](https://github.com/taller-projects/echo-backend/pull/2303). Pre-check: `git merge-tree --write-tree origin/qa origin/dev` clean + ScriptDirectory heads on the merged tree = single `wm3rp9kzt2ve`. qa == main today, so a qa → main PR was impossible (empty).
+- Release [#2307](https://github.com/taller-projects/echo-backend/pull/2307) → main — OPEN 2026-09-18 evening, reviewer rocha-p (Slack DM sent). Branch `deploy/prod_2026-09-18_referral-fixes` off `origin/main` (`4ff1ed6c`) with `git cherry-pick -x 8fa7862d aff9167e 98ce1715` (clean, no conflicts) in its own worktree `.claude/worktrees/deploy-prod-referral-fixes`. User's call: open it now instead of waiting for #2306, **do not merge** until #2306 lands + QA verifies; merge commit. Heads on the branch = single `wm3rp9kzt2ve`; `git diff HEAD origin/dev` = only the 6 old re-chained migrations. Body has the prod effect table (2 renames in place + 1 vendor link, kforce-prod unmeasured).
 - Review r1 (pr-review skill, 2026-09-18): architecture 13/0, ticket 10/10 reqs, tests-security 1 FAIL (T2: the fixed flow was asserted only against `__new__` fakes / MagicMock `update`) + 5 nits. Fixed in `34cc5f35`: route-level 201 test (`/sync` + Referral + `edit_source` → Referral row in DB), two DB-backed native-apply tests (existing Referral kept + no history; channel talent → vendor + history `changed_by_id` = uploader), 4th native matrix case, 255-cap tests; `writes_attribution` evaluated once per request (router → `keeps_attribution` kwarg), `_require_edit_source` helper for the 3 router gates, stale comments + `/sync` OpenAPI summary reworded.
 
 ## How
@@ -45,6 +47,7 @@ Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling o
 
 ## Gotchas
 - `__new__`-style fakes broke on the new collaborator/keyword: needed `vendor_service` stub, `talent.source` attribute, `**_kwargs` on fake `update` (`changed_by`). 422 body `detail` is a pydantic list → assert on `error.message`.
+- A fresh worktree has no `.env` → `uv run` there recreates `.venv` and any alembic `ScriptDirectory` load fails on `Settings()` (a 2024 migration imports app models). Run chain checks from a worktree that has `.env`, pointing `ScriptDirectory` at the other tree's `app/migrations`.
 - Worktree-guard inside a worktree blocks `awk -v`, `source scripts/venv.sh`, long multi-heredoc `&&` chains and Write outside the worktree → `uv run` directly, temp files inside the worktree.
 - Re-upload with owner reassignment still goes through `TalentUpdateInternal` → no history row, referrer invariant skipped, `_canonical_referrer` skipped, no explicit Camino A `link_source_to_internal_vendors` (pre-existing; 422 now caught at schema level). Now that this path can persist `source=Referral`, it is an attribution write with no audit row.
 - `/apply` (`POST /talents/{id}/apply/{role}`) has NO native branch — always calls the ER→Jazz sync regardless of the `jazz_hr` flag (pre-existing). Route-level test impossible without an ER mock in the test container (none exists; only `__new__` fakes).
@@ -53,7 +56,8 @@ Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling o
 ## Pending
 - [x] PR #2304 reviewed (r1) + merged to dev `98ce1715`
 - [ ] Verify on dev: add candidate with role + Referral → source stays Referral, history author = recruiter
-- [ ] Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa: Pedro review + merge (merge commit) → then open qa → main → prod approvals
+- [ ] Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa: Pedro review + merge (merge commit) → QA verify
+- [ ] Release [#2307](https://github.com/taller-projects/echo-backend/pull/2307) → main: Pedro review; merge (merge commit) only after #2306 + QA → prod approvals → post-deploy: revert BT Member `edit_source` unblock; delete branch + worktree `deploy-prod-referral-fixes`
 - [ ] Tech PRD changelog: resolve open question 5 (attribution wins over sync) + amend "Jazz sync no cambia" (local write changed, outbound payload did not) + add `POST /talents/{role_id}/sync` next to `POST /talents` in Autorización/Validación criteria
 - [ ] Tech PRD: record the re-upload-with-owner-reassignment path (`TalentUpdateInternal`) as the declared exception to "every source change writes one history row" and to "no write path touches owner_id" — or open a follow-up ticket
 - [ ] Product: should an existing EXTERNAL-vendor source also be protected on `/apply` / legacy re-upload (see Decisions)?
