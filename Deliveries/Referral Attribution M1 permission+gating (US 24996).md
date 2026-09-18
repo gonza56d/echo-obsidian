@@ -91,6 +91,7 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - Canonical casing of a source row = first write, EXCEPT Referral (pinned). The Source filter is exact-match; any future "special" source value needs the same pinning.
 
 ## Pending
+- Bug 25028 (role sync overwrote Referral with the vendor, reported by Meli 2026-09-18) → fixed in [#2304](https://github.com/taller-projects/echo-backend/pull/2304), see [[Role sync overwrites Referral source (Bug 25028)]].
 - Merge promotions [#2296](https://github.com/taller-projects/echo-backend/pull/2296) (qa) and [#2297](https://github.com/taller-projects/echo-backend/pull/2297) (main) — **merge commit, never squash**; prod/kforce-prod deploy needs the Azure Environment approvals.
 - kforce-prod Referral case-variant spot-check (optional, low risk): dev=1 canonical, kforce-dev=0, **prod=0 (verified read-only 2026-09-18)**; kforce-prod has no local creds — check via Supabase `hslptkvpsrawnrouwkhc` if wanted.
 - FE paired work = [US 24993](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24993) (Melina) — description + AC filled 2026-09-18 with full BE contract (8-point scope). Parent [US 24973](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24973) (title typo'd "referrral" — searches miss it).

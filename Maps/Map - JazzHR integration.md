@@ -34,3 +34,4 @@ The emission-rule change also fixes an **active Navitec bug**: `matching_diff` t
 ## Reference
 - Shared outbox/dispatcher architecture, MockServer-in-dev, POST-vs-PATCH routing: [[Map - TrackerRMS integration]].
 - `entity_external_links` enum already includes `jazz_hr`; `entity_type=application` already dual-written today.
+- [[Role sync overwrites Referral source (Bug 25028)]] — **in review** (PR #2304, 2026-09-18). `POST /talents/{role}/sync` stamped the vendor over a fresh `Referral` (Referral Attribution collision); now attribution wins locally, Jazz payload still gets the vendor.
