@@ -74,6 +74,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 📌 Recent activity
 
+- 2026-09-18 — Bug 25028: PR #2304 review r1 (1 blocker: fixed flow only asserted on fakes; 5 nits) → fixed + pushed `34cc5f35` (DB-backed regression tests, single `writes_attribution` per request, shared 404 helper); CI watch → squash-merge on green
 - 2026-09-18 — Bug 25028 filed + PR [#2304](https://github.com/taller-projects/echo-backend/pull/2304) opened: role sync (`/talents/{role}/sync`, native, `/apply`) yields to Referral attribution, history author = uploader, sync endpoint gets POST /talents gate + 422
 - 2026-09-18 — Bug 25021: #2302 merged to dev `aff9167e`; release [#2303](https://github.com/taller-projects/echo-backend/pull/2303) dev → qa opened (rider #2301); qa→main body drafted, waits for #2303 merge; merge-tree chain check single head
 - 2026-09-18 — Bug 25021: PR #2302 self-review r1 (0 blockers); nits fixed `1f49c00e` — executable migration test, matcher `refer+al` + POSIX class, docstring/enum breadcrumb
