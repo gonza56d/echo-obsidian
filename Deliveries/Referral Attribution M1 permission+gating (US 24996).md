@@ -13,6 +13,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2295"
   - "https://github.com/taller-projects/echo-backend/pull/2296"
   - "https://github.com/taller-projects/echo-backend/pull/2297"
+  - "https://github.com/taller-projects/echo-backend/pull/2301"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24996"
@@ -149,3 +150,16 @@ Open questions (non-blocking, surfaced by review):
 - `create_talent` intake link uses `commit=True` (standalone commit) vs `update_source`'s `commit=False` — confirmed intentional (talent row already persisted at that point).
 - FE milestone must consume 3 new `error.code`s (`external_source_active_process`, `owner_assignment_outside_referral_exception`, `referral_requires_referred_by`) + additive `owner_id` body field. Backend contract intact (202 + detail/error.code preserved).
 - Notion Tech PRD is auth-gated — open-question resolutions (Camino A, new-rule-only) confirmed against PR body, not re-fetched from Notion.
+
+## Prod regression fix — POST /talents attribution gate (#2301, 2026-09-18)
+
+After M2 reached prod (2026-09-17), `POST /talents` answered **404** for any user without `recruitment.edit_source` whose payload `source` differed from their own vendor name. Prod 2026-09-18: 0 such 404s the three prior days, **13 that day across Battle Tested + Taller**. Root cause: the M2 intake gate compared `source` to `user.vendor_name` (string equality) — wrong because the Chrome extension sends `source: "LinkedIn"` on every profile, tenant-configured source names differ from the vendor name (`Taller - Recruiter` vs `Taller Recruitment`), and vendorless users (`vendor_name IS NULL`) tripped on any non-null source.
+
+- **Fix (Pedro, `23abe8cc`)**: gate on whether the payload writes *attribution*, not on vendor-name equality. `TalentService.writes_attribution(payload)` = referrer set OR source is `Referral` OR `VendorService.is_external_source_name(source)` (case/accent-insensitive name lookup via `talent_source_repo.get_by_name`, then the existing `is_external_source`). Channel sources (LinkedIn, own vendor, tenant-internal names, brand-new names) stay open; a referrer / `Referral` / an external-vendor source still 404 without the permission. The `vendor_name` compare + the `normalize_source_name` import are gone. PATCH `/{id}/source` + generic PATCH untouched (verified they never shared the premise — bug was POST-only).
+- Branch `fix/talent-intake-attribution-gate` (NOT ticketed — no US/Task in the body). PR [#2301](https://github.com/taller-projects/echo-backend/pull/2301) → dev OPEN 2026-09-18.
+- **Temporary prod unblock applied 2026-09-18** (revert after deploy): `recruitment.edit_source` added to Battle Tested's `Member` access role `aa2637f5-73e3-42a1-955b-737a01799719`.
+- **Self /pr-review 2026-09-18 (full, 3-agent): READY WITH NITS, 0 blockers.** Arch 12 PASS. PRD compliance 3/5 fully (`Referral`⇒referrer 422, external=`Vendor.kind=external`, M2 404 preserved) + 2 intentionally narrowed. Tests-sec no privilege regression (new gate is strictly narrower than the old one — only channel/internal/new-name sources newly open, none are attribution).
+- **Contract-text drift flagged (OUT-OF-SCOPE, non-code PRD follow-up)**: the Tech PRD's Criterio "Autorización" ("toda escritura de source/referrer responde 404") and Anexo POST ("consistente con la edición") no longer hold literally — intake now gates attribution only, while edition still gates all source writes. Amend the PRD text (or accept the intake-vs-edition asymmetry explicitly).
+- Open QUESTION (non-blocking): a permissionless user can create a talent with a brand-new source name that is *later* linked to an external vendor — that intake write was never gated. Consistent with "no row ⇒ not external yet" and corrected on the fully-gated edit path; confirm product accepts.
+- **My contribution — 2 completeness tests `4c3894f4`** (pushed to the PR branch, no behavior change): `test_post_with_internal_vendor_source_201_without_permission` (row linked to an INTERNAL vendor → 201; symmetric counterpart of the external-vendor 404, pins the "row exists + internal vendor" branch the no-row 201 cases never reached) + `test_post_with_external_source_of_other_tenant_201` (the external check is tenant-scoped — a source external in another tenant must not gate a create here). Full file 30 passed via main `.venv`; ruff clean.
+- Pending: CI green → merge; PRD-text amendment; product confirm on the edge above.
