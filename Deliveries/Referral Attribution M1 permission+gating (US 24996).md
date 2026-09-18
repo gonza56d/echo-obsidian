@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
 delivered:
 tags: [feature, talent, application, access-control, referral-attribution]
@@ -10,6 +10,9 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2291"
   - "https://github.com/taller-projects/echo-backend/pull/2292"
   - "https://github.com/taller-projects/echo-backend/pull/2293"
+  - "https://github.com/taller-projects/echo-backend/pull/2295"
+  - "https://github.com/taller-projects/echo-backend/pull/2296"
+  - "https://github.com/taller-projects/echo-backend/pull/2297"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24996"
@@ -33,11 +36,14 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - PRD: [PRD Técnico — Referral Attribution](https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3) · business: [Referral Attribution (set at intake or by editing the source)](https://app.notion.com/p/3deaedca11f0812cb3d6eb0ae5f34f39) + Dami's [Editable Candidate Source & Referral Attribution](https://app.notion.com/p/3deaedca11f081e2a32dcae3ef1e28f3)
 
 ## PRs
-- M1 [#2289](https://github.com/taller-projects/echo-backend/pull/2289) → dev — OPEN 2026-09-17. Branch `24996/referral-attribution-m1-permission-gating`.
-- M2 [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → **stacked on M1 branch** — OPEN 2026-09-17. Branch `24999/referral-attribution-m2-referral-source-validation`. Retarget base to dev once #2289 merges.
-- M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → **stacked on M2 branch** — OPEN 2026-09-17. Branch `25000/referral-attribution-m3-conflict-cascade-ownership`.
-- M4 [#2292](https://github.com/taller-projects/echo-backend/pull/2292) → **stacked on M3 branch** — OPEN 2026-09-17. Branch `25001/referral-attribution-m4-referrer-suggestions`.
-- M5 [#2293](https://github.com/taller-projects/echo-backend/pull/2293) → **stacked on M4 branch** — OPEN 2026-09-17. Branch `25002/referral-attribution-m5-audit-trail`. LAST of the chain.
+- M1 [#2289](https://github.com/taller-projects/echo-backend/pull/2289) → dev — MERGED 2026-09-17 (`8ee501cb`).
+- M2 [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → dev — MERGED 2026-09-17 (`169a78f2`).
+- M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → dev — MERGED 2026-09-17 (`79fc6af1`).
+- M4 [#2292](https://github.com/taller-projects/echo-backend/pull/2292) → dev — MERGED 2026-09-17 (`37c712ab`).
+- M5 [#2293](https://github.com/taller-projects/echo-backend/pull/2293) → dev — MERGED 2026-09-17 (`dcc77a93`).
+- Chain fix [#2295](https://github.com/taller-projects/echo-backend/pull/2295) → dev — MERGED 2026-09-17 (alembic chain repair after the stack landed).
+- **Promotion [#2296](https://github.com/taller-projects/echo-backend/pull/2296) dev → qa — OPEN 2026-09-18.** Riders: #2287 (chat bubble_id backfill), #2294 (gitignore).
+- **Promotion [#2297](https://github.com/taller-projects/echo-backend/pull/2297) dev → main — OPEN 2026-09-18** (qa == main at open time; prod deploy behind Azure Environment approvals). Same content + riders as #2296.
 
 ## How
 - `Permission.EditSource = "recruitment.edit_source"` in `app/user/schemas.py`, wired into `TenantModuleConfig.RECRUITING` (NOT ADMIN_PERMISSIONS) → appears in available-permissions for recruiting tenants.
@@ -83,18 +89,18 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - Canonical casing of a source row = first write, EXCEPT Referral (pinned). The Source filter is exact-match; any future "special" source value needs the same pinning.
 
 ## Pending
-- PR [#2289](https://github.com/taller-projects/echo-backend/pull/2289) (M1) review + merge, then retarget [#2290](https://github.com/taller-projects/echo-backend/pull/2290) (M2) to dev and merge.
-- Per-tenant duplicate case-variant source check in dev/qa before prod (PRD risk mitigation for the insensitive lookup).
-- M3 [#2291](https://github.com/taller-projects/echo-backend/pull/2291) review + merge (after #2290).
-- Retry edge (documented in PR): partial failure between source write and owner assignment → retry 422s on owner_id; assign via ownership endpoint.
-- M4 [#2292](https://github.com/taller-projects/echo-backend/pull/2292) review + merge (after #2291).
-- Merge the chain in order: [#2289](https://github.com/taller-projects/echo-backend/pull/2289) → [#2290](https://github.com/taller-projects/echo-backend/pull/2290) → [#2291](https://github.com/taller-projects/echo-backend/pull/2291) → [#2292](https://github.com/taller-projects/echo-backend/pull/2292) → [#2293](https://github.com/taller-projects/echo-backend/pull/2293), retargeting each to dev as its base merges.
-- FE paired PR (ACCESS_LEVELS mirror, Add Candidates toggle, read-only states, suggestions typeahead, change-history views).
-- Feature-level QA in dev env (PRD: 6–8h, two tenants, four profiles) before qa/main promotion.
-- PRD changelog + resolve remaining open questions (ATS precedence confirmed by product; keep-referrer implemented as proposed).
-- FE paired PR (ACCESS_LEVELS mirror, toggle in Add Candidates, read-only states).
-- PRD open questions before M3: RLS Camino A/B; guard existing vs new conflict rule; keep-vs-clear referrer; ATS precedence.
-- qa/main promotion at feature level (after all milestones).
+- Merge promotions [#2296](https://github.com/taller-projects/echo-backend/pull/2296) (qa) and [#2297](https://github.com/taller-projects/echo-backend/pull/2297) (main) — **merge commit, never squash**; prod/kforce-prod deploy needs the Azure Environment approvals.
+- kforce-prod Referral case-variant spot-check (optional, low risk): dev=1 canonical, kforce-dev=0, **prod=0 (verified read-only 2026-09-18)**; kforce-prod has no local creds — check via Supabase `hslptkvpsrawnrouwkhc` if wanted.
+- FE paired work = [US 24993](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24993) (Melina) — description + AC filled 2026-09-18 with full BE contract (8-point scope). Parent [US 24973](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24973) (title typo'd "referrral" — searches miss it).
+- Feature-level QA (PRD: 6–8h, two tenants, four profiles) — **must use a non-system_admin user** (system_admin bypasses all permission gates by design). Bruno folder `Referral Attribution (24996)` in ~/taller/Echo has the 25-step flow.
+- PRD changelog + close open questions (Camino A, new-rule-only, keep-referrer, 202-empty — all implemented; ATS precedence documented as proposed).
+
+## Post-merge verification + promotion (2026-09-18)
+- Deep post-deploy testing on dev + kforce-dev DBs: all 3 migrations at head, audit tables + RLS + composite FKs correct, backfill gap 0, canonical Referral row intact, audit tables start empty, unaccent present. Suite 4983 passed (5 fails = known flaky adoption tests).
+- Live HTTP QA (25 checks, dev API + local run with RLS role `echo_backend`): full matrix green — 422/400 error codes, canonicalization both fields, cascade active-only, ownership exception (invalid owner = zero partial writes), no-op writes nothing (history + outbox exact), closed-app editable, filter + suggestions accent-insensitive.
+- **Gating verified for real** via temporary user-row swap (role=member + permission-less access_role, then reverted): all gated writes 404 on BOTH local and deployed dev; member + edit_source → 202. Key lesson: `role=system_admin` bypasses `has_permissions` entirely (app/user/models.py:268) — earlier "dev flag off" hypothesis was WRONG; dev runs ENABLE_ACCESS_CONTROL=True.
+- FE-safety audit for BE-first release: FE calls none of the new/re-gated endpoints; create sends source only as own-vendor echo (AddCandidate.tsx:89 = the carve-out); EditTalentInfoForm has no source/referral fields (talentSourceOptions schemas are dead code). BE ships dormant.
+- Legacy data note: 1 dev talent (`fae8baaf`, 2024) holds Referral source + NULL referrer (pre-feature; write-path invariant unaffected).
 
 ## M2 review round 1 (2026-09-17)
 
