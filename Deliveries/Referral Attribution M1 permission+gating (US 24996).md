@@ -44,6 +44,7 @@ First of 5 stacked milestones of the Referral Attribution feature (record who re
 - M5 [#2293](https://github.com/taller-projects/echo-backend/pull/2293) → dev — MERGED 2026-09-17 (`dcc77a93`).
 - Chain fix [#2295](https://github.com/taller-projects/echo-backend/pull/2295) → dev — MERGED 2026-09-17 (alembic chain repair after the stack landed).
 - **Promotion [#2296](https://github.com/taller-projects/echo-backend/pull/2296) dev → qa — OPEN 2026-09-18.** Riders: #2287 (chat bubble_id backfill), #2294 (gitignore).
+- Follow-up promotion [#2303](https://github.com/taller-projects/echo-backend/pull/2303) dev → qa — OPEN 2026-09-18 evening: [#2302](https://github.com/taller-projects/echo-backend/pull/2302) (Bug 25021 variant fold) + [#2301](https://github.com/taller-projects/echo-backend/pull/2301) (intake gate fix). qa → main to follow once merged. See [[Referral source variant cleanup (Bug 25021)]].
 - **Promotion [#2297](https://github.com/taller-projects/echo-backend/pull/2297) dev → main — OPEN 2026-09-18** (qa == main at open time; prod deploy behind Azure Environment approvals). Same content + riders as #2296.
 
 ## How
