@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
 delivered:
 tags: [bugfix, talent, referral-attribution, jazzhr]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2304"
+  - "https://github.com/taller-projects/echo-backend/pull/2306"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25028"
@@ -16,7 +17,7 @@ prd: "https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3"
 
 # Role sync overwrites Referral source (Bug 25028)
 
-**Status**: PR [#2304](https://github.com/taller-projects/echo-backend/pull/2304) → dev OPEN 2026-09-18 · **Ticket**: [Bug 25028](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25028) (In revision)
+**Status**: PR [#2304](https://github.com/taller-projects/echo-backend/pull/2304) → dev MERGED `98ce1715` 2026-09-18 (squash, by Gonzalo); release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa OPEN · **Ticket**: [Bug 25028](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25028) (In revision)
 
 Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling of [[Referral source variant cleanup (Bug 25021)]]. Reported by Meli (FE) 2026-09-18 while testing on Taller: adding a candidate **with a role** ("Role Applying For") goes to `POST /talents/{role_id}/sync` (FE routes there when `!isMultiTenant`), and that path stamped the uploader's vendor over the freshly written `Referral` source, recording the change as **System**. Without a role (`POST /talents`) it worked, so it looked fine at first.
 
@@ -25,7 +26,8 @@ Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling o
 - PRD: [PRD Técnico — Referral Attribution](https://app.notion.com/p/3deaedca11f081b39e81c49c7ffb2ce3) — explicitly left integration paths untouched ("Jazz sync ... no cambian"); **open question 5** (manual attribution wins, sync doesn't revert) never resolved → this is the PRD gap. Changelog row still to add.
 
 ## PRs
-- [#2304](https://github.com/taller-projects/echo-backend/pull/2304) → dev — OPEN 2026-09-18 (branch `25028/sync-preserves-referral-attribution`, commit `47c33c2c`). Not in release [#2303](https://github.com/taller-projects/echo-backend/pull/2303); rides the next promo.
+- [#2304](https://github.com/taller-projects/echo-backend/pull/2304) → dev — MERGED 2026-09-18 `98ce1715` (branch `25028/sync-preserves-referral-attribution`, commits `47c33c2c` + review follow-up `34cc5f35`).
+- Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa — OPEN 2026-09-18 evening, reviewer rocha-p (Slack DM sent). Carries #2301 + #2302 + #2304 (= all of `qa..dev`). Replaces the closed [#2303](https://github.com/taller-projects/echo-backend/pull/2303). Pre-check: `git merge-tree --write-tree origin/qa origin/dev` clean + ScriptDirectory heads on the merged tree = single `wm3rp9kzt2ve`. qa == main today → prod release = qa → main PR AFTER #2306 merges (convention: user closed dev→main #2297; rocha-p did #2299 qa→main).
 - Review r1 (pr-review skill, 2026-09-18): architecture 13/0, ticket 10/10 reqs, tests-security 1 FAIL (T2: the fixed flow was asserted only against `__new__` fakes / MagicMock `update`) + 5 nits. Fixed in `34cc5f35`: route-level 201 test (`/sync` + Referral + `edit_source` → Referral row in DB), two DB-backed native-apply tests (existing Referral kept + no history; channel talent → vendor + history `changed_by_id` = uploader), 4th native matrix case, 255-cap tests; `writes_attribution` evaluated once per request (router → `keeps_attribution` kwarg), `_require_edit_source` helper for the 3 router gates, stale comments + `/sync` OpenAPI summary reworded.
 
 ## How
@@ -49,8 +51,9 @@ Follow-up to [[Referral Attribution M1 permission+gating (US 24996)]], sibling o
 - `create_entity(db, TalentFactory, Talent, source="Referral", referral=...)` works: the `source` setter fills `_source` and the `before_insert` hook get-or-creates the row. Read `talent.source` back through `svc.get_by_id` (joined `source_obj`), not on the detached factory instance.
 
 ## Pending
-- [ ] PR #2304 review + merge to dev; verify on dev: add candidate with role + Referral → source stays Referral, history author = recruiter
-- [ ] Ride next dev → qa → main promo (after [#2303](https://github.com/taller-projects/echo-backend/pull/2303))
+- [x] PR #2304 reviewed (r1) + merged to dev `98ce1715`
+- [ ] Verify on dev: add candidate with role + Referral → source stays Referral, history author = recruiter
+- [ ] Release [#2306](https://github.com/taller-projects/echo-backend/pull/2306) dev → qa: Pedro review + merge (merge commit) → then open qa → main → prod approvals
 - [ ] Tech PRD changelog: resolve open question 5 (attribution wins over sync) + amend "Jazz sync no cambia" (local write changed, outbound payload did not) + add `POST /talents/{role_id}/sync` next to `POST /talents` in Autorización/Validación criteria
 - [ ] Tech PRD: record the re-upload-with-owner-reassignment path (`TalentUpdateInternal`) as the declared exception to "every source change writes one history row" and to "no write path touches owner_id" — or open a follow-up ticket
 - [ ] Product: should an existing EXTERNAL-vendor source also be protected on `/apply` / legacy re-upload (see Decisions)?
