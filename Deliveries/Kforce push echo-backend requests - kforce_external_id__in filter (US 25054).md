@@ -34,6 +34,7 @@ Emiliano Kokic's new Kforce pipeline (Bronze/Silver/Gold built) is about to push
 
 ## PRs
 - [#2314](https://github.com/taller-projects/echo-backend/pull/2314) → dev — open 2026-09-21. Branch `25054/kforce-external-id-filter`.
+- Review 2026-09-21 (`/pr-review`, 3 parallel reviewers): READY WITH NITS — 3/3 requirements, 0 scope creep, 0 blockers. Addressed nit inline: commit `22fecaa9` caps `kforce_external_id__in` at `max_length=100` (aligned to the ≤100-id push batch / `/internal/contacts` page cap) + 2 tests. Sibling `id__in` stays uncapped (predates this work). Second nit (EXPLAIN on a non-default sort key) is verification-only, not a code change — assessed negligible (id is the PK, cheap terminal tie-break).
 
 ## How
 - `ContactFilter.kforce_external_id__in: List[str]` next to `id__in` (`app/modules/contact/filters.py`). No migration: `Contact.kforce_external_id` is `unique=True, index=True` (`models.py:712`). Public `/contacts` gets it too (shared filter).
@@ -43,6 +44,7 @@ Emiliano Kokic's new Kforce pipeline (Bronze/Silver/Gold built) is about to push
 
 ## Decisions
 - **Bundle the three one-liners in one PR**, defer P1-1 (upsert by `kforce_external_id` in `bulk_create`): Postgres allows one `ON CONFLICT` target per statement, so "a second target" is not implementable as asked; the PRD itself says to drop P1-1 first. Alternative offered to Emiliano: resolve ids via the new filter, then `PATCH /internal/contacts/bulk` for the 1.976M adoptees + `POST /internal/contacts/bulk` for the ~2k new ones (~4k requests instead of 1.98M).
+- **Cap `kforce_external_id__in` at 100, not `id__in`**: the push has a documented ≤100-id batch and `/internal/contacts` pages at size≤100, so a larger IN has no legitimate caller; `id__in` is left uncapped because it predates this work and changing it is out of scope.
 - **Tie-break only when there is an `order_by`**: a caller that explicitly clears ordering keeps an unordered query (no hidden ORDER BY on programmatic paths).
 - **Global unique on `kforce_external_id` is inherited, not a decision**: migration `492db619e39d` (2025-03-05, single-tenant fork). Answer to the PRD's alert: not on purpose; fixing it = rebuild a unique index on ~2M rows under the 25s timeout → Task 25057, direction for a second Dynamics tenant is `entity_external_links`.
 - **No openapi waiver**: additive params on `/contacts` have not been waived since the cutover (contact groups #2269 added several) — consistent with current practice.
