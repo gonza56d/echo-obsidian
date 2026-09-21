@@ -33,7 +33,7 @@ Emiliano Kokic's new Kforce pipeline (Bronze/Silver/Gold built) is about to push
 - PRD: [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc, Emiliano, 2026-09-21; raw survey lives in the pipeline repo `docs/echo-backend-relevamiento-2026-09-21.md`)
 
 ## PRs
-- [#2314](https://github.com/taller-projects/echo-backend/pull/2314) → dev — open 2026-09-21. Branch `25054/kforce-external-id-filter`.
+- [#2314](https://github.com/taller-projects/echo-backend/pull/2314) → dev — open 2026-09-21. Branch `25054/kforce-external-id-filter`. Pedro /pr-review r1 (scoped): **READY WITH NITS, 0 blockers**. Follow-ups: `22fecaa9` (another Claude session) caps `kforce_external_id__in` at 100 ids; `79bab5dc` pins empty-value-matches-nothing + public `GET /contacts` tie-break smoke test (nits 2 and 3). Nit 1 answered in the thread (cap kept).
 - Review 2026-09-21 (`/pr-review`, 3 parallel reviewers): READY WITH NITS — 3/3 requirements, 0 scope creep, 0 blockers. Addressed nit inline: commit `22fecaa9` caps `kforce_external_id__in` at `max_length=100` (aligned to the ≤100-id push batch / `/internal/contacts` page cap) + 2 tests. Sibling `id__in` stays uncapped (predates this work). Second nit (EXPLAIN on a non-default sort key) is verification-only, not a code change — assessed negligible (id is the PK, cheap terminal tie-break).
 
 ## How
@@ -43,6 +43,7 @@ Emiliano Kokic's new Kforce pipeline (Bronze/Silver/Gold built) is about to push
 - Tests: `tests/unit/test_contact_kforce_external_id_filter.py` (filter SQL, internal route incl. cross-tenant invisibility, tie-break SQL, real paged `created_at` tie via `size=1`, both bulk bodies vs DB); `test_non_activity_sort_has_no_id_tiebreaker` flipped.
 
 ## Decisions
+- **Keep `max_length=100` on `kforce_external_id__in`** even though `OrganizationInternalFilter` is unbounded: `/internal/contacts` pages at ≤100 so a bigger batch would spill past page 1 unnoticed; the org route pages at 30000. Align the org side only if asked.
 - **Bundle the three one-liners in one PR**, defer P1-1 (upsert by `kforce_external_id` in `bulk_create`): Postgres allows one `ON CONFLICT` target per statement, so "a second target" is not implementable as asked; the PRD itself says to drop P1-1 first. Alternative offered to Emiliano: resolve ids via the new filter, then `PATCH /internal/contacts/bulk` for the 1.976M adoptees + `POST /internal/contacts/bulk` for the ~2k new ones (~4k requests instead of 1.98M).
 - **Cap `kforce_external_id__in` at 100, not `id__in`**: the push has a documented ≤100-id batch and `/internal/contacts` pages at size≤100, so a larger IN has no legitimate caller; `id__in` is left uncapped because it predates this work and changing it is out of scope.
 - **Tie-break only when there is an `order_by`**: a caller that explicitly clears ordering keeps an unordered query (no hidden ORDER BY on programmatic paths).
@@ -51,6 +52,8 @@ Emiliano Kokic's new Kforce pipeline (Bronze/Silver/Gold built) is about to push
 - Ticketed under Feature 24972 (not a new Feature): the PRD is the echo-backend side of that pipeline structure. Re-parent if Nicolás disagrees.
 
 ## Gotchas
+- Commit `22fecaa9` carries a `Co-Authored-By: Claude Opus 4.8` trailer (added by another session; CLAUDE.md forbids it). Not rewritten (no force-push); squash-merge message must be checked at merge time so the trailer does not land on `dev`.
+- Public-route tests: `client` fixture + autouse `init_db_state` already mock the JWT user; only `settings.ENABLE_ACCESS_CONTROL` needs toggling (fixture-time, not import-time). `db._tenant_id` set by older tests is a dead attribute.
 - `GET /internal/contacts` uses fastapi-pagination `Params` (size ≤ 100), unlike `GET /internal/organizations` (`InternalParams`, ≤ 30000). With `kforce_external_id__in` batches of ≤100 ids that is one page per call (~19.8k calls for 1.98M). Raising it is an optional follow-up, not done.
 - `ContactFilter()` built without `order_by` in a test carries the FastAPI `Query` default object → `sort()` explodes; always pass `order_by=[...]` when compiling SQL in tests (precedent: `test_contact_started_tracking_sort.py`).
 - kforce-dev `EXPLAIN ANALYZE` (1.64M contacts, 1,636,527 with kforce id): default first page 0.07 ms → 0.13 ms with the tie-break (Incremental Sort, presorted `contact_created_at_idx`); 100-id `IN` lookup 20 ms via `contact_kforce_external_id_idx`; OFFSET 500000 is 16 s regardless — the offset itself, which is exactly why P0-1 matters.
