@@ -24,6 +24,7 @@ Fase 2 / F1 of Emiliano's Kforce-push PRD. `Interaction` was the only contact-ow
 
 ## PRs
 - [#2326](https://github.com/taller-projects/echo-backend/pull/2326) → dev — open 2026-09-22. Branch `25055/interaction-kforce-external-id`.
+  - Reviewed via `/pr-review` 2026-09-22 (3 parallel reviewers): 0 blockers, verdict READY WITH NITS. Both nits fixed in follow-up commit `77892481` and pushed.
 
 ## How
 - `Interaction.kforce_external_id: str | None` + partial unique index `uq_contact_interaction_kforce_external_id` on `(tenant_id, kforce_external_id) WHERE kforce_external_id IS NOT NULL` (`app/modules/contact/interaction/models.py`).
@@ -35,6 +36,11 @@ Fase 2 / F1 of Emiliano's Kforce-push PRD. `Interaction` was the only contact-ow
 - **`contact_id` deliberately out of the key** (unlike `Relationship`, which needed it for company↔contact mapping ambiguity): a source external id identifies one interaction *within a tenant*, regardless of contact — so the same id on two contacts of one tenant is correctly a duplicate.
 - **Column + index only** (per Gonzalo): no `InteractionBase`/`BulkInteractionCreate` field and no `bulk_create` ON CONFLICT target yet — the exact write shape waits on Kforce's Silver layer. Keeps the migration (the expensive-to-retrofit part) landed now.
 - **`CREATE INDEX CONCURRENTLY`**: `contact_interaction` is ~2.69M rows on kforce-dev (~567k on dev). A plain in-transaction `CREATE INDEX` would hold ACCESS EXCLUSIVE through the full-heap scan and risk the 25s timeout; concurrent is safe because the brand-new column is all-NULL so no row qualifies for the partial predicate.
+
+## Review (2026-09-22)
+- `/pr-review` scoped mode, 3 reviewers. Architecture 8 PASS/0 FAIL; Tests&Security 11 PASS/0 FAIL; PRD 4/7 implemented, 1 partial (AC#3), 2 out-of-scope-by-decision, 0 scope creep. **0 blockers.**
+- Two nits, both fixed (commit `77892481`): (1) empty-string vs NULL — `""` is NOT NULL so it falls under the partial predicate and two empty ids in one tenant collide; added `test_empty_string_external_ids_collide` + a note that the future write path must map a missing source id to NULL, never `""`. (2) pinned the index WHERE-clause text (`kforce_external_id IS NOT NULL`) in the model-spec test. Interaction kforce-id suite now 6 pass.
+- **Ticket action (not code):** US 25055 AC#3 as written enumerates the write-path exposure that this PR descopes. Amend/split AC#3 — (i) tenant-isolation of the column [met here], (ii) bulk create/update accept-and-echo [move to the deferred write-path ticket with F1.2/F1.3/F1.4] — before closing 25055.
 
 ## Gotchas
 - The repo test suites build schema via `create_all`, **not** the alembic chain, and the full chain can't run on a vanilla Postgres (a Supabase migration needs `auth.users`). So the migration DDL was exercised by hand on a throwaway `pgvector/pgvector:pg16` container: upgrade + downgrade both idempotent (`IF NOT EXISTS`/`IF EXISTS`), clean final state. Behavioural uniqueness is covered by the unit tests on real PG.
