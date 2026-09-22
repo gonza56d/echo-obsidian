@@ -25,9 +25,26 @@ Never `git merge dev → kforce-dev`. Always verify claims against `origin/kforc
 - [[Deep pagination selectin fix (23553)]] — planner is a separate copy; needed its own PR ([#1820](https://github.com/taller-projects/echo-backend/pull/1820)).
 
 ## Kforce push pipeline (2026-09, post-unification)
-Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, TrackerRMS/HubSpot-style) replaces the old contact ingestion. Its echo-backend requests live under [Feature 24972](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24972).
-- [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] — PRD triage + the blocker PR ([#2314](https://github.com/taller-projects/echo-backend/pull/2314)); tickets 25055–25059 for phase 2 / low-priority items.
-- [[Audit log on internal via IntegrationAuditMiddleware (Task 25058)]] — P2-3 of the same PRD ([#2323](https://github.com/taller-projects/echo-backend/pull/2323)): `IntegrationAuditMiddleware` on `internal_app`.
+Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, TrackerRMS/HubSpot-style) replaces the old contact ingestion. Its echo-backend requests live under [Feature 24972](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24972). PRD = [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc — read via Claude Docs MCP `read`, project → node `kind: view`).
+
+**Deliveries**
+- [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] — PRD triage + the blocker PR ([#2314](https://github.com/taller-projects/echo-backend/pull/2314), merged dev): P0-1 contact `kforce_external_id__in`, P0-2/P1-0 stable `Contact.id` tie-break, P2-1 bulk POSTs return ids.
+- [[Audit log on internal via IntegrationAuditMiddleware (Task 25058)]] — P2-3 ([#2323](https://github.com/taller-projects/echo-backend/pull/2323), merged dev): `IntegrationAuditMiddleware` on `internal_app`.
+
+**PRD request status (where the next agent picks up)**
+- ✅ **P0-1** contact filter — #2314 (dev).
+- ✅ **P0-2 / P1-0** stable tie-break on `/internal/contacts` — #2314 (dev). Pipeline no longer needs the `order_by=created_at,id` workaround.
+- ✅ **P1-2** org lookup by external id — already existed (`OrganizationInternalFilter.kforce_external_id__in`); no work. Option 2 (ContactBase resolving `crm_organization_kforce_external_id`) is convenience-only scope creep — skip.
+- ✅ **P2-1** bulk POSTs return ids — #2314 (dev).
+- ✅ **P2-3** audit on `/internal` — #2323 (dev).
+- ⏸️ **P1-1** upsert / actionable `bulk_create` — **DEFERRED**. Decision: if ever built use **option 2 (per-item results)**, NOT "second ON CONFLICT target" (Postgres = one conflict target; `contact` has 5 unique keys). Build only if Emiliano says the per-row POST/PATCH dispatcher (0 collisions) is too slow at 1.98M rows.
+- 📋 **P2-2** push concurrency / `rate_limit_rpm` ([Task 25059](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25059)) — mostly an **agreement with Emiliano** (RPS + whether to enforce the stored-but-inert `rate_limit_rpm`); needs infra numbers (ingress/pooler) before answering.
+- 📋 **Fase 2** interaction/relationship/activity `kforce_external_id` column + refresh policy ([US 25055](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055) + [Task 25056](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25056)) — **scale-sensitive migration** on the ~9M-row interaction table; idempotent, measured against KForce volume, within the 25s statement timeout. Cheap now, expensive later.
+- 📋 **Task 25057** tech debt: `kforce_external_id` unique is **global**, not per-tenant (inherited from migration `492db619e39d`) — rebuild as partial `(tenant_id, kforce_external_id)` unique; ~2M-row index rebuild under timeout.
+
+**Still-open cross-cutting items**
+- Reply to Emiliano on Slack (owed answers: `kforce` is the agreed platform value; global-unique is inherited; `rate_limit_rpm` stored not enforced; Loki already logs `/internal`).
+- qa/main promotion of #2314 and #2323 after dev QA.
 
 ## Kforce-native deliveries
 - [[Kforce multilevel groups (US 23339)]] — group hierarchy for Echo Usage

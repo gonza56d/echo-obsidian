@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-09-22
 tags: [feature, kforce, internal-api, audit, observability]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2323"
@@ -23,7 +23,8 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - PRD: [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc, Emiliano) — read via Claude Docs MCP `read` (project -> node `kind: view`)
 
 ## PRs
-- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — OPEN 2026-09-22. Branch `25058/audit-middleware-internal-app`.
+- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — **MERGED 2026-09-22**. Branch `25058/audit-middleware-internal-app`. 5100 unit+multitenancy green, lint clean.
+- Review DONE (READY WITH NITS, 0 blockers); nits addressed in `817f4e09` — 3 extra e2e cases: POST 2xx audited, legacy `X-Echo-internal` shim row carries `api_key_id=None`, and an audit-handler failure does not break the request (isolation).
   - `/pr-review` (2026-09-22): **READY WITH NITS**, 0 blockers (architecture 13/13 PASS; tests/security 0 blockers; PRD 2/3 asks met + shim untested).
   - Nits addressed in commit `817f4e09` (`test:` follow-up): added 3 e2e cases — POST 2xx audited, legacy `X-Echo-internal` shim row (`api_key_id=None`), audit-failure-never-breaks-request; extracted `_pin_default_bus`/`_poll_audit_row` helpers. 5 `TestInternalAudit` + full file (94) green.
 
@@ -31,7 +32,7 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - `internal_app = FastAPI(middleware=[Middleware(IntegrationAuditMiddleware)], strict_content_type=False)` in `app/main.py` — identical to how `integrations_app` mounts it, so it sits **inside** the InjectorMiddleware (`dp_injector.setup_injections`) and `get_request_context()` resolves the context the auth dep populated. Core change is one line.
 - Both internal auth paths already populate what the middleware reads: `_verify_api_key_with_surface` (`app/permissions.py`) sets `tenant_id` + `api_key_id`; the legacy `X-Echo-internal` shim sets `tenant_id` only -> those rows carry `api_key_id=None` (a useful cutover signal).
 - Docstring on `app/modules/public_api/middleware.py` generalized to "internal + integrations".
-- Tests (`TestInternalAudit` in `tests/unit/test_public_api_endpoints.py`): (1) middleware mounted on the `/internal` sub-app; (2) real internal GET -> middleware -> EventBus -> handler persists an `integration_request_log` row with resolved `tenant_id`/`api_key_id`.
+- Tests (`TestInternalAudit` in `tests/unit/test_public_api_endpoints.py`): (1) middleware mounted on the `/internal` sub-app; (2) real internal GET -> middleware -> EventBus -> handler persists an `integration_request_log` row with resolved `tenant_id`/`api_key_id`; plus (from `817f4e09`) POST 2xx audited, legacy-shim `api_key_id=None`, and audit-failure isolation.
 
 ## Decisions
 - **Reuse the table/event as-is** (my recommendation, Gonzalo approved): `/internal` and `/integrations` rows share `integration_request_log`, told apart by `http_path`. No `surface` discriminator column now — left as a follow-up if consumers need it. The PRD asked for "el mismo IntegrationAudit", so reuse is the intent.
