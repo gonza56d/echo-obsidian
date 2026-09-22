@@ -27,6 +27,7 @@ Never `git merge dev → kforce-dev`. Always verify claims against `origin/kforc
 ## Kforce push pipeline (2026-09, post-unification)
 Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, TrackerRMS/HubSpot-style) replaces the old contact ingestion. Its echo-backend requests live under [Feature 24972](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24972).
 - [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] — PRD triage + the blocker PR ([#2314](https://github.com/taller-projects/echo-backend/pull/2314)); tickets 25055–25059 for phase 2 / low-priority items.
+- [[Audit log on internal via IntegrationAuditMiddleware (Task 25058)]] — P2-3 of the same PRD ([#2323](https://github.com/taller-projects/echo-backend/pull/2323)): `IntegrationAuditMiddleware` on `internal_app`.
 
 ## Kforce-native deliveries
 - [[Kforce multilevel groups (US 23339)]] — group hierarchy for Echo Usage
