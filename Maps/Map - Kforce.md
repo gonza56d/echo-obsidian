@@ -30,6 +30,7 @@ Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, Tracke
 **Deliveries**
 - [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] — PRD triage + the blocker PR ([#2314](https://github.com/taller-projects/echo-backend/pull/2314), merged dev): P0-1 contact `kforce_external_id__in`, P0-2/P1-0 stable `Contact.id` tie-break, P2-1 bulk POSTs return ids.
 - [[Audit log on internal via IntegrationAuditMiddleware (Task 25058)]] — P2-3 ([#2323](https://github.com/taller-projects/echo-backend/pull/2323), merged dev): `IntegrationAuditMiddleware` on `internal_app`.
+- [[Interaction kforce_external_id column (US 25055)]] — Fase 2 / F1 ([#2326](https://github.com/taller-projects/echo-backend/pull/2326), open dev): `Interaction.kforce_external_id` + tenant-scoped partial unique index (column + index only).
 
 **PRD request status (where the next agent picks up)**
 - ✅ **P0-1** contact filter — #2314 (dev).
@@ -39,12 +40,13 @@ Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, Tracke
 - ✅ **P2-3** audit on `/internal` — #2323 (dev).
 - ⏸️ **P1-1** upsert / actionable `bulk_create` — **DEFERRED**. Decision: if ever built use **option 2 (per-item results)**, NOT "second ON CONFLICT target" (Postgres = one conflict target; `contact` has 5 unique keys). Build only if Emiliano says the per-row POST/PATCH dispatcher (0 collisions) is too slow at 1.98M rows.
 - 📋 **P2-2** push concurrency / `rate_limit_rpm` ([Task 25059](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25059)) — mostly an **agreement with Emiliano** (RPS + whether to enforce the stored-but-inert `rate_limit_rpm`); needs infra numbers (ingress/pooler) before answering.
-- 📋 **Fase 2** interaction/relationship/activity `kforce_external_id` column + refresh policy ([US 25055](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055) + [Task 25056](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25056)) — **scale-sensitive migration** on the ~9M-row interaction table; idempotent, measured against KForce volume, within the 25s statement timeout. Cheap now, expensive later.
+- ✅ **Fase 2 / F1** interaction `kforce_external_id` column — [US 25055](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055), [#2326](https://github.com/taller-projects/echo-backend/pull/2326) (open dev). **Tenant-scoped** partial unique `(tenant_id, kforce_external_id)` (NOT global; `contact_id` out of the key); migration `p8w3knf2v6qd` builds the index `CONCURRENTLY` on the `contact_interaction` table (**2.69M rows on kforce-dev**, ~567k on dev — not ~9M; that was contact_relationship). Column + index only — write-path wiring deferred until Kforce's Silver interaction shape exists. F2 (interaction bulk POST ids) already shipped in #2314.
+- 📋 **Fase 2 / F3** bulk POST `refresh_contacts` sync policy ([Task 25056](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25056)) — agreement + BackgroundTasks parity; not started.
 - 📋 **Task 25057** tech debt: `kforce_external_id` unique is **global**, not per-tenant (inherited from migration `492db619e39d`) — rebuild as partial `(tenant_id, kforce_external_id)` unique; ~2M-row index rebuild under timeout.
 
 **Still-open cross-cutting items**
 - Reply to Emiliano on Slack (owed answers: `kforce` is the agreed platform value; global-unique is inherited; `rate_limit_rpm` stored not enforced; Loki already logs `/internal`).
-- qa/main promotion of #2314 and #2323 after dev QA.
+- qa/main promotion of #2314, #2323 and #2326 after dev QA.
 
 ## Kforce-native deliveries
 - [[Kforce multilevel groups (US 23339)]] — group hierarchy for Echo Usage
