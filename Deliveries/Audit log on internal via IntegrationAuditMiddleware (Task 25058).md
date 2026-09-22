@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged
+status: in-review
 env: both
 delivered: 2026-09-22
 tags: [feature, kforce, internal-api, audit, observability]
@@ -23,10 +23,12 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - PRD: [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc, Emiliano) — read via Claude Docs MCP `read` (project -> node `kind: view`)
 
 ## PRs
-- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — **MERGED 2026-09-22**. Branch `25058/audit-middleware-internal-app`. 5100 unit+multitenancy green, lint clean.
-- Review DONE (READY WITH NITS, 0 blockers); nits addressed in `817f4e09` — 3 extra e2e cases: POST 2xx audited, legacy `X-Echo-internal` shim row carries `api_key_id=None`, and an audit-handler failure does not break the request (isolation).
-  - `/pr-review` (2026-09-22): **READY WITH NITS**, 0 blockers (architecture 13/13 PASS; tests/security 0 blockers; PRD 2/3 asks met + shim untested).
-  - Nits addressed in commit `817f4e09` (`test:` follow-up): added 3 e2e cases — POST 2xx audited, legacy `X-Echo-internal` shim row (`api_key_id=None`), audit-failure-never-breaks-request; extracted `_pin_default_bus`/`_poll_audit_row` helpers. 5 `TestInternalAudit` + full file (94) green.
+- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — **OPEN** (NOT merged; the earlier `/pr-review` READY-WITH-NITS was superseded by Pedro's human review). Branch `25058/audit-middleware-internal-app`.
+- **`/pr-review` (2026-09-22): READY WITH NITS, 0 blockers** — nits addressed in `817f4e09` (`test:` follow-up): 3 e2e cases (POST 2xx audited, legacy `X-Echo-internal` shim row `api_key_id=None`, audit-failure isolation); extracted `_pin_default_bus`/`_poll_audit_row` helpers.
+- **Pedro review (2026-09-22): CHANGES REQUESTED — 1 real blocker.** [comment](https://github.com/taller-projects/echo-backend/pull/2323#issuecomment-5778139669). Attaching the audit middleware to `internal_app` made every `/internal` request publish an `integration.request` event onto the **shared** default `EventBus` (bounded `queue.Queue(maxsize=1000)`, single worker, `put_nowait` drop-on-`queue.Full`). During the push, audit ~doubles queue traffic in the busiest window, so a functional event (placements/notifications/status) — not just an audit row — could be the one dropped. AC #3 ("verify write volume acceptable for ~2M requests") existed to rule out exactly this.
+- **Blocker resolved — commit `609a149d` (pushed 2026-09-22), option 2 (isolate audit from functional events).** `dependencies.py` now builds two buses: the default bus with `exclude_events={integration.request}`, and a dedicated `AuditEventBus(only_events={integration.request})` started with `set_default=False` (so it never displaces the default singleton). The middleware publishes via `get_audit_event_bus()`. Each bus has its own queue+worker → an audit burst can only drop audit rows, never a functional event. Reply: [comment](https://github.com/taller-projects/echo-backend/pull/2323#issuecomment-5779323461). Awaiting Pedro re-review.
+  - Nits in the same commit: honest `IntegrationRequestLog` docstring (POST audited; `query_params` can carry PII e.g. `?email=` → redaction tracked as follow-up); `_pin_default_bus` → `_pin_audit_bus` via `monkeypatch.setattr` (auto-reverting); new 401-audit-row test; new `TestAuditBusIsolation` (registry filtering + `set_default` guard). Queue-full drop contract already pinned by pre-existing `test_eventbus_queue_full_handling`.
+  - Verification: `test_event_bus.py` 19/19, `test_public_api_endpoints.py`+shim 106/106, functional-event handlers (adoption/outbox/dispatcher) 117/117, lint clean.
 
 ## How
 - `internal_app = FastAPI(middleware=[Middleware(IntegrationAuditMiddleware)], strict_content_type=False)` in `app/main.py` — identical to how `integrations_app` mounts it, so it sits **inside** the InjectorMiddleware (`dp_injector.setup_injections`) and `get_request_context()` resolves the context the auth dep populated. Core change is one line.
@@ -37,16 +39,17 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 ## Decisions
 - **Reuse the table/event as-is** (my recommendation, Gonzalo approved): `/internal` and `/integrations` rows share `integration_request_log`, told apart by `http_path`. No `surface` discriminator column now — left as a follow-up if consumers need it. The PRD asked for "el mismo IntegrationAudit", so reuse is the intent.
 - **All tenants, no feature flag** — it is infra symmetry with `/integrations`, not tenant behavior.
+- **Dedicated audit `EventBus`** (Gonzalo, resolving Pedro's blocker): audit rides its own queue+worker so a `/internal` push spike can only drop audit rows, never a functional event. Chosen over a throughput-measurement waiver (option 1) and per-event commit batching (option 3, which leaves audit on the shared queue).
 
 ## Gotchas
-- The e2e audit test must keep the `TestClient` context **open while polling** the DB: the handler persists off-thread, so exiting the `with` (lifespan shutdown) first races/kills the EventBus worker. Mirror `TestAuditPipeline` and pin `event_bus_module._default_event_bus` to the app's injector-bound bus (robust to suite ordering).
+- The e2e audit test must keep the `TestClient` context **open while polling** the DB: the handler persists off-thread, so exiting the `with` (lifespan shutdown) first races/kills the EventBus worker. Mirror `TestAuditPipeline` and pin the app's injector-bound bus (robust to suite ordering). NOTE (post-`609a149d`): the middleware now publishes to the **audit** bus, so pin `event_bus_module._audit_event_bus` to `injector.get(AuditEventBus)` — the `_pin_audit_bus` helper does this via `monkeypatch.setattr`.
 - Do **not** probe `/internal/projects` (list) or a `mocked_project` detail route in tests: polyfactory generates **float** `min_budget`/`max_budget` and the internal `ProjectResponse` requires `int` -> `ResponseValidationError` 500 depending on suite pollution. Probe a **non-existent** project id -> deterministic 404, still authenticated so the audit fires.
 - Constructor-level `middleware=[...]` is NOT gated by `create_app(add_middlewares=...)` (only Sentry + CORS/SecurityHeaders are), so the audit middleware runs in the test suite too — consistent with `AccessLoggerMiddleware`/`integrations_app`, verified no regressions.
 
 - **Commit `817f4e09` carries a forbidden `Co-Authored-By: Claude Opus 4.8` trailer** (added against CLAUDE.md by mistake; can't be removed without a force-push, which CLAUDE.local.md forbids). Branch squash-merges to dev, so **strip the trailer from the squash message at merge** (same handling as #2314).
 
 ## Pending
-- Review DONE (READY WITH NITS, nits addressed). Pending: merge (**strip Opus trailer from squash msg**); then Task 25058 -> Closed, qa/main promotion. Ticket owes: write-volume estimate (ask #2) + Loki-retention confirmation (ask #3) — ops checks, not code.
+- **Awaiting Pedro re-review** of blocker fix `609a149d`. Then: merge (**strip Opus trailer from squash msg** — see Gotcha), Task 25058 -> Closed, qa/main promotion. Ticket owes: Loki-retention confirmation (AC #4) — ops check, not code. (AC #3 write-volume concern is now resolved structurally by the dedicated audit bus, not by a throughput estimate.)
 - **Follow-up (this ticket's scope):** at push volume every `/internal` write emits one `integration_request_log` row (~millions from one push) + EventBus load — retention/partitioning of that table is worth a follow-up; also a `surface` discriminator column if querying by surface becomes painful.
 
 ## Related
