@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
 delivered: 2026-09-22
 tags: [feature, kforce, internal-api, audit, observability]
@@ -23,7 +23,7 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - PRD: [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc, Emiliano) — read via Claude Docs MCP `read` (project -> node `kind: view`)
 
 ## PRs
-- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — **OPEN** (NOT merged; the earlier `/pr-review` READY-WITH-NITS was superseded by Pedro's human review). Branch `25058/audit-middleware-internal-app`.
+- [#2323](https://github.com/taller-projects/echo-backend/pull/2323) -> dev — **MERGED 2026-09-22** (merge commit `51e188f3`). Branch `25058/audit-middleware-internal-app`. **Merged with a merge commit, NOT squashed** — so all three branch commits (`fafe5224`, `817f4e09`, `609a149d`) are on dev individually, and the forbidden `Co-Authored-By: Claude Opus 4.8` trailer on `817f4e09` is now **permanent in dev history** (removing it needs a force-push, which CLAUDE.local.md forbids). The plan to strip it from a squash message did not apply because the merge was not squashed. Nothing further to do — noted so it is not re-flagged.
 - **`/pr-review` (2026-09-22): READY WITH NITS, 0 blockers** — nits addressed in `817f4e09` (`test:` follow-up): 3 e2e cases (POST 2xx audited, legacy `X-Echo-internal` shim row `api_key_id=None`, audit-failure isolation); extracted `_pin_default_bus`/`_poll_audit_row` helpers.
 - **Pedro review (2026-09-22): CHANGES REQUESTED — 1 real blocker.** [comment](https://github.com/taller-projects/echo-backend/pull/2323#issuecomment-5778139669). Attaching the audit middleware to `internal_app` made every `/internal` request publish an `integration.request` event onto the **shared** default `EventBus` (bounded `queue.Queue(maxsize=1000)`, single worker, `put_nowait` drop-on-`queue.Full`). During the push, audit ~doubles queue traffic in the busiest window, so a functional event (placements/notifications/status) — not just an audit row — could be the one dropped. AC #3 ("verify write volume acceptable for ~2M requests") existed to rule out exactly this.
 - **Blocker resolved — commit `609a149d` (pushed 2026-09-22), option 2 (isolate audit from functional events).** `dependencies.py` now builds two buses: the default bus with `exclude_events={integration.request}`, and a dedicated `AuditEventBus(only_events={integration.request})` started with `set_default=False` (so it never displaces the default singleton). The middleware publishes via `get_audit_event_bus()`. Each bus has its own queue+worker → an audit burst can only drop audit rows, never a functional event. Reply: [comment](https://github.com/taller-projects/echo-backend/pull/2323#issuecomment-5779323461). Awaiting Pedro re-review.
@@ -46,10 +46,10 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - Do **not** probe `/internal/projects` (list) or a `mocked_project` detail route in tests: polyfactory generates **float** `min_budget`/`max_budget` and the internal `ProjectResponse` requires `int` -> `ResponseValidationError` 500 depending on suite pollution. Probe a **non-existent** project id -> deterministic 404, still authenticated so the audit fires.
 - Constructor-level `middleware=[...]` is NOT gated by `create_app(add_middlewares=...)` (only Sentry + CORS/SecurityHeaders are), so the audit middleware runs in the test suite too — consistent with `AccessLoggerMiddleware`/`integrations_app`, verified no regressions.
 
-- **Commit `817f4e09` carries a forbidden `Co-Authored-By: Claude Opus 4.8` trailer** (added against CLAUDE.md by mistake; can't be removed without a force-push, which CLAUDE.local.md forbids). Branch squash-merges to dev, so **strip the trailer from the squash message at merge** (same handling as #2314).
+- **Commit `817f4e09` carries a forbidden `Co-Authored-By: Claude Opus 4.8` trailer** (added against CLAUDE.md by mistake). The PR was merged with a **merge commit (not squashed)**, so the trailer is now permanent on dev — it could only be removed by a force-push, which CLAUDE.local.md forbids. Lesson for next time: PRs to dev that carry a bad trailer must be **squash-merged** (where the message is editable), not merge-committed.
 
 ## Pending
-- **Awaiting Pedro re-review** of blocker fix `609a149d`. Then: merge (**strip Opus trailer from squash msg** — see Gotcha), Task 25058 -> Closed, qa/main promotion. Ticket owes: Loki-retention confirmation (AC #4) — ops check, not code. (AC #3 write-volume concern is now resolved structurally by the dedicated audit bus, not by a throughput estimate.)
+- **MERGED to dev 2026-09-22** (merge commit, not squashed — Opus trailer on `817f4e09` is permanent, see PRs). Pending: Task 25058 -> Closed, qa/main promotion. Ticket owes: Loki-retention confirmation (AC #4) — ops check, not code. (AC #3 write-volume concern is resolved structurally by the dedicated audit bus, not by a throughput estimate.)
 - **Follow-up (this ticket's scope):** at push volume every `/internal` write emits one `integration_request_log` row (~millions from one push) + EventBus load — retention/partitioning of that table is worth a follow-up; also a `surface` discriminator column if querying by surface becomes painful.
 
 ## Related
