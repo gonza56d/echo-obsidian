@@ -19,7 +19,8 @@ Fase 2 / F1 of Emiliano's Kforce-push PRD. `Interaction` was the only contact-ow
 
 ## Azure / docs
 - Parent: [Feature 24972](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24972) "Kforce - New Integration pipelines structure"
-- [US 25055](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055) — this PR (PRD F1) — In development → In revision
+- [US 25055](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055) — this PR (PRD F1) — In development → In revision; AC amended to column+index scope 2026-09-22
+- [Task 25072](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25072) — deferred write-path wiring (schema exposure + bulk_create ON CONFLICT + optional filter); split from 25055, blocked on Kforce Silver-layer interaction shape
 - PRD: [Pedidos a echo-backend para el push de Kforce](https://claude.ai/artifact/Ce8YpGSFnkqdYPNtomNMuC?sk=W9zUtnMU6qCcOgoVLxriMg) (Claude Doc, Emiliano) — section "Fase 2 → F1"
 
 ## PRs
@@ -48,7 +49,7 @@ One reviewer flagged a "blocker" (ticket AC not ratified) + 4 nits. Resolution:
 - **"RLS test mislabeled as isolation evidence"** → the reviewer assumed a tenant-scoping RLS policy. `contact_interaction`'s RLS is `using=true` ("Backend full access", kept only for PostgREST default-deny); interaction tenant isolation is app/repo-layer, and testcontainers runs as superuser so RLS is bypassed regardless. Fixed (`2fe0e51f`): the cross-tenant test is now explicitly documented as proving the **unique index** is tenant-scoped (not RLS row-hiding), and the model spec asserts the RLS policy **survived** the column add — the achievable RLS coverage for a column-only change.
 - **Empty-string→NULL contract is test-only** → acknowledged; carried into the deferred write-path PR (the ingest must map a missing source id to NULL, never `""`).
 - **No measured CONCURRENTLY build time** → reviewer said not required; not fabricating a number (build qualifies zero rows since the column is all-NULL).
-- **"Blocker": ticket AC not ratified.** AC#6 (RLS/tenant-isolation coverage) is now met in-PR (index-scope test + RLS-policy survival guard). AC#4 (expose field on `BulkInteractionCreate`/`InteractionUpdate`/`InteractionResponse`) genuinely depends on Kforce's undefined Silver-layer interaction shape → **split to a follow-up task, mirroring the F3→Task 25056 precedent**, and amend US 25055's AC. **PENDING Gonzalo's go-ahead to create that task + post the AC amendment on 25055.**
+- **"Blocker": ticket AC not ratified → RESOLVED.** AC#6 (RLS/tenant-isolation) met in-PR (index-scope test + RLS-policy survival guard). Write-path exposure split to **[Task 25072](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25072)** (child of Feature 24972, related to 25055), mirroring F3→25056. US 25055 AC amended in place (AC#3 struck → 25072; new AC#3 = tenant-isolation of the column) + ratification comment posted linking #2326. US 25055 can close on merge.
 
 ## Gotchas
 - The repo test suites build schema via `create_all`, **not** the alembic chain, and the full chain can't run on a vanilla Postgres (a Supabase migration needs `auth.users`). So the migration DDL was exercised by hand on a throwaway `pgvector/pgvector:pg16` container: upgrade + downgrade both idempotent (`IF NOT EXISTS`/`IF EXISTS`), clean final state. Behavioural uniqueness is covered by the unit tests on real PG.
@@ -56,7 +57,7 @@ One reviewer flagged a "blocker" (ticket AC not ratified) + 4 nits. Resolution:
 
 ## Pending
 - CI green + merge; then US 25055 → Closed, dev deploy.
-- **Split AC#4 (write-path exposure) to a follow-up task + amend US 25055 AC** (like F3→25056) before closing — awaiting go-ahead.
+- Write-path wiring now tracked as **Task 25072** (blocked on Kforce Silver-layer interaction shape).
 - Write-path wiring (schema field + `bulk_create` idempotency via ON CONFLICT) when Kforce's interaction Silver shape is defined — the reason this is column-only.
 - qa/main promotion after dev QA.
 
