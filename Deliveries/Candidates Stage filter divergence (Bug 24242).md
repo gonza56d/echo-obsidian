@@ -20,7 +20,12 @@ On the Candidates list, selecting one or more **Stage** values returned candidat
 - [Bug 24242](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24242) — In revision, assigned Gonzalo (reporter: Pedro / QA automation).
 
 ## PRs
-- [#2329](https://github.com/taller-projects/echo-backend/pull/2329) → dev — OPEN 2026-09-23.
+- [#2329](https://github.com/taller-projects/echo-backend/pull/2329) → dev — OPEN 2026-09-23. Fix commit `a015a1d7`; review nits `104a1273`.
+
+## Review
+- Ran `/pr-review` (scoped mode, 3 parallel reviewers) 2026-09-23: **READY WITH NITS**, zero blockers. Root cause verified in code (not the reporter's dropped-param hint — `current_status__in`/`current_step_id__in` ARE honored by `TalentFilter`; the repro returns filtered-but-wrong rows, not unfiltered). Divergence fixture verified non-vacuous.
+- Nits addressed + pushed (`104a1273`): fixed stale `current_step_progress_sort` docstring; added a real `current_step_id__in` divergence test (step-history row so it fails pre-fix, passes post-fix); asserted a zero-application talent is absent from a `current_status__in` filter.
+- Open QUESTION (advisory, non-blocking): no `EXPLAIN` of `/talents?current_status__in=...` under RLS at KForce volume. The realigned properties embed `last_application_subq` (which carries a per-row `max(step_history.created_at)` subquery) — heavier per row than the old `ORDER BY last_status_update LIMIT 1`, though `deferred=True` and it reuses the already-shipped `last_application_*` pattern. `talent` is not a hot table, so risk is modest; run one EXPLAIN before merge to confirm budget.
 
 ## How
 - FE renders each row's Stage from `last_application.status` / `.workflow_step` (`TalentListUI.last_application`). `Talent.last_application` picks the app by the shared `last_activity_at` recency key (`GREATEST(last step update, last_status_update, created_at)`, `id` tie-break) and excludes matching-only rows (status NULL and step NULL).
@@ -31,14 +36,14 @@ On the Candidates list, selecting one or more **Stage** values returned candidat
 
 ## Decisions
 - **Realign the column_property, not the filter.** The column_properties feed both the Stage filter and the Stage sort (`current_step_progress_sort`, `order_by=current_status`), and are single-sourced. Aligning them to `last_application` fixes filter, sort, and display consistency in one place, and is the drift `last_activity_at`'s own docstring warns about ("shared so they cannot drift apart" — `current_status` was simply never migrated to it).
-- **Covered `current_step_id` too** (workflow-step / KForce path), same defect class, one-line twin of the fix.
+- **Covered `current_step_id` too** (workflow-step / KForce path), same defect class, one-line twin of the fix — now with its own non-vacuous divergence test (needs a step-history row to force the pre-fix `last_step_update` ranking to pick the wrong app).
 
 ## Gotchas
 - The Bash grep/rg output in this repo masks identifiers (`current_status`→`n`, `TalentFilter`→`ln`); use Read, not grep output, to read these files.
 - `ApplicationCreate` has no `created_at`; set it in tests via `create_entity(..., extra_fields={"created_at": ...})`. The list endpoint caps `size` at 100 (200 → 422).
 
 ## Pending
-- Team review + merge #2329; then dev verification, Bug → Closed, qa/main promotion.
+- Team review (Pedro) + merge #2329; run the KForce EXPLAIN; then dev verification, Bug → Closed, qa/main promotion.
 - `Talent.current_application_id` still ranks by `last_status_update` alone (feeds only the "Last Stage Update" **date-range** filter, a different dimension) — same latent drift class, left out of scope. Consider aligning if that filter ever shows the same symptom.
 
 ## Related
