@@ -25,6 +25,7 @@ The longest-running saga: generalizing the contact relationship model to **label
 
 ### Adjacent contact-module fixes
 - [[Contact bulk_track IntegrityError (Bug 23251)]] · [[Future-dated interactions fix (Bug 23383)]] · [[Kforce contacts custom sorts (23546)]] · [[Kforce Last Contacted By filter (PR 1846)]]
+- [[Relationship recency by activity dates (PR 2341)]]: one recency key (open first, then the latest `activity_dates` or own date) for the list rows, the `last_relationship_type` trigger, the view, the group merge and `order_by=recency` (Sep 23). Pedro's PR; my bulk_check pairing fix.
 
 ### Investigations
 - [[Contact job-update signals — Changed Jobs vs Promoted (investigation)]] — how the dashboard "Update" badges + Warm Leads + job-change notifications actually work (2026-08-13); change_kind is classified by the data pipeline, never by Echo. Draft PRD (private) in the note.
