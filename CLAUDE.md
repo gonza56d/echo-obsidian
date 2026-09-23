@@ -14,6 +14,7 @@ Deliveries/      — ONE note per delivered feature/bugfix (the atomic unit)
 Maps/            — Maps of Content ("Map - <topic>.md") linking deliveries
                    into sagas (Contact Relationships, Kforce, Pentest, …)
 Templates/       — Delivery.md (frontmatter schema + section skeleton)
+Tooling/         — versioned snapshots of personal tooling (hooks/scripts) referenced by a delivery note
 CLAUDE.md        — this file
 ```
 

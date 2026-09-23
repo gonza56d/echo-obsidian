@@ -22,6 +22,7 @@ Running several Claude sessions on echo-backend at once (one per ticket/PR) kept
 - None yet. Lives outside git:
   - `~/.claude/hooks/echo-worktree-owner.py`: the hook (one script, dispatches on `hook_event_name`)
   - `~/.claude/hooks/test_echo_worktree_owner.py`: 66 scenario tests
+  - **versioned snapshot in this vault**: `Tooling/worktree-owner-hook/` (same two files; re-copy after editing the live ones)
   - registered in `echo-backend/.claude/settings.local.json` (3 entries: `PreToolUse` matcher `Bash|Edit|Write|NotebookEdit|EnterWorktree`, `SessionStart`, `UserPromptSubmit`; command `python3 "$HOME/.claude/hooks/echo-worktree-owner.py"`)
 
 ## Root cause (2026-09-23 incident)
@@ -74,7 +75,7 @@ Running several Claude sessions on echo-backend at once (one per ticket/PR) kept
   - make `BASE_REF` / repo scope configurable
   - fix the worktree-guard message
   - document `claim-worktree` in CLAUDE.md
-  - **The source currently lives only in `~/.claude/hooks` (not versioned).**
+  - Source of truth is `~/.claude/hooks`; the vault copy in `Tooling/worktree-owner-hook/` is a backup snapshot. Re-copy after any edit: `cp ~/.claude/hooks/{echo-worktree-owner.py,test_echo_worktree_owner.py} /Users/gonza56d/taller/repos/echo-obsidian/Tooling/worktree-owner-hook/`
 - Optional: the tmux bind rewrite above.
 
 ## Related
