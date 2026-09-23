@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-09-23
 tags: [feature, permissions, matching-instructions, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2337"
+  - "https://github.com/taller-projects/echo-backend/pull/2338"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25101"
@@ -30,7 +31,8 @@ What shipped: a new `matching_instructions.edit` permission, required together w
 - PRD: [Matching Instructions — Permiso dedicado por usuario — PRD Técnico](https://app.notion.com/p/3e4aedca11f0812a8529d48a206c85dd). Owner Pedro Rocha, Tier B, Draft. Open blocker: validating the permission name. The page was not shared with the Notion integration at first (404); the user granted access.
 
 ## PRs
-- [#2337](https://github.com/taller-projects/echo-backend/pull/2337) → dev — OPEN 2026-09-23 (`ef751778`)
+- [#2337](https://github.com/taller-projects/echo-backend/pull/2337) → dev — MERGED 2026-09-23 (merge `6fc81949`)
+- [#2338](https://github.com/taller-projects/echo-backend/pull/2338) → dev — OPEN 2026-09-23 (`b9a2c4a5`): empty merge migration `zolvj810zl6j` over `pf2rzvc97b81` (#2333) + `pl4ai19616w3`
 - FE: not yet (US 25103). Contract impact:
   - new permission string `matching_instructions.edit` in `/users/me` `access_role.permissions[]`;
   - `generate` now 404s without it;
@@ -45,7 +47,7 @@ What shipped: a new `matching_instructions.edit` permission, required together w
   - PATCH: `ProjectService.update_role(..., can_write_matching_instructions=...)` compares against `old_role` before `_update`. The default is True, so internal API-key callers stay ungated.
   - `POST /projects/{pid}/roles` and `POST /roles`: in the routers.
   - create-from-job: `OrganizationJobService.create_role_from_job`.
-- Migration `pl4ai19616w3` (parent `b8fq3mzv7kdn`): `permissions || '["matching_instructions.edit"]'` WHERE `? 'projects.edit' AND NOT ? 'matching_instructions.edit'`. Downgrade: `permissions - '...'`.
+- Migration `pl4ai19616w3` (parent `q7fkc2npl8rs` after the r1 rebase; merged with #2333's `pf2rzvc97b81` by `zolvj810zl6j`): `permissions || '["matching_instructions.edit"]'` WHERE `? 'projects.edit' AND NOT ? 'matching_instructions.edit'`. Downgrade: `permissions - '...'`.
 
 ## Decisions
 - **403 only on a real change**, because the FE's `RoleOverlayContext.tsx:162` PATCHes `{...role, code_challenge, interview_questions}`, which re-sends the stored instructions on unrelated saves.
@@ -59,12 +61,13 @@ What shipped: a new `matching_instructions.edit` permission, required together w
 - **The custom role drifts.** "Member - No Matching Instructions" is not a system role, so it won't pick up future Member permissions. Re-copy it whenever Navitec's modules change.
 - **Cached `/users/me`.** It uses `staleTime: Infinity`, so affected Navitec users must log in again.
 - **Alembic heads by file date can be wrong.** The newest file (`td9m2kqp7v3x`, 2026-09-22 16:00) was not the head (`b8fq3mzv7kdn` was). Always use `alembic heads`.
-- **Full alembic chain can't run locally** (it needs Supabase `auth.users`). The migration was verified in isolation via `Operations.context` on a throwaway pgvector container: parity, running twice, downgrade, re-upgrade.
+- **Double alembic head after merging.** Pedro's #2333 (`pf2rzvc97b81`) and #2337 (`pl4ai19616w3`) both revise `q7fkc2npl8rs`; each was single-head on its own branch, so CI was green on both, but `dev` ended with 2 heads and `apply_migrations.sh` (`alembic upgrade head`) fails. Fixed with a merge migration (#2338), not by re-parenting: a merge works whether an env's DB sits at the fork point or at either head. `downgrade -1` from the mergepoint is "Ambiguous walk"; downgrade with an explicit target.
+- **The full alembic chain needs Supabase `auth.users`.** #2337 was verified in isolation via `Operations.context` on a throwaway pgvector container: parity, running twice, downgrade, re-upgrade. For #2338 the full chain ran after stubbing on a FRESH database (a failed first run leaves enum types behind): `CREATE SCHEMA auth; CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb, raw_app_meta_data jsonb, created_at timestamptz, updated_at timestamptz)`, then `DB_URL=... alembic upgrade head`.
 - **Worktree-guard limits.** It blocks `source`, `$S`-variable python one-liners and inline `-d` Azure payloads. Do Azure and vault work after `ExitWorktree(keep)`.
 - **Stale FE checkout.** The local echo-frontend checkout is from June 2026. Read FE `dev` through `gh api .../tarball/dev` into the scratchpad instead.
 
 ## Pending
-- Review and merge #2337, then the qa/main promotions.
+- Merge [#2338](https://github.com/taller-projects/echo-backend/pull/2338) — the dev migrate step fails until it lands. Then the qa/main promotions (must carry #2333, #2337 and #2338 together).
 - Tell Pedro about the three PRD deviations (the dropped feature layer, `has_permissions` instead of `RequestContext.permissions`, create-from-job) and validate the permission name, which is the PRD's open blocker.
 - FE US 25103 (Web Team).
 - Task 25104: the Navitec prod runbook, after the prod deploy. Also tell Navitec which role to use for new invites.
