@@ -7,6 +7,7 @@ tags: [bugfix, matching, vectorizer, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2334"
   - "https://github.com/taller-projects/echo-backend/pull/2335"
+  - "https://github.com/taller-projects/echo-backend/pull/2339"
 fe_prs: []
 tickets: []
 prd: ""
@@ -23,6 +24,7 @@ Navitec reported that role 3093's LLM scores changed "on their own". Every Add C
 - [#2334](https://github.com/taller-projects/echo-backend/pull/2334) → dev: Pedro, MERGED 2026-09-23 as merge commit `67d06c51`. I reviewed it: /pr-review r1 verdict CHANGES REQUESTED (2 test blockers), posted as an APPROVE review at the user's request ([review 5293638485](https://github.com/taller-projects/echo-backend/pull/2334#pullrequestreview-5293638485)).
 - [#2335](https://github.com/taller-projects/echo-backend/pull/2335) → dev: my follow-up, OPEN 2026-09-23 (`e53dc50c`).
 - FE: no contract change. The per-row "Re-match candidate" button (`MatchingScoreCell.tsx` → `POST /matches?role_id&talent_id`) now re-evaluates only that pair.
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
 
 ## How
 - `VectorizerService.evaluate_application_batch(job_id, tenant_id, *, candidate_ids=None, ...)` (real and mock). The body carries `candidate_ids` only when given. An empty list returns `None` with no call.

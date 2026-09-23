@@ -6,6 +6,7 @@ delivered:
 tags: [feature, kforce, contacts, interaction, migration, internal-api]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2326"
+  - "https://github.com/taller-projects/echo-backend/pull/2339"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25055"
@@ -26,6 +27,7 @@ Fase 2 / F1 of Emiliano's Kforce-push PRD. `Interaction` was the only contact-ow
 ## PRs
 - [#2326](https://github.com/taller-projects/echo-backend/pull/2326) → dev — open 2026-09-22. Branch `25055/interaction-kforce-external-id`.
   - Reviewed via `/pr-review` 2026-09-22 (3 parallel reviewers): 0 blockers, verdict READY WITH NITS. Nits fixed `77892481` (empty-string guard + pinned predicate). Round-2 external review nits fixed `2fe0e51f`.
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
 
 ## How
 - `Interaction.kforce_external_id: str | None` + partial unique index `uq_contact_interaction_kforce_external_id` on `(tenant_id, kforce_external_id) WHERE kforce_external_id IS NOT NULL` (`app/modules/contact/interaction/models.py`).

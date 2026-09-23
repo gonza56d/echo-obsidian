@@ -6,6 +6,7 @@ delivered:
 tags: [chore, tooling, pr-review, claude]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2332"
+  - "https://github.com/taller-projects/echo-backend/pull/2339"
 fe_prs: []
 tickets: []
 prd: ""
@@ -20,6 +21,7 @@ Running the `/pr-review` (or `/review-pr`) review workflow with **no argument** 
 
 ## PRs
 - [#2332](https://github.com/taller-projects/echo-backend/pull/2332) → `dev` — **in review** (opened 2026-09-23)
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
 
 ## How
 - `.claude/skills/pr-review/SKILL.md` — new **"Precondition: a PR identifier is MANDATORY"** section at the top: abort and ask when no id is given; never infer from the current branch / latest PR / a default; never run `gh pr *` without an explicit `<num>`. "Inputs required" also marks the PR id REQUIRED.
