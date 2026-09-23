@@ -37,6 +37,16 @@ Backend part of adding a `Candidate Selected` status to `RolePlacement`: a **non
 - Suite builds schema with `create_all`, NOT alembic, so tests don't exercise the migration. Verified upgrade/downgrade against a throwaway pgvector Postgres in isolation (rows preserved, `'Draft'` default intact).
 - Enum migration `existing_server_default` is `'Draft'` today, not `'Open'` — always re-check the real current default before copying an older enum migration.
 
+## Review (2026-09-23)
+Ran the full pr-review skill (3 parallel reviewers). Verdict: **CHANGES REQUESTED** — 2 blockers, 2 nits. PRD compliance 7/7; every count/reporting bucket independently verified in code.
+- **Nits fixed** in commit `826a9735` (pushed to #2330):
+  - Parametrized `test_patch_rejects_talent_linked_to_another_non_terminal_placement` over `[Open, Candidate Selected]` (occupancy rejection on the PATCH branch now covers the new status).
+  - Migration docstring: documented the `sync_enum_values` full-type-swap rewrite cost + KForce budget + no view dependency on `role_placement.status`.
+- **Blockers still open (not addressed — left for author decision):**
+  1. `refresh_placement_denormalized_fields` widening (`repository.py:325`) has no test exercising a `CANDIDATE_SELECTED` placement — the PR's central repo change is uncovered. Add `test_candidate_selected_placement_used_for_denormalization`.
+  2. Migration `downgrade()` removes the enum value with no guarded `UPDATE` first → hard-fails if any row is in `'Candidate Selected'` (violates the CLAUDE.md enum-downgrade rule; same flaw as precedent `add_placement_draft`). Fix: `UPDATE role_placement SET status='Open' WHERE status='Candidate Selected'` before the sync, or document downgrade unsupported.
+- **Question raised:** paired echo-frontend PR/ticket for the `"Candidate Selected"` string (FE hardcodes the status set; must NOT add it to FE `FULFILLED_STATUSES`).
+
 ## Pending
 - Review + merge to dev.
 - qa/main promotion.
