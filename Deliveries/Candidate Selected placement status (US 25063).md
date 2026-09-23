@@ -4,7 +4,7 @@ status: in-review
 env: both
 delivered:
 tags: [feature, placement, roles]
-prs: ["https://github.com/taller-projects/echo-backend/pull/2330", "https://github.com/taller-projects/echo-backend/pull/2339"]
+prs: ["https://github.com/taller-projects/echo-backend/pull/2330", "https://github.com/taller-projects/echo-backend/pull/2339", "https://github.com/taller-projects/echo-backend/pull/2340"]
 fe_prs: []
 tickets: ["https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25063"]
 prd: ""
@@ -19,7 +19,8 @@ Backend part of adding a `Candidate Selected` status to `RolePlacement`: a **non
 
 ## PRs
 - [#2330](https://github.com/taller-projects/echo-backend/pull/2330) → dev — in review
-- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` MERGED 2026-09-23 (`26e57503`; 31 commits, 7 migrations, single head `zolvj810zl6j`).
+- [#2340](https://github.com/taller-projects/echo-backend/pull/2340) — release `qa` → `main` OPEN 2026-09-23 (prod + kforce-prod behind Azure approvals).
 
 ## How
 - Enum: `CANDIDATE_SELECTED = "Candidate Selected"` added to `RolePlacementStatus` and to `NON_TERMINAL_PLACEMENT_STATUSES` (`app/modules/role/placement/schemas.py`).

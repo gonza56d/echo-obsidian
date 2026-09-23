@@ -8,6 +8,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2337"
   - "https://github.com/taller-projects/echo-backend/pull/2338"
   - "https://github.com/taller-projects/echo-backend/pull/2339"
+  - "https://github.com/taller-projects/echo-backend/pull/2340"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25101"
@@ -38,7 +39,8 @@ What shipped: a new `matching_instructions.edit` permission, required together w
   - new permission string `matching_instructions.edit` in `/users/me` `access_role.permissions[]`;
   - `generate` now 404s without it;
   - role PATCH/create answers 403 `error.code = matching_instructions_forbidden` when the field changes without it.
-- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` MERGED 2026-09-23 (`26e57503`; 31 commits, 7 migrations, single head `zolvj810zl6j`).
+- [#2340](https://github.com/taller-projects/echo-backend/pull/2340) — release `qa` → `main` OPEN 2026-09-23 (prod + kforce-prod behind Azure approvals).
 
 ## How
 - `Permission.MatchingInstructionsEdit` sits in `TenantModuleConfig.RECRUITING` + `SOLUTIONING`, the same modules as `projects.edit`. A test asserts that parity for every module.

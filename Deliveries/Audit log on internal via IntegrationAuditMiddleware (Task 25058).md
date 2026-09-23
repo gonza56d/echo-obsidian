@@ -7,6 +7,7 @@ tags: [feature, kforce, internal-api, audit, observability]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2323"
   - "https://github.com/taller-projects/echo-backend/pull/2339"
+  - "https://github.com/taller-projects/echo-backend/pull/2340"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25058"
@@ -30,7 +31,8 @@ P2-3 of Emiliano's Kforce-push PRD (priority *baja / barato*). `/internal` is wh
 - **Blocker resolved — commit `609a149d` (pushed 2026-09-22), option 2 (isolate audit from functional events).** `dependencies.py` now builds two buses: the default bus with `exclude_events={integration.request}`, and a dedicated `AuditEventBus(only_events={integration.request})` started with `set_default=False` (so it never displaces the default singleton). The middleware publishes via `get_audit_event_bus()`. Each bus has its own queue+worker → an audit burst can only drop audit rows, never a functional event. Reply: [comment](https://github.com/taller-projects/echo-backend/pull/2323#issuecomment-5779323461). Awaiting Pedro re-review.
   - Nits in the same commit: honest `IntegrationRequestLog` docstring (POST audited; `query_params` can carry PII e.g. `?email=` → redaction tracked as follow-up); `_pin_default_bus` → `_pin_audit_bus` via `monkeypatch.setattr` (auto-reverting); new 401-audit-row test; new `TestAuditBusIsolation` (registry filtering + `set_default` guard). Queue-full drop contract already pinned by pre-existing `test_eventbus_queue_full_handling`.
   - Verification: `test_event_bus.py` 19/19, `test_public_api_endpoints.py`+shim 106/106, functional-event handlers (adoption/outbox/dispatcher) 117/117, lint clean.
-- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` MERGED 2026-09-23 (`26e57503`; 31 commits, 7 migrations, single head `zolvj810zl6j`).
+- [#2340](https://github.com/taller-projects/echo-backend/pull/2340) — release `qa` → `main` OPEN 2026-09-23 (prod + kforce-prod behind Azure approvals).
 
 ## How
 - `internal_app = FastAPI(middleware=[Middleware(IntegrationAuditMiddleware)], strict_content_type=False)` in `app/main.py` — identical to how `integrations_app` mounts it, so it sits **inside** the InjectorMiddleware (`dp_injector.setup_injections`) and `get_request_context()` resolves the context the auth dep populated. Core change is one line.

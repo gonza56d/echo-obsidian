@@ -7,6 +7,7 @@ tags: [bugfix, candidates, talent, filters]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2329"
   - "https://github.com/taller-projects/echo-backend/pull/2339"
+  - "https://github.com/taller-projects/echo-backend/pull/2340"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24242"
@@ -22,7 +23,8 @@ On the Candidates list, selecting one or more **Stage** values returned candidat
 
 ## PRs
 - [#2329](https://github.com/taller-projects/echo-backend/pull/2329) → dev — OPEN 2026-09-23. Fix commit `a015a1d7`; self-review nits `104a1273`; Pedro r1 fixes `3c7ac0e2` (perf blocker + nits). Reply: https://github.com/taller-projects/echo-backend/pull/2329#issuecomment-5798324715
-- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` OPEN 2026-09-23 (31 commits, 7 migrations, single head `zolvj810zl6j`); `qa` → `main` opens after it merges (qa == main until then).
+- [#2339](https://github.com/taller-projects/echo-backend/pull/2339) — release `dev` → `qa` MERGED 2026-09-23 (`26e57503`; 31 commits, 7 migrations, single head `zolvj810zl6j`).
+- [#2340](https://github.com/taller-projects/echo-backend/pull/2340) — release `qa` → `main` OPEN 2026-09-23 (prod + kforce-prod behind Azure approvals).
 
 ## Review
 - Ran `/pr-review` (scoped mode, 3 parallel reviewers) 2026-09-23: **READY WITH NITS**, zero blockers. Root cause verified in code (not the reporter's dropped-param hint — `current_status__in`/`current_step_id__in` ARE honored by `TalentFilter`; the repro returns filtered-but-wrong rows, not unfiltered). Divergence fixture verified non-vacuous.
