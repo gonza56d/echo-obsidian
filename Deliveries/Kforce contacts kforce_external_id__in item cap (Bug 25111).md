@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-09-24
 tags: [bugfix, kforce, contacts, internal-api, filters]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2344"
@@ -23,7 +23,7 @@ Follow-up of [[Kforce push echo-backend requests - kforce_external_id__in filter
 - PRD source: Emiliano's `docs/prd-pedidos-a-echo-backend-2026-09-21.md` in `taller_kforce_integration_api` (a copy sits untracked at `echo-backend/prd-pedidos.md`), section P0-1 "Actualización 2026-09-23"
 
 ## PRs
-- [#2344](https://github.com/taller-projects/echo-backend/pull/2344) → dev — open 2026-09-24, branch `25111/kforce-external-id-in-item-cap`, commits `969b27f0` (fix) + `7651c88f` (my r1 nits) + `71533086` (Pedro's nits)
+- [#2344](https://github.com/taller-projects/echo-backend/pull/2344) → dev — **MERGED 2026-09-24** (squash `7b4c3726`), branch `25111/kforce-external-id-in-item-cap`, commits `969b27f0` (fix) + `7651c88f` (my r1 nits) + `71533086` (Pedro's nits)
 
 ## Review
 - `/pr-review` r1 2026-09-24 on `969b27f0`: **READY WITH NITS**, 0 blockers, CI green (arch 9 PASS / 1 FAIL nit A14 / 6 N/A; ticket 7/7 in-scope; tests-sec 12 PASS / 0 FAIL / 4 N/A). Not posted to GitHub.
@@ -47,7 +47,7 @@ Follow-up of [[Kforce push echo-backend requests - kforce_external_id__in filter
 - Tenant-scope question (C4): kforce-dev has ONE tenant (`018a3ca4…` Kforce Inc.), so `count(*)` global = tenant = 1,636,903 proves nothing by itself. Real evidence: `TenantScopedRepository._base_query` adds `contact.tenant_id = <key's tenant>` (internal app runs under `DisableRLS`) + `test_other_tenants_contacts_stay_invisible`.
 
 ## Pending
-- CI on `71533086` → merge #2344 (already APPROVED by Pedro) → Bug 25111 Closed, dev deploy (kforce-dev auto on green).
+- Bug 25111 → Closed; confirm dev + kforce-dev deploy of `7b4c3726` went green, then Emi re-runs the canary with 100 GUIDs.
 - Reply to Emiliano: fix PR + counts answer (1,636,903 both, single-tenant DB) + code evidence.
 - qa/main promotion.
 
