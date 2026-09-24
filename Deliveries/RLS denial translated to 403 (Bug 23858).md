@@ -22,14 +22,16 @@ Every write rejected by a Postgres RLS policy answered **HTTP 500**. `SQLAlchemy
 - Filed from [US 23849](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23849) (Create Role from Open Job), where it was worked around with `ProjectService.assert_can_create_standalone_role`.
 
 ## PRs
-- [#2348](https://github.com/taller-projects/echo-backend/pull/2348) → dev: **OPEN 2026-09-24**. Commit `fix(repositories): translate RLS denials to 403 instead of 500`.
+- [#2348](https://github.com/taller-projects/echo-backend/pull/2348) → dev: **OPEN 2026-09-24**. Commit `a5072eb8` `fix(repositories): translate RLS denials to 403 instead of 500`, then `76236717` `fix(exceptions): hand non-RLS ProgrammingError to the catch-all; report RLS denials to Sentry` (self-review round 1 fixes). PR body updated to match.
 - FE: none. No contract change; the FE already shows `detail` on a 403.
 
 ## How
 - `app/repositories/exceptions.py`: `RowLevelSecurityError(AuthorizationError)` has a generic detail ("You do not have permission to make this change"), `error.code` `authorization_error`, and a `policy_table` attribute. `from_db_error()` returns None unless `orig` is `InsufficientPrivilege` **and** the message matches `new row violates row-level security policy .*?for table "<t>"`. The lazy gap covers the RESTRICTIVE-named and `(USING expression)` variants.
 - `handle_commit_errors`: a `ProgrammingError` branch that rolls back and raises `RowLevelSecurityError`. A non-RLS error is re-raised with no rollback, which is the old behaviour.
 - `app/core/exception_handlers.py`: `programming_error_handler`, registered on all four apps (root, `/internal`, `/admin`, `/integrations`) in `main.py`. It covers the ~54 service-level direct commits that never pass through the decorator. A non-RLS error is **re-raised**, so it reaches the catch-all 500 + Sentry unchanged.
-- `echo_exception_handler` logs `rls_policy_violation table=… method=… path=…` at WARNING. A 403 never reaches Sentry, so this keeps the signal in Loki. It mirrors `duplicate_constraint_violation`.
+- `echo_exception_handler` logs `rls_policy_violation table=… method=… path=…` at WARNING (mirrors `duplicate_constraint_violation`) **and** calls `sentry_sdk.capture_message(..., level="warning", fingerprint=["rls_policy_violation", table])`, so each table gets one Sentry issue. Without it a 4xx never reaches Sentry: WARNING logs are only breadcrumbs under the default `LoggingIntegration`, and nothing alerts on Loki.
+- A non-RLS `ProgrammingError` goes to `return await unhandled_exception_handler(...)`, **not** `raise exc` (see Gotchas).
+- `bulk_update_stage` (`application/service.py`) catches `EchoException` per item, so an RLS denial there becomes a per-item `authorization_error` and the global handler never runs. Its `bulk_stage_move_failed` warning now carries `policy_table`.
 
 ## Decisions
 - **Only the policy form of 42501 becomes a 403.** A missing GRANT (`permission denied for table …`) shares the SQLSTATE but is a deployment bug, so it stays a 500 and goes to Sentry.
@@ -42,10 +44,16 @@ Every write rejected by a Postgres RLS policy answered **HTTP 500**. `SQLAlchemy
 - On PG16, a plain `UPDATE` whose new row fails an `UPDATE USING` clause (no WITH CHECK) emits the **plain** message. `(USING expression)` only appears for ON CONFLICT DO UPDATE.
 - A constructed `psycopg2` error has `diag.*`/`pgerror` = None, so the classifier matches on `str(error.orig)`. That works for real and constructed errors alike.
 
+- **Never re-raise from an exception handler registered on both the root app and mounted sub-apps.** A re-raise inside a mounted app reaches its `ServerErrorMiddleware`, which sends the 500 and re-raises. The error then hits the ROOT app's handler for the same type with the response already started, and Starlette raises `RuntimeError("Caught handled exception, but response already started.")`. That produces a second, misleading Sentry event, and dedupe misses it because it is a different object. Return the catch-all's response instead. The `mounted_app` test in `tests/unit/core/test_exception_handlers.py` fails with the RuntimeError if someone reverts this.
+- Side effect of not re-raising: on the root app, a non-RLS `ProgrammingError` no longer passes through `AccessLoggerMiddleware`. So it shows up in Sentry as a structured `ProgrammingError` event (from `capture_exception`) instead of the `app.access` `unhandled_exception_in_request` log event, and Sentry groups it differently. The traceback is still logged by the catch-all's `logger.exception`.
+- Real-RLS tests: use `commit=False` whenever the row would pass the policy. Otherwise a regression would COMMIT the CREATE ROLE, and the role is cluster-global (it survives `drop_all`).
+
+## Verification / baseline
+- Sentry baseline (90 days, measured 2026-09-24 via org Discover): the only RLS 500s are `POST /applications` on **Taller prod** (tenant `01df2012…`), table `application`. There were 3 events (2026-09-01, and 2 on 2026-09-24) in issues ECHO-BACKEND-P6 / V4. No other endpoint or environment had any. After merge these become 403 plus the `rls_policy_violation table=application` Sentry warning. Posted on 23858 (comment 28872390), along with the missing-GRANT narrowing note.
+
 ## Pending
-- CI on #2348 (the user is watching it upstream); review; merge → Bug 23858 **Closed**.
-- Sentry/Loki measurement of today's RLS 500s by endpoint (the ticket asked for it). A background agent was still running when the PR opened; add the results to the PR once in.
-- The full local `tests/unit` + `tests/multitenancy` run was still in flight when the PR opened (the targeted 50 tests pass; both repo tests fail on dev without the fix).
+- CI on `76236717`, then merge → Bug 23858 **Closed**.
+- **Why is the `application` INSERT RLS-denied in Taller prod?** It happened twice on 2026-09-24. Unticketed. Investigate separately (could be a user outside data scope, or a policy gap).
 - qa/main promotion with the next release.
 
 ## Related
