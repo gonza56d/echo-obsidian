@@ -119,7 +119,7 @@ Everything testable on dev passed. Roles created in the Taller tenant: **103853,
 - FE ticket not created: Open Jobs overlay action, 409 → open the existing role via `error.context.role_id` (`renderError` shows `'API Error'` today, needs `getApiErrorStatus`/`getApiErrorDetailMessage`), and replicate `useLicenseLimit('standalone_roles')` on that surface.
 - Post-merge: verify on `dev` against a real seeded job (with and without `description`), then M4's handoff items.
 - Capa 1 business PRD still owed; v1.1 "already converted" signal committed in the PRD.
-- Follow-ups filed: [Bug 23858](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23858) RLS denial → 500 repo-wide · [Bug 23859](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23859) `top_tech` string default on JSONB · [Task 23860](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23860) tenant scoping of open-job reads.
+- Follow-ups filed: [Bug 23858](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23858) RLS denial → 500 repo-wide · [Bug 23859](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23859) `top_tech` string default on JSONB (fixed → [[OrganizationJob top_tech string default (Bug 23859)]], [#2347](https://github.com/taller-projects/echo-backend/pull/2347)) · [Task 23860](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23860) tenant scoping of open-job reads.
 
 ## Related
 
