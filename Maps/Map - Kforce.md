@@ -31,6 +31,7 @@ Emiliano's new pipeline (Bronze/Silver/Gold → push through `/internal`, Tracke
 - [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] — PRD triage + the blocker PR ([#2314](https://github.com/taller-projects/echo-backend/pull/2314), merged dev): P0-1 contact `kforce_external_id__in`, P0-2/P1-0 stable `Contact.id` tie-break, P2-1 bulk POSTs return ids.
 - [[Audit log on internal via IntegrationAuditMiddleware (Task 25058)]] — P2-3 ([#2323](https://github.com/taller-projects/echo-backend/pull/2323), merged dev): `IntegrationAuditMiddleware` on `internal_app`.
 - [[Interaction kforce_external_id column (US 25055)]] — Fase 2 / F1 ([#2326](https://github.com/taller-projects/echo-backend/pull/2326), open dev): `Interaction.kforce_external_id` + tenant-scoped partial unique index (column + index only).
+- [[Kforce contacts kforce_external_id__in item cap (Bug 25111)]] — P0-1 follow-up ([#2344](https://github.com/taller-projects/echo-backend/pull/2344), open dev): the 100 cap counted characters (2 GUIDs); now counts ids.
 
 **PRD request status (where the next agent picks up)**
 - ✅ **P0-1** contact filter — #2314 (dev).
