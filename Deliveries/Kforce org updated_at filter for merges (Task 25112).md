@@ -54,7 +54,7 @@ Emiliano's Kforce push PRD P1-3 (improvement, not blocking): to learn that Echo 
 ## Pending
 - Re-review + merge #2345 → Task 25112 Closed, dev deploy.
 - Ask the user whether to also bump `updated_at` on insight-only ORM edits (mapper `before_update` listener on `OrganizationInsight`), as a follow-up.
-- Reply to Emiliano (cursor overlap, offset required, `order_by=updated_at` + one page, merges only, keep a periodic `--full` for insight-only edits / external-link re-points; the loser is looked up via the list `id__in`, not `GET /{id}`).
+- ~~Reply to Emiliano~~ DONE 2026-09-24: Emi confirmed list-only `merged_into_id`, merge/unmerge-only cursor + periodic `--full`, contract `order_by=updated_at,id` / 15-min overlap / 30000 page / idempotent. Told him to drop `merged_into_id__isnull=false` (hides unmerges; unmerge restores the loser's `kforce_external_id` + bumps both). Posted as reply to Pedro's BLOCKED ON CLARIFICATION review ([comment](https://github.com/taller-projects/echo-backend/pull/2345#issuecomment-5821394155)) + recorded in Task 25112 description. Pedro's remaining nits (undo per-type hook, 3x repeated explanation, super-admin list test) → follow-up.
 - Out-of-scope follow-ups from the review: pre-existing N+1 on the internal list (3 deferred column_properties per item, `related_contacts_count` over `contact_relationship`); `_link_organizations` per-row `rollback()` may drop earlier uncommitted merges in the batch.
 - qa/main promotion.
 
