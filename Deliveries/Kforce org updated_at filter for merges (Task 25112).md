@@ -23,7 +23,7 @@ Emiliano's Kforce push PRD P1-3 (improvement, not blocking): to learn that Echo 
 - PRD source: `docs/prd-pedidos-a-echo-backend-2026-09-21.md` (pipeline repo), section P1-3
 
 ## PRs
-- [#2345](https://github.com/taller-projects/echo-backend/pull/2345) → dev — open 2026-09-24, branch `25112/org-updated-at-filter-merge-bump`, commits `d201d1e4` + `2f07cf16` (r1 review nits)
+- [#2345](https://github.com/taller-projects/echo-backend/pull/2345) → dev — open 2026-09-24, branch `25112/org-updated-at-filter-merge-bump`, commits `d201d1e4` + `2f07cf16` (r1 review nits) + `daa5e856` (Pedro's nits: per-type post-revert hooks in `UndoService`, cursor contract documented once on the route, super-admin list cursor tests)
 
 ## How
 - `OrganizationInternalFilter.updated_at__gte: AwareDatetime` (existing `organization_updated_at_idx`, no migration; naive/invalid → 422). Super-admin org list shares the filter.
@@ -54,7 +54,7 @@ Emiliano's Kforce push PRD P1-3 (improvement, not blocking): to learn that Echo 
 ## Pending
 - Re-review + merge #2345 → Task 25112 Closed, dev deploy.
 - Ask the user whether to also bump `updated_at` on insight-only ORM edits (mapper `before_update` listener on `OrganizationInsight`), as a follow-up.
-- ~~Reply to Emiliano~~ DONE 2026-09-24: Emi confirmed list-only `merged_into_id`, merge/unmerge-only cursor + periodic `--full`, contract `order_by=updated_at,id` / 15-min overlap / 30000 page / idempotent. Told him to drop `merged_into_id__isnull=false` (hides unmerges; unmerge restores the loser's `kforce_external_id` + bumps both). Posted as reply to Pedro's BLOCKED ON CLARIFICATION review ([comment](https://github.com/taller-projects/echo-backend/pull/2345#issuecomment-5821394155)) + recorded in Task 25112 description. Pedro's remaining nits (undo per-type hook, 3x repeated explanation, super-admin list test) → follow-up.
+- ~~Reply to Emiliano~~ DONE 2026-09-24: Emi confirmed list-only `merged_into_id`, merge/unmerge-only cursor + periodic `--full`, contract `order_by=updated_at,id` / 15-min overlap / 30000 page / idempotent. Told him to drop `merged_into_id__isnull=false` (hides unmerges; unmerge restores the loser's `kforce_external_id` + bumps both). Posted as reply to Pedro's BLOCKED ON CLARIFICATION review ([comment](https://github.com/taller-projects/echo-backend/pull/2345#issuecomment-5821394155)) + recorded in Task 25112 description. Pedro's nits fixed in `daa5e856` (default-sort nit answered by Emi's `order_by=updated_at,id`); CI left to the user.
 - Out-of-scope follow-ups from the review: pre-existing N+1 on the internal list (3 deferred column_properties per item, `related_contacts_count` over `contact_relationship`); `_link_organizations` per-row `rollback()` may drop earlier uncommitted merges in the batch.
 - qa/main promotion.
 
