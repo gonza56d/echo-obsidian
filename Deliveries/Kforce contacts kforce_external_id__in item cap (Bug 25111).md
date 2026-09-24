@@ -23,11 +23,13 @@ Follow-up of [[Kforce push echo-backend requests - kforce_external_id__in filter
 - PRD source: Emiliano's `docs/prd-pedidos-a-echo-backend-2026-09-21.md` in `taller_kforce_integration_api` (a copy sits untracked at `echo-backend/prd-pedidos.md`), section P0-1 "Actualización 2026-09-23"
 
 ## PRs
-- [#2344](https://github.com/taller-projects/echo-backend/pull/2344) → dev — open 2026-09-24, branch `25111/kforce-external-id-in-item-cap`, commits `969b27f0` (fix) + `7651c88f` (review nits)
+- [#2344](https://github.com/taller-projects/echo-backend/pull/2344) → dev — open 2026-09-24, branch `25111/kforce-external-id-in-item-cap`, commits `969b27f0` (fix) + `7651c88f` (my r1 nits) + `71533086` (Pedro's nits)
 
 ## Review
 - `/pr-review` r1 2026-09-24 on `969b27f0`: **READY WITH NITS**, 0 blockers, CI green (arch 9 PASS / 1 FAIL nit A14 / 6 N/A; ticket 7/7 in-scope; tests-sec 12 PASS / 0 FAIL / 4 N/A). Not posted to GitHub.
 - Nits fixed in `7651c88f`: return type on `_cap_kforce_external_id_batch`; FilterDepends rationale kept once (field comment), docstring keeps only the why-100; tests derive 99/100/101 + message from `KFORCE_EXTERNAL_ID_BATCH_MAX`; 422 test pins `error.code == "validation_error"` + `detail[0].loc == ["kforce_external_id__in"]`. PR body corrected: org filter has item semantics but NO cap (not "same contract"); cap also hits `GET /contacts/relationships`.
+- **Pedro (rocha-p) APPROVED** 2026-09-24 on `7651c88f`, READY WITH NITS (verified dev 422 vs PR 200 with 100 real GUIDs). Fixed in `71533086`: error msg drops the backticked field name (`loc` names it; msg is now `Value error, accepts at most 100 ids per call.`); 422 test asserts `loc[-1]` only (survives a fastapi-filter `query` prefix); new `test_public_list_accepts_a_full_batch_of_guids` on `GET /contacts`; comment on `KFORCE_EXTERNAL_ID_BATCH_MAX` (100 GUIDs ~3.7k chars vs nginx-ingress 8k request line → ~200 ceiling).
+- Pedro nits NOT changed: duplicates / empty items count toward the cap (`split_str` is shared by every `__in`; results stay correct via the unique index; Kforce sends clean lists). His OOS: a `docs/`/`AdvancedFilter` note that `_list_to_str_fields` copies ANY `FieldInfo` constraint (`max_length`, `min_length`, `pattern`) onto the joined str; `GET /contacts/relationships` has no coverage of this filter (pre-existing).
 - Left as out-of-scope (not built): per-item length cap (`List[Annotated[str, Field(max_length=64)]]`), org filter cap symmetry, cap `description` in OpenAPI, EXPLAIN evidence from kforce-dev.
 - Verified: `FilterWrapper.__new__` re-raises `ValidationError` as `RequestValidationError` → 422, never 500 (only via FilterDepends; a direct `ContactFilter(...)` in service code would 500, no caller today). `split_str` doesn't trim/dedupe → trailing comma counts as an item.
 
@@ -45,7 +47,7 @@ Follow-up of [[Kforce push echo-backend requests - kforce_external_id__in filter
 - Tenant-scope question (C4): kforce-dev has ONE tenant (`018a3ca4…` Kforce Inc.), so `count(*)` global = tenant = 1,636,903 proves nothing by itself. Real evidence: `TenantScopedRepository._base_query` adds `contact.tenant_id = <key's tenant>` (internal app runs under `DisableRLS`) + `test_other_tenants_contacts_stay_invisible`.
 
 ## Pending
-- CI on `7651c88f` → merge #2344 → Bug 25111 Closed, dev deploy (kforce-dev auto on green).
+- CI on `71533086` → merge #2344 (already APPROVED by Pedro) → Bug 25111 Closed, dev deploy (kforce-dev auto on green).
 - Reply to Emiliano: fix PR + counts answer (1,636,903 both, single-tenant DB) + code evidence.
 - qa/main promotion.
 
