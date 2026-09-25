@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-09-25
 tags: [bugfix, contacts, search, linkedin]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2346"
@@ -21,10 +21,10 @@ prd: ""
 QA (Gisel, TC-22383-A8) typed `HTTPS://WWW.LINKEDIN.COM/IN/TOMYTEST/` into the `/contacts` search bar and got "No matches". Stored `https://www.linkedin.com/in/tomytest/` exists (QA contact `cd9008f0…`). This is a bug in the LinkedIn search branch from [US 22383](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22383) ([#1359](https://github.com/taller-projects/echo-backend/pull/1359), May 2026). The fix: the section segment is now normalized case-insensitively, and the search matches `linkedin IN (as_typed, lowercased)`.
 
 ## Azure / docs
-- [Bug 22559](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22559) (→ In revision 2026-09-24, PR linked) · original [US 22383](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22383) · sibling [Bug 22560](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22560) (email search, closed) · Feature [11124 Contacts](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/11124)
+- [Bug 22559](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22559) (→ In revision 2026-09-24, PR linked → **Closed** 2026-09-25 on merge) · original [US 22383](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22383) · sibling [Bug 22560](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22560) (email search, closed) · Feature [11124 Contacts](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/11124)
 
 ## PRs
-- [#2346](https://github.com/taller-projects/echo-backend/pull/2346) → dev — OPEN 2026-09-24. No FE impact: same `search` param and response.
+- [#2346](https://github.com/taller-projects/echo-backend/pull/2346) → dev — **MERGED 2026-09-25** (squash `88ce7381`, CI green on `341bf2f5`). No FE impact: same `search` param and response.
   - Commit 2 `7611bc1d` (review follow-up, 2026-09-24): new tests for the case variants, the pinned gap, another tenant and `/SCHOOL/`; removed a stale comment. PR body updated with the talent audit, the EXPLAIN re-run and a QA retest note.
   - Pedro's review ([5310179858](https://github.com/taller-projects/echo-backend/pull/2346#pullrequestreview-5310179858)): APPROVED, READY WITH NITS. Commit 3 `341bf2f5` (2026-09-25): uppercase and mixed-case inputs in `test_is_linkedin_profile_url_positive` (the PR body had claimed them), and `in_({…})` as a set so a lowercase search binds one value. Follow-ups opened: [Task 25148](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25148) and [Task 25149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25149). Scope comment on Bug 22559 (TC-A8 covers lowercase-stored slugs). PR body updated via REST, and I replied on the PR.
 
@@ -48,7 +48,7 @@ QA (Gisel, TC-22383-A8) typed `HTTPS://WWW.LINKEDIN.COM/IN/TOMYTEST/` into the `
 - `ruff format` on test files reformats unrelated pre-existing lines. Lint only covers `app/`, so format tests by hand to keep the diff minimal.
 
 ## Pending
-- [ ] CI green on #2346 (upstream pipeline) → review → squash-merge to dev → Bug 22559 Closed.
+- [x] CI green → Pedro APPROVED → squash-merged to dev 2026-09-25 → Bug 22559 Closed.
 - [ ] qa promotion + QA re-test of TC-22383-A8.
 - [ ] Residual gap, accepted and tracked in [Task 25149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25149): a stored mixed-case vanity slug searched with different casing still misses. If needed: `CREATE INDEX CONCURRENTLY (tenant_id, lower(linkedin)) WHERE linkedin IS NOT NULL` and switch to `lower()`.
 - [ ] Legacy uppercase-section `talent.linkedin_url` rows (dev 2, prod 3, kforce-dev 4): guarded cleanup in [Task 25148](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25148). It must skip the canonical collisions.
