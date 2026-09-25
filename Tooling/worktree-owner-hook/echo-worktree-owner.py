@@ -8,20 +8,23 @@ one branch: one checks out another PR, stashes, commits or runs lint in the
 other's tree.
 
 Rules (only for checkouts of the repo the session belongs to):
-  1. One writer per linked worktree. The owner is a session_id stored in
+  1. One agent per linked worktree. The owner is a session_id stored in
      <worktree git dir>/claude-owner.json. A session becomes owner on its first
-     write in a worktree nobody owns, unless it was BORN there (tmux split,
-     /clear, `claude` launched in that dir). Ownership never expires and never
-     moves implicitly; non-owners are read-only there.
+     write in an unowned worktree created AFTER the session started (by itself
+     or its subagents). Worktrees that predate the session belong to earlier
+     agents, including the one a tmux split or /clear drops it into. Ownership
+     never expires or transfers; everyone else is read-only there. An agent
+     that must continue another agent's work creates its own worktree off that
+     worktree's commits.
   2. Every checkout is pinned to its branch: git checkout <ref>, git switch and
      gh pr checkout are blocked; so are bare git stash / stash pop / stash clear
      (the stash stack is shared by all worktrees).
   3. EnterWorktree(name=...) is blocked when HEAD has commits that are not on
-     origin/dev (worktree.baseRef=head would copy them into the new branch).
+     origin/dev (worktree.baseRef=head would silently copy them into the new
+     branch); the base must then be given explicitly with `git worktree add`.
 
-User-only escape hatches (the model cannot trigger them):
-  - typing `claim-worktree` as a prompt: this session owns the current worktree
-  - launching with CLAUDE_OWNER_GUARD_OFF=1: hook disabled for that session
+User-only escape hatch (the model cannot trigger it): launching with
+CLAUDE_OWNER_GUARD_OFF=1 disables the hook for that session.
 
 Fail-open: unexpected errors allow the call and are logged to STATE_DIR/errors.log.
 Tests: ~/.claude/hooks/test_echo_worktree_owner.py
@@ -43,9 +46,7 @@ BIRTHS_DIR = os.path.join(STATE_DIR, "births")
 LOCK_NAME = "claude-owner.json"
 PROTECTED_MARKER = "claude-owner"
 BASE_REF = "origin/dev"
-CLAIM_PROMPTS = {"claim-worktree", "claim worktree"}
 BIRTH_TTL_DAYS = 30
-BORN_SOURCES = {"startup", "clear", "fork"}
 
 PUNCT = "();<>|&\n"
 SHELL_KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while",
@@ -91,10 +92,6 @@ def now():
     return datetime.datetime.now().astimezone().isoformat(timespec="seconds")
 
 
-def under(path, root):
-    return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
-
-
 def git(cwd, *args, timeout=5):
     try:
         out = subprocess.run(["git", "-C", cwd, *args], capture_output=True,
@@ -123,6 +120,25 @@ class Tree:
 
     def branch(self):
         return git(self.root, "rev-parse", "--abbrev-ref", "HEAD") or "?"
+
+    def head_ref(self):
+        """Branch name, or the short sha when detached."""
+        branch = self.branch()
+        if branch not in ("HEAD", "?"):
+            return branch
+        return git(self.root, "rev-parse", "--short", "HEAD") or "<sha>"
+
+    def created_at(self):
+        try:
+            st = os.stat(self.git_dir)
+        except OSError:
+            return None
+        if getattr(st, "st_birthtime", None):
+            return st.st_birthtime
+        try:
+            return os.stat(os.path.join(self.git_dir, "commondir")).st_mtime
+        except OSError:
+            return None
 
 
 _TREES = {}
@@ -165,35 +181,32 @@ def read_owner(tree):
         return {"session_id": "?unreadable-lock"}
 
 
-def write_owner(tree, session_id, via, previous=None, exclusive=False):
+def claim(tree, session_id):
     data = {"session_id": session_id, "branch": tree.branch(),
-            "claimed_at": now(), "via": via}
-    if previous:
-        data["previous_owner"] = previous.get("session_id")
-    payload = json.dumps(data, indent=2)
-    if exclusive:
-        try:
-            fd = os.open(tree.lock_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-        except FileExistsError:
-            return False
-        with os.fdopen(fd, "w") as f:
-            f.write(payload)
-        return True
-    tmp = tree.lock_path + ".tmp"
-    with open(tmp, "w") as f:
-        f.write(payload)
-    os.replace(tmp, tree.lock_path)
-    return True
+            "claimed_at": now(), "via": "first-write"}
+    try:
+        fd = os.open(tree.lock_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError:
+        return
+    with os.fdopen(fd, "w") as f:
+        f.write(json.dumps(data, indent=2))
 
 
 def birth_path(session_id):
     return os.path.join(BIRTHS_DIR, re.sub(r"[^A-Za-z0-9_-]", "_", session_id) + ".json")
 
 
-def record_birth(session_id, cwd, source):
+def ensure_birth(session_id, cwd, source):
+    """Record when this session was first seen; later events only refresh the TTL."""
+    path = birth_path(session_id)
+    if os.path.exists(path):
+        if source:
+            os.utime(path)
+        return
     os.makedirs(BIRTHS_DIR, exist_ok=True)
-    with open(birth_path(session_id), "w") as f:
-        json.dump({"cwd": os.path.realpath(cwd), "source": source, "at": now()}, f)
+    with open(path, "w") as f:
+        json.dump({"cwd": os.path.realpath(cwd), "source": source or "first-tool-call",
+                   "at": now(), "ts": datetime.datetime.now().timestamp()}, f)
     cutoff = datetime.datetime.now().timestamp() - BIRTH_TTL_DAYS * 86400
     for name in os.listdir(BIRTHS_DIR):
         p = os.path.join(BIRTHS_DIR, name)
@@ -204,10 +217,16 @@ def record_birth(session_id, cwd, source):
             pass
 
 
-def birth_cwd(session_id):
+def birth_ts(session_id):
     try:
         with open(birth_path(session_id)) as f:
-            return json.load(f).get("cwd")
+            record = json.load(f)
+    except Exception:
+        return None
+    if "ts" in record:
+        return record["ts"]
+    try:  # records written before `ts` existed
+        return datetime.datetime.fromisoformat(record["at"]).timestamp()
     except Exception:
         return None
 
@@ -217,10 +236,10 @@ def ownership(tree, session_id):
     owner = read_owner(tree)
     if owner:
         return ("mine" if owner.get("session_id") == session_id else "foreign"), owner
-    born = birth_cwd(session_id)
-    if born and under(born, tree.root):
-        return "foreign", None
-    return "claimable", None
+    born, created = birth_ts(session_id), tree.created_at()
+    if born is not None and created is not None and created >= born:
+        return "claimable", None
+    return "foreign", None
 
 
 class Ctx:
@@ -245,7 +264,7 @@ class Ctx:
 
     def commit_claims(self):
         for tree in self.pending.values():
-            write_owner(tree, self.session_id, via="first-write", exclusive=True)
+            claim(tree, self.session_id)
 
 
 # --------------------------------------------------------------------------- #
@@ -257,24 +276,36 @@ def describe_owner(owner):
         return (f"session {str(owner.get('session_id'))[:8]} "
                 f"(claimed {owner.get('claimed_at', '?')} via {owner.get('via', '?')}, "
                 f"branch {owner.get('branch', '?')})")
-    return ("nobody yet, but this session was STARTED inside it (tmux split, /clear, "
-            "or `claude` launched in that dir), so it cannot adopt it implicitly")
+    return "nobody, but it predates this session, so it belongs to an earlier agent"
+
+
+def own_worktree_help(tree):
+    main, ref, branch = tree.main_root, tree.head_ref(), tree.branch()
+    pr_branch = branch if branch not in ("HEAD", "?") else "<pr-branch>"
+    return (
+        "Work in a worktree of your own:\n"
+        f"- New ticket: branch off {BASE_REF}:\n"
+        f"    git -C {main} fetch origin dev && git -C {main} worktree add -b <ticket>/<name> "
+        f"{main}/.claude/worktrees/<dir> {BASE_REF}\n"
+        "- Continuing this worktree's work (e.g. improving its PR): branch off its commits:\n"
+        f"    git -C {main} worktree add -b <new-branch> {main}/.claude/worktrees/<dir> {ref}\n"
+        f"  and publish to its PR with `git push origin HEAD:{pr_branch}` (never force; if\n"
+        f"  rejected, fetch and rebase onto origin/{pr_branch}). Uncommitted changes here do\n"
+        f"  not carry over; copy them with `git -C {tree.root} diff | git apply`.\n"
+        "Then EnterWorktree(path=<that dir>)."
+    )
 
 
 def foreign_msg(tree, owner, what):
-    main = tree.main_root
     return (
         f"BLOCKED by worktree-owner: {what}\n"
         f"  worktree: {tree.root}\n"
         f"  owner:    {describe_owner(owner)}\n"
-        "This worktree is READ-ONLY for this session (reading files, git log/diff/show,\n"
-        "gh pr view/diff/comment/review all work; edits, commits, tests, lint do not).\n"
-        "- Different ticket/PR? Get your own worktree: EnterWorktree(name=...), or\n"
-        f"    git -C {main} worktree add -b <ticket>/<name> {main}/.claude/worktrees/<dir> {BASE_REF}\n"
-        "  and then EnterWorktree(path=...).\n"
-        "- Supposed to continue THIS worktree's work? Stop and ask the user to type\n"
-        "  `claim-worktree` as their next prompt. Only the user can transfer ownership;\n"
-        "  never edit the lock file or route around this hook."
+        "This worktree is another agent's and READ-ONLY for this session (reading files,\n"
+        "git log/diff/show, gh pr view/diff/comment/review all work; edits, commits, tests,\n"
+        "lint do not). Ownership never transfers: never edit the lock file or route around\n"
+        "this hook.\n"
+        + own_worktree_help(tree)
     )
 
 
@@ -289,7 +320,10 @@ def pin_msg(tree, cmd):
         "- Review another PR read-only: gh pr diff <N> / gh pr view <N>; for a runnable tree:\n"
         f"    git -C {main} fetch origin pull/<N>/head && "
         f"git -C {main} worktree add --detach {main}/.claude/worktrees/pr-<N> FETCH_HEAD\n"
-        "- Another ticket: EnterWorktree(name=...).\n"
+        "- Another ticket, or continuing another branch's work: a worktree of your own\n"
+        f"    git -C {main} worktree add -b <new-branch> {main}/.claude/worktrees/<dir> "
+        f"<{BASE_REF} | that branch>\n"
+        "  then EnterWorktree(path=<that dir>).\n"
         "If the user explicitly wants this switch, ask them to run it themselves."
     )
 
@@ -303,7 +337,8 @@ STASH_MSG = (
 
 LOCK_MSG = (
     "BLOCKED by worktree-owner: worktree ownership files (claude-owner*) are managed by\n"
-    "the hook and the user. To take over a worktree, ask the user to type `claim-worktree`."
+    "the hook alone and ownership never transfers. To continue another agent's work, create\n"
+    "your own worktree off its commits (git worktree add -b <new-branch> <dir> <its branch>)."
 )
 
 
@@ -510,7 +545,7 @@ def git_is_readonly(sub, args):
     if sub == "config":
         return any(a.startswith("--get") or a in ("--list", "-l") for a in args)
     if sub == "worktree":
-        return first == "list"
+        return first in ("list", "add")  # add only writes the new dir, checked as a target
     if sub == "stash":
         return first in ("list", "show")
     if sub == "tag":
@@ -535,6 +570,19 @@ def git_is_readonly(sub, args):
             return False
         return True
     return False
+
+
+def worktree_add_path(args):
+    i = 1
+    while i < len(args):
+        a = args[i]
+        if a in ("-b", "-B", "--reason"):
+            i += 2
+        elif a.startswith("-"):
+            i += 1
+        else:
+            return a
+    return None
 
 
 def gh_is_readonly(words):
@@ -637,6 +685,8 @@ def check_segment(words, outs, eff_dir, ctx, problems, depth):
                 return eff_dir
         if sub == "worktree" and args[:1] in (["remove"], ["move"]):
             write_targets += [a for a in args[1:] if not a.startswith("-")][:1]
+        if sub == "worktree" and args[:1] == ["add"]:
+            write_targets += [p for p in [worktree_add_path(args)] if p]
         readonly = git_is_readonly(sub, args)
     else:
         tree = tree_of(work_dir)
@@ -714,15 +764,11 @@ def check_enter_worktree(tool_input, ctx):
     ahead = git(tree.root, "rev-list", "--count", f"{BASE_REF}..HEAD")
     if not ahead or int(ahead) == 0:
         return None
-    main = tree.main_root
     return (
         f"BLOCKED by worktree-owner: HEAD of {tree.root} ({tree.branch()}) has {ahead}\n"
         f"commit(s) that are not on {BASE_REF}. With worktree.baseRef=head the new worktree\n"
-        "would start from here and its PR would carry another ticket's commits.\n"
-        f"Create it from a clean base instead:\n"
-        f"  git -C {main} fetch origin dev && git -C {main} worktree add -b <ticket>/<name> "
-        f"{main}/.claude/worktrees/<dir> {BASE_REF}\n"
-        "then EnterWorktree(path=<that dir>)."
+        "would silently start from them, so choose the base explicitly.\n"
+        + own_worktree_help(tree)
     )
 
 
@@ -745,9 +791,6 @@ def on_pre_tool(data, ctx):
 
 
 def on_session_start(data, ctx):
-    source = data.get("source") or "startup"
-    if source in BORN_SOURCES:
-        record_birth(ctx.session_id, ctx.cwd, source)
     tree = tree_of(ctx.cwd)
     if not ctx.governs(tree):
         return 0
@@ -756,39 +799,16 @@ def on_session_start(data, ctx):
         return 0
     if state == "claimable":
         print(f"[worktree-owner] This session is inside the worktree {tree.root} "
-              f"(branch {tree.branch()}). Nobody owns it; the first write claims it.")
+              f"(branch {tree.branch()}), created after it started. Nobody owns it yet; "
+              "the first write claims it.")
         return 0
     print(
         f"[worktree-owner] This session STARTED inside the worktree {tree.root} "
         f"(branch {tree.branch()}); owner: {describe_owner(owner)}.\n"
         "It is READ-ONLY for this session: reading, git log/diff/show and gh pr view/diff/"
         "comment/review work; edits, commits, tests, lint and branch switches are blocked.\n"
-        "For a different ticket or PR, use EnterWorktree(name=...) (a clean base is required) "
-        "or a detached worktree. If the user wants this session to continue this worktree's "
-        "own work, they must type `claim-worktree`; never try to take it over yourself."
+        + own_worktree_help(tree)
     )
-    return 0
-
-
-def on_prompt(data, ctx):
-    if (data.get("prompt") or "").strip().lower() not in CLAIM_PROMPTS:
-        return 0
-    tree = tree_of(ctx.cwd)
-    if not ctx.governs(tree):
-        note = f"claim-worktree: this session is not inside a linked worktree ({ctx.cwd}); nothing claimed."
-        context = note
-    else:
-        previous = read_owner(tree)
-        write_owner(tree, ctx.session_id, via="claim-worktree", previous=previous)
-        prev = str(previous.get("session_id"))[:8] if previous else "none"
-        note = f"worktree-owner: this session now owns {tree.root} (previous owner: {prev})."
-        context = (f"The user typed claim-worktree: this session now OWNS {tree.root} "
-                   f"(branch {tree.branch()}); previous owner: {prev}. Writes there are allowed "
-                   "again; resume the task that was blocked.")
-    print(json.dumps({
-        "systemMessage": note,
-        "hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": context},
-    }))
     return 0
 
 
@@ -800,11 +820,16 @@ def main():
     except Exception:
         return 0
     try:
-        ctx = Ctx(data.get("session_id") or "", data.get("cwd") or os.getcwd())
+        event = data.get("hook_event_name")
+        session_id = data.get("session_id") or ""
+        cwd = data.get("cwd") or os.getcwd()
+        if session_id:
+            ensure_birth(session_id, cwd, data.get("source") if event == "SessionStart" else None)
+        ctx = Ctx(session_id, cwd)
         if ctx.repo_common is None:
             return 0
-        handler = {"PreToolUse": on_pre_tool, "SessionStart": on_session_start,
-                   "UserPromptSubmit": on_prompt}.get(data.get("hook_event_name"))
+        handler = {"PreToolUse": on_pre_tool,
+                   "SessionStart": on_session_start}.get(event)
         return handler(data, ctx) if handler else 0
     except Exception:
         try:
