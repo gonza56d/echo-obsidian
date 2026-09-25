@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged-dev
 env: both
 delivered:
 tags: [bugfix, rls, error-handling, repositories]
@@ -22,7 +22,7 @@ Every write rejected by a Postgres RLS policy answered **HTTP 500**. `SQLAlchemy
 - Filed from [US 23849](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23849) (Create Role from Open Job), where it was worked around with `ProjectService.assert_can_create_standalone_role`.
 
 ## PRs
-- [#2348](https://github.com/taller-projects/echo-backend/pull/2348) → dev: **OPEN 2026-09-24**. Commit `a5072eb8` `fix(repositories): translate RLS denials to 403 instead of 500`, then `76236717` `fix(exceptions): hand non-RLS ProgrammingError to the catch-all; report RLS denials to Sentry` (self-review round 1 fixes). PR body updated to match.
+- [#2348](https://github.com/taller-projects/echo-backend/pull/2348) → dev: opened 2026-09-24, **MERGED 2026-09-25** (squash `1ea1bf79`, CI green on `f200b219`). Commit `a5072eb8` `fix(repositories): translate RLS denials to 403 instead of 500`, then `76236717` `fix(exceptions): hand non-RLS ProgrammingError to the catch-all; report RLS denials to Sentry` (self-review round 1 fixes). PR body updated to match.
 - Pedro (rocha-p) review 2026-09-24: **APPROVED, READY WITH NITS** (5 nits, 0 blockers). All 5 addressed in `f200b219` `fix(repositories): address review nits on RLS denial translation` (2026-09-25), PR body aligned (prod case = `POST /applications`, behaviour-change line for non-RLS `ProgrammingError`).
 - FE: none. No contract change; the FE already shows `detail` on a 403.
 
@@ -53,7 +53,7 @@ Every write rejected by a Postgres RLS policy answered **HTTP 500**. `SQLAlchemy
 - Sentry baseline (90 days, measured 2026-09-24 via org Discover): the only RLS 500s are `POST /applications` on **Taller prod** (tenant `01df2012…`), table `application`. There were 3 events (2026-09-01, and 2 on 2026-09-24) in issues ECHO-BACKEND-P6 / V4. No other endpoint or environment had any. After merge these become 403 plus the `rls_policy_violation table=application` Sentry warning. Posted on 23858 (comment 28872390), along with the missing-GRANT narrowing note.
 
 ## Pending
-- CI on `f200b219`, then merge → Bug 23858 **Closed**.
+- Bug 23858 → **Closed** (not moved yet).
 - **Why is the `application` INSERT RLS-denied in Taller prod?** It happened twice on 2026-09-24. Unticketed. Investigate separately (could be a user outside data scope, or a policy gap).
 - qa/main promotion with the next release.
 
