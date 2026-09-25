@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-09-25
 tags: [feature, kforce, organizations, internal-api, merge]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2345"
@@ -23,7 +23,7 @@ Emiliano's Kforce push PRD P1-3 (improvement, not blocking): to learn that Echo 
 - PRD source: `docs/prd-pedidos-a-echo-backend-2026-09-21.md` (pipeline repo), section P1-3
 
 ## PRs
-- [#2345](https://github.com/taller-projects/echo-backend/pull/2345) → dev — open 2026-09-24, branch `25112/org-updated-at-filter-merge-bump`, commits `d201d1e4` + `2f07cf16` (r1 review nits) + `daa5e856` (Pedro's nits: per-type post-revert hooks in `UndoService`, cursor contract documented once on the route, super-admin list cursor tests)
+- [#2345](https://github.com/taller-projects/echo-backend/pull/2345) → dev — **MERGED 2026-09-25** (squash `9ac121af`; Task 25112 still In revision → close), opened 2026-09-24, branch `25112/org-updated-at-filter-merge-bump`, commits `d201d1e4` + `2f07cf16` (r1 review nits) + `daa5e856` (Pedro's nits: per-type post-revert hooks in `UndoService`, cursor contract documented once on the route, super-admin list cursor tests)
 
 ## How
 - `OrganizationInternalFilter.updated_at__gte: AwareDatetime` (existing `organization_updated_at_idx`, no migration; naive/invalid → 422). Super-admin org list shares the filter.
