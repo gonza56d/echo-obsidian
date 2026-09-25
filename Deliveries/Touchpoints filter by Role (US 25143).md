@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-09-25
 tags: [feature, touchpoints, future-interaction, applications, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2350"
+  - "https://github.com/taller-projects/echo-backend/pull/2356"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143"
@@ -22,7 +23,8 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - PRD técnico (Tier B, Pedro): [Touchpoints — Filtro por Role — PRD Técnico](https://app.notion.com/p/3e5aedca11f0816a9118d23413fc431d). Tier B only because it adds a query param to the public contract.
 
 ## PRs
-- [#2350](https://github.com/taller-projects/echo-backend/pull/2350) → dev — OPEN 2026-09-25, branch `25143/touchpoints_role_filter`, commits `b06058d5` (feature) + `e9dbc7df` (self-review r1 fixes, pushed from worktree `25143-role-filter-r1`) + `83f5c335` (full `/pr-review` r2 nits, pushed from worktree `25143-role-filter-r2`) + `a3cace05` (Pedro's review nits, pushed from worktree `25143-role-filter-r3`, branch `25143/touchpoints_role_filter_r3`).
+- [#2350](https://github.com/taller-projects/echo-backend/pull/2350) → dev — **MERGED 2026-09-25** (squash `2441a3c6`), branch `25143/touchpoints_role_filter`, commits `b06058d5` (feature) + `e9dbc7df` (self-review r1 fixes, pushed from worktree `25143-role-filter-r1`) + `83f5c335` (full `/pr-review` r2 nits, pushed from worktree `25143-role-filter-r2`) + `a3cace05` (Pedro's review nits, pushed from worktree `25143-role-filter-r3`, branch `25143/touchpoints_role_filter_r3`).
+- [#2356](https://github.com/taller-projects/echo-backend/pull/2356) → dev — OPEN 2026-09-25, branch `fix/touchpoints_visibility_test_pagination` off `origin/dev` (worktree `fix-touchpoints-visibility-test`), commit `21eb29b5`. Test-only: the first `dev` build after the squash ([Azure build 29528](https://dev.azure.com/TallerInternTools/Snapshot%20Exploration/_build/results?buildId=29528)) failed on the pre-existing page-order flake in `TestEntityTypeVisibility` (see Gotchas); both list reads in that class now pass `owner_user_id__in=<the fresh viewer>`.
 - FE: none yet (US 25144). Contract impact: one additive query param `role_id__in` (comma-separated UUIDs); response shape unchanged.
 
 ## How
@@ -60,12 +62,12 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - A blank `role_id__in=` is **no filter** (cleared chip, like `search=""`), unlike a column `__in=` which is an empty `IN`. Pinned by `test_an_empty_role_param_is_no_filter`.
 - Step-only applications need a real `WorkflowStep` in the tenant (`fk_application_workflow_step_tenant`); the `workflow_step` fixture in `TestRoleFilter` builds one.
 - `ApplicationFactory` randomizes `status`; `None` turns the row into a Matched suggestion. Every test application pins `status` explicitly.
-- `test_an_empty_role_param_is_no_filter` was **page-order flaky**: it asserted on the unfiltered first page (default size 50) while the module tenant holds more rows than that, all tied on the fixed `DUE_AT`, so which rows land on page 1 depends on heap order and changed with which other modules ran first (failed in a 4-file run and in the full suite, passed file-alone). Pinned in `83f5c335` to its own two people via `linked_entity_id__in`. `TestEntityTypeVisibility::test_a_candidates_only_viewer_does_not_see_contact_touchpoints` (from #1955, on dev) has the same shape and fails in the same ad-hoc orderings — pre-existing, left alone.
+- `test_an_empty_role_param_is_no_filter` was **page-order flaky**: it asserted on the unfiltered first page (default size 50) while the module tenant holds more rows than that, all tied on the fixed `DUE_AT`, so which rows land on page 1 depends on heap order and changed with which other modules ran first (failed in a 4-file run and in the full suite, passed file-alone). Pinned in `83f5c335` to its own two people via `linked_entity_id__in`. `TestEntityTypeVisibility::test_a_candidates_only_viewer_does_not_see_contact_touchpoints` (from #1955, on dev) has the same shape; it was left alone and then **bit on the first `dev` build after the squash** (build 29528, 2026-09-25 — probe: 71 rows visible to that viewer vs page size 50, all tied on `DUE_AT`). Fixed in [#2356](https://github.com/taller-projects/echo-backend/pull/2356) by scoping both `TestEntityTypeVisibility` reads with `owner_user_id__in` (the fresh viewer owns exactly the two rows). ~7 other unfiltered `client.get(URL)` reads in that module have the same latent shape but sit under 50 visible rows today.
 - Ad-hoc pytest invocations that mix `tests/multitenancy` before other unit files change row order; the CI order (`./tests/unit ./tests/multitenancy`) is the one that matters.
 - Navitec prod numbers (2026-09-25, read-only `EXPLAIN ANALYZE`): 4002 touchpoints, 73 distinct candidates with touchpoints, 39.5k applications. Refs 3.6 ms, resolution 10 roles 1.7 ms (BitmapAnd on `application_role_status_idx` + `application_talent_id_idx`), 1 role 0.1 ms (unique `(tenant, role, talent)` index), page + count 0.3 ms. Criterion p95 < 1 s met by orders of magnitude.
 
 ## Pending
-- Merge of [#2350](https://github.com/taller-projects/echo-backend/pull/2350) (approved by Pedro; nits pushed `a3cace05`, CI run 36174594895 pending at push time); dev deploy. Optionally reply on the review that the nits landed.
+- ~~Merge of #2350~~ merged 2026-09-25 (`2441a3c6`). Now: merge [#2356](https://github.com/taller-projects/echo-backend/pull/2356) (test-only, un-reds the `dev` pipeline; CI pending at push time), confirm the next `dev` build is green, then close [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143).
 - Attach the `EXPLAIN ANALYZE` plans to [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) — only the timings were recorded here and in the PR body; re-run on Navitec prod (read-only) if the plans are wanted.
 - PRD annex (Pedro said he'll do it): Matched = status NULL and no step, comma-separated wire format, blank `role_id__in=` = no filter; still unmentioned by him: isolation on `/internal` is the explicit tenant predicate, not RLS.
 - Unticketed follow-up: centralize the non-Matched predicate (`Application.is_not_matched()`), now spelled in 5 places.
