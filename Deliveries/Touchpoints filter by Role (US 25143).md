@@ -22,12 +22,14 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - PRD técnico (Tier B, Pedro): [Touchpoints — Filtro por Role — PRD Técnico](https://app.notion.com/p/3e5aedca11f0816a9118d23413fc431d). Tier B only because it adds a query param to the public contract.
 
 ## PRs
-- [#2350](https://github.com/taller-projects/echo-backend/pull/2350) → dev — OPEN 2026-09-25, branch `25143/touchpoints_role_filter`, commit `b06058d5`.
+- [#2350](https://github.com/taller-projects/echo-backend/pull/2350) → dev — OPEN 2026-09-25, branch `25143/touchpoints_role_filter`, commits `b06058d5` (feature) + `e9dbc7df` (self-review r1 fixes, pushed from worktree `25143-role-filter-r1`).
 - FE: none yet (US 25144). Contract impact: one additive query param `role_id__in` (comma-separated UUIDs); response shape unchanged.
 
 ## How
 - `FutureInteractionFilter.role_id__in` (`app/modules/future_interaction/filters.py`), consumed and cleared like `search`.
-- `FutureInteractionService._resolve_roles`: takes the candidate refs already in touchpoints (`repo.get_person_refs`), asks `ApplicationService.get_talent_ids_applied_to_roles(role_ids, talent_ids)` (new, tenant-scoped `DISTINCT talent_id`, predicate `status IS NOT NULL OR workflow_step_id IS NOT NULL`, request session so RLS applies), intersects with any supplied `linked_entity_id__in`, and narrows `linked_entity_type__in` to candidates. Runs in `list_for_viewer` right after `_restrict_entity_types` and BEFORE `_restrict_to_visible_people`, so the talent-side data_scope intersection still wins; also in `list_internal` after `_resolve_search`.
+- `FutureInteractionService._resolve_roles` (after r1): narrows `linked_entity_type__in` to candidates (short-circuits to an empty page when no candidate type survives), then asks `ApplicationService.get_talent_ids_applied_to_roles(role_ids, bound)` (new, explicit tenant predicate, `DISTINCT talent_id`, predicate `status IS NOT NULL OR workflow_step_id IS NOT NULL`) and keeps `bound ∩ answer`. `bound` = whatever an earlier step put in `linked_entity_id__in`, else the candidate refs of touchpoints (`repo.get_person_refs`).
+  - Public (`list_for_viewer`): a role filter narrows `allowed_entity_types` to `{candidate}` up front → `_restrict_entity_types` → `_restrict_to_visible_people` (RLS data_scope) → `_resolve_roles` bounded by the visible candidates. One refs read, no contact lookup.
+  - Internal (`list_internal`): `_resolve_search` → `_resolve_roles`. The internal app mounts `DisableRLS`, so the lookup's explicit tenant predicate is what isolates tenants there.
 - `ApplicationService` injected into `FutureInteractionService` (no DI cycle: nothing under application/talent/role imports touchpoints).
 - Contract: empty match → `200` empty page (never the unfiltered list); malformed UUID → `422` standard shape; contacts excluded while the filter is active.
 
@@ -37,17 +39,24 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - No cap on the number of role ids (PRD sizes latency for 1–10 but sets no limit; user agreed to leave it uncapped).
 - Persisting `role_id`/`application_id` on the touchpoint was explicitly discarded in the PRD for this iteration (migration + FE create changes + no backfill); revisit in the KPIs follow-up.
 
+## Self-review r1 (2026-09-25, not posted)
+- `/pr-review 2350` → CHANGES REQUESTED, 1 blocker: no test for step-only applications (status NULL + `workflow_step_id` set). **Navitec prod has 0 applications with a status, 7,623 step-only, 31,939 Matched**, so that `or_` branch is the whole feature for them; dropping it kept all 16 original tests green.
+- Fixed in `e9dbc7df` (user asked to fix + push): step-only test with a Matched control; perf (one refs read, no contact lookup, short-circuit); wrong docstrings (claimed RLS isolates on internal; cited a nonexistent `(talent_id, tenant_id)` index); tests for `status__in`, blank param, positive controls, internal search + role, internal cross-tenant, direct tenant-predicate test; reverted ruff-format churn in existing tests; OpenAPI descriptions. Mutation-checked: removing the step branch or the tenant predicate each fails a test. Full suite 5307 passed. PR body rewritten via `gh api`.
+- Routed to PRD (not code): annex wire format → comma-separated (repeated params silently keep the last value); application RLS (`COALESCE(application.owner_id, talent.owner_id)`, vendor hides self-applied) can narrow the role match below the candidates a user-scope viewer sees — confirm with Pedro; PRD's "Rejected/Withdrawn" statuses no longer exist (removed in `f516c2428583`), equivalents count.
+
 ## Gotchas
 - **Wire format is comma-separated**, not repeated params: `FilterDepends` turns list fields into a single `str`, so `role_id__in=a&role_id__in=b` keeps only the last value. The PRD example shows repeated params and should be corrected; the FE already sends `a,b` for every other `__in`.
-- data_scope cannot be exercised end to end in tests (RLS off under testcontainers). Pinned at the service seam instead: `test_role_matches_are_intersected_with_visible_people` asserts the applications answer is intersected with the talent service's result, never used alone.
+- data_scope cannot be exercised end to end in tests (RLS off under testcontainers). Pinned at the service seam instead: `test_role_matches_are_intersected_with_visible_people` asserts the applications module is asked only about the visible people and its answer is intersected with them, with one refs read and no contact lookup.
+- A blank `role_id__in=` is **no filter** (cleared chip, like `search=""`), unlike a column `__in=` which is an empty `IN`. Pinned by `test_an_empty_role_param_is_no_filter`.
+- Step-only applications need a real `WorkflowStep` in the tenant (`fk_application_workflow_step_tenant`); the `workflow_step` fixture in `TestRoleFilter` builds one.
 - `ApplicationFactory` randomizes `status`; `None` turns the row into a Matched suggestion. Every test application pins `status` explicitly.
 - Navitec prod numbers (2026-09-25, read-only `EXPLAIN ANALYZE`): 4002 touchpoints, 73 distinct candidates with touchpoints, 39.5k applications. Refs 3.6 ms, resolution 10 roles 1.7 ms (BitmapAnd on `application_role_status_idx` + `application_talent_id_idx`), 1 role 0.1 ms (unique `(tenant, role, talent)` index), page + count 0.3 ms. Criterion p95 < 1 s met by orders of magnitude.
 
 ## Pending
-- Team review + merge of [#2350](https://github.com/taller-projects/echo-backend/pull/2350); dev deploy.
+- Team review + merge of [#2350](https://github.com/taller-projects/echo-backend/pull/2350) (r1 fixes pushed `e9dbc7df`, CI re-run); dev deploy.
 - ~~Azure~~ done 2026-09-25: [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) → In revision, assigned Gonzalo, formal "GitHub Pull Request" link added (repo internal id `db75e3ff-226f-4014-86ae-37f4bcf56c43`, reusable for future PR links).
 - FE [US 25144](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25144) (unassigned); tell the FE dev the wire format is comma-separated.
-- Tell Pedro: PRD contract example (repeated params) needs correcting; data_scope covered at the seam, not end to end.
+- Tell Pedro: PRD contract example (repeated params) needs correcting before FE starts; data_scope covered at the seam, not end to end; confirm the application-RLS narrowing for user/vendor scope is the intended meaning.
 - QA gating: feature complete (BE + FE) before qa/main promotion; QA plan in PRD §5 (3 h, multi-active tenant).
 - Follow-up (outside PRD): role/touchpoint KPIs for management dashboards, where exact attribution (persist role/application on the touchpoint) gets decided.
 
