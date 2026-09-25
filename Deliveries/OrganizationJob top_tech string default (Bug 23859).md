@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-09-25
 tags: [bugfix, organization-job, jsonb, open-jobs]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2347"
@@ -20,7 +20,7 @@ prd: ""
 - [Bug 23859](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/23859) — filed by me 2026-07-29 as a follow-up of [[Create Role from Open Job (US 23849)]]. State → In revision 2026-09-24 (PR hyperlink + measurement comment added).
 
 ## PRs
-- [#2347](https://github.com/taller-projects/echo-backend/pull/2347) → dev — OPEN 2026-09-24 (branch `23859/org-job-top-tech-default`, worktree `.claude/worktrees/23859-top-tech-default`).
+- [#2347](https://github.com/taller-projects/echo-backend/pull/2347) → dev — opened 2026-09-24, Pedro APPROVED, **squash-merged 2026-09-25** as `6eef9231` after CI went green on `5ecf19f6` (branch `23859/org-job-top-tech-default`, worktree `.claude/worktrees/23859-top-tech-default`). After the merge, `alembic heads` on dev returns just `ufqnmj4llnke`.
 
 ## How
 - `app/modules/organization/job/models.py`: `top_tech` `default="[]"` → `default=list`. `skills` comment re-pointed (it referenced "the top_tech gotcha").
@@ -40,9 +40,10 @@ prd: ""
 - Running pytest with `-p no:logging` removes `caplog` → `test_bulk_update_by_ids_drops_unknown_fields_with_warning` ERRORs. Not a real failure.
 
 ## Pending
-- [ ] CI green on the `5ecf19f6` push, then merge (this session is watching CI and merges when it goes green).
+- [x] CI green on `5ecf19f6` → squash-merged to dev 2026-09-25 (`6eef9231`).
+- [ ] Migration `ufqnmj4llnke` rides the next dev→qa→main promo (runs on every env DB).
 - [ ] kforce-prod count not measured (no credentials): `SELECT count(*) FROM organization_job WHERE jsonb_typeof(top_tech) <> 'array';` — expected 0. **Gates closing the ticket, not the merge.** If non-zero → guarded data migration modeled on `NORMALIZE_NON_ARRAYS_SQL` in `ehjnwsqitqve` (matched_talents precedent) + `ANALYZE`.
-- [ ] Merge → Bug 23859 → Closed; rides the next dev→qa→main promo.
+- [ ] Bug 23859 → Closed once the kforce-prod count is confirmed as 0.
 
 ## Self-review (2026-09-24, /pr-review r1: READY WITH NITS)
 - 0 blockers. 3 nits, all addressed in `2ea872e3` + PR body PATCH: list-sort test, fixture-cleanup wording, backfill rationale wording.
