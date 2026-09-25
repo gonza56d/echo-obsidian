@@ -25,6 +25,7 @@ Round 3 of Emiliano's Kforce push PRD (wave 2: activities `job_order`), asked on
 
 ## PRs
 - [#2349](https://github.com/taller-projects/echo-backend/pull/2349) → dev — open 2026-09-25, branch `25154/activities-bulk-on-conflict-internal-list`, commit `63c46f90`. Full unit + multitenancy suite green locally (5628 passed, 1 xfailed).
+- Self-review `/pr-review` r1 (2026-09-25): **READY WITH NITS**, 0 blockers (arch 15/0/1, tests 14/0/2, tickets 11/12 with the page-1 claim partial). All 10 nits fixed in `5e201d7b` (pushed from worktree `25154-activities-review-nits`, branch `25154/activities-review-nits` → `HEAD:25154/activities-bulk-on-conflict-internal-list`); PR body rewritten via `gh api` PATCH. Suite 5282 passed, 1 xpassed; lint clean.
 
 ## How
 - **P2-4** `ActivityService.bulk_create` → `repo.bulk_create(entities, on_conflict=do_nothing_on_conflict)`; the contact refresh runs only when rows were inserted. Relationship/interaction services already did this since `7efdaa85` (#2314 only added RETURNING to their responses).
@@ -32,6 +33,7 @@ Round 3 of Emiliano's Kforce push PRD (wave 2: activities `job_order`), asked on
 - `InternalParams` / `InternalPage` (size ≤ 30000) moved from `organization/internal_routers.py` to `app/core/pagination.py`; both internal lists import from there.
 - No migration: `uq_contact_activity_kforce_external_id_kind` `(kforce_external_id, kind)` serves the lookup.
 - Tests: `tests/unit/test_activity_bulk_create_internal.py` (6) + `tests/unit/test_activity_internal_list.py` (9).
+- **Review follow-up `5e201d7b`:** `ActivityInternalFilter` now derives from a new `ActivityFilterBase` (public `ActivityFilter` = base + `group_root_contact_id`, unchanged), requires one of `kforce_external_id__in` / `contact_id` / `relationship_id` (`model_validator`, 422), and its `sort()` always appends `Activity.id`. Tenant semi-join moved out of the filter into `ActivitySQLRepository.tenant_query(tenant_id)`, passed as `base_query` by `ActivityService.list_internal` (fail-closed `get_tenant_id(required=True)`; `OrganizationTrackerService.list_trackers` pattern). Bulk POST logs `activity.bulk_created` (requested/inserted counts) and its OpenAPI description states the skip semantics. `KFORCE_EXTERNAL_ID_BATCH_MAX` moved to import-free `app/modules/contact/constants.py`. Tag `contacts activities`. Tests 15 → 28 across both files.
 
 ## Decisions
 - **One PR for both requests** (Gonzalo, 2026-09-25) even though P2-4 is blocking and P2-5 is not; two tickets keep Emi's P-numbering traceable.
@@ -39,6 +41,8 @@ Round 3 of Emiliano's Kforce push PRD (wave 2: activities `job_order`), asked on
 - **Tenant isolation lives in the filter, fail-closed**: `contact_activity` has no `tenant_id`, no RLS policies (kf9cnv1tnt01 drops them), and `/internal` runs under `DisableRLS`; the only prior cross-contact internal path (`bulk_update`) documents the same reasoning.
 - **Skip the refresh on an all-duplicate batch**: DO NOTHING means nothing changed; on ~150K near-all-no-op POSTs that is 4 recomputations saved per call. Did **not** add a `refresh_contacts` Query param to the activities POST (F3 territory, not asked).
 - **`InternalParams` reused via `app/core/pagination.py`** instead of the public `Params` (≤100): a 100-id batch without `kind` can return one row per kind, and the #2314 gotcha was exactly a page spilling unnoticed.
+- **Selective filter required on the internal GET** (review r1): a tenant-wide `?kind=job_order` would count + sort 691K kforce-dev rows with no index serving `-created_at, -start_date` (worst case a 20s statement-timeout 500). The pipeline always sends ids, so nothing it needs is lost.
+- **Page-1 claim corrected**: with `kind`, 100 ids → ≤100 rows = one default page; without `kind` up to one row per kind, so it may span pages — safe now that `id` is the terminal sort key.
 - Caveat stated in the PR: DO NOTHING has no target, so any unique violation is skipped — including a collision with another tenant's row (global unique, Task 25057).
 
 ## Gotchas
@@ -52,6 +56,7 @@ Round 3 of Emiliano's Kforce push PRD (wave 2: activities `job_order`), asked on
 - PR review + merge → Bug 25154 / Task 25155 → Closed; dev deploy; tell Emi (P2-4 in DEV unblocks the activities push; P2-5 route + caveat).
 - Bug 25111 and Task 25112 were still **In revision** on 2026-09-25 although #2344 / #2345 merged → close them.
 - qa/main promotion.
+- **Out-of-scope follow-ups from review r1 (not ticketed yet):** activities bulk POST never checks that the path contact belongs to the request tenant nor that the relationship belongs to the contact (cross-tenant write + refresh; `bulk_update` gates via `ContactService.get_by_id`) — file a Bug, highest priority; `order_by=consultant|recruiter|account_manager|organization` → 500 on public and internal activity lists (allow-list sort fields); `ActivityBulkCreate.activities` has no batch cap (PATCH caps 500); the per-relationship activity mount is `deprecated=` although the push depends on its POST/PATCH; `AdminParams`/`AdminPage` duplicate `app/core/pagination.py`.
 - Still open from the PRD (not asked this round): F1 remainder (interaction `kforce_external_id` in schema + `__in`), F4 (`kforce_relationship_id__in` + Client backfill owner), F3 open question, P2-2 Q2.
 
 ## Related
