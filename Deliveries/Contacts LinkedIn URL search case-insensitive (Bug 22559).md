@@ -11,6 +11,8 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22559"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/22383"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/11124"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25148"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25149"
 prd: ""
 ---
 
@@ -24,6 +26,7 @@ QA (Gisel, TC-22383-A8) typed `HTTPS://WWW.LINKEDIN.COM/IN/TOMYTEST/` into the `
 ## PRs
 - [#2346](https://github.com/taller-projects/echo-backend/pull/2346) → dev — OPEN 2026-09-24. No FE impact: same `search` param and response.
   - Commit 2 `7611bc1d` (review follow-up, 2026-09-24): new tests for the case variants, the pinned gap, another tenant and `/SCHOOL/`; removed a stale comment. PR body updated with the talent audit, the EXPLAIN re-run and a QA retest note.
+  - Pedro's review ([5310179858](https://github.com/taller-projects/echo-backend/pull/2346#pullrequestreview-5310179858)): APPROVED, READY WITH NITS. Commit 3 `341bf2f5` (2026-09-25): uppercase and mixed-case inputs in `test_is_linkedin_profile_url_positive` (the PR body had claimed them), and `in_({…})` as a set so a lowercase search binds one value. Follow-ups opened: [Task 25148](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25148) and [Task 25149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25149). Scope comment on Bug 22559 (TC-A8 covers lowercase-stored slugs). PR body updated via REST, and I replied on the PR.
 
 ## How
 - Root cause 1: `app/core/linkedin.py::normalize_linkedin_url` compared `parts[0]` to `{"company","in","school"}` case-sensitively. `/IN/` fell through to `return url`, so the URL stayed raw.
@@ -47,7 +50,8 @@ QA (Gisel, TC-22383-A8) typed `HTTPS://WWW.LINKEDIN.COM/IN/TOMYTEST/` into the `
 ## Pending
 - [ ] CI green on #2346 (upstream pipeline) → review → squash-merge to dev → Bug 22559 Closed.
 - [ ] qa promotion + QA re-test of TC-22383-A8.
-- [ ] Residual gap, accepted: a stored mixed-case vanity slug searched with different casing still misses. If needed: `CREATE INDEX CONCURRENTLY (tenant_id, lower(linkedin)) WHERE linkedin IS NOT NULL` and switch to `lower()`.
+- [ ] Residual gap, accepted and tracked in [Task 25149](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25149): a stored mixed-case vanity slug searched with different casing still misses. If needed: `CREATE INDEX CONCURRENTLY (tenant_id, lower(linkedin)) WHERE linkedin IS NOT NULL` and switch to `lower()`.
+- [ ] Legacy uppercase-section `talent.linkedin_url` rows (dev 2, prod 3, kforce-dev 4): guarded cleanup in [Task 25148](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25148). It must skip the canonical collisions.
 - [ ] Not in scope: a decoded slug (`/in/thainá-…`) doesn't match a stored percent-encoded one.
 
 ## Related
