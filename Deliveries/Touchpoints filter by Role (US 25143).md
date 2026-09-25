@@ -45,7 +45,7 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 
 ## Pending
 - Team review + merge of [#2350](https://github.com/taller-projects/echo-backend/pull/2350); dev deploy.
-- Azure: [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) → In revision + assign + formal "GitHub Pull Request" link (see vault commit for what was automated).
+- ~~Azure~~ done 2026-09-25: [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) → In revision, assigned Gonzalo, formal "GitHub Pull Request" link added (repo internal id `db75e3ff-226f-4014-86ae-37f4bcf56c43`, reusable for future PR links).
 - FE [US 25144](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25144) (unassigned); tell the FE dev the wire format is comma-separated.
 - Tell Pedro: PRD contract example (repeated params) needs correcting; data_scope covered at the seam, not end to end.
 - QA gating: feature complete (BE + FE) before qa/main promotion; QA plan in PRD §5 (3 h, multi-active tenant).
