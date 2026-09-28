@@ -55,8 +55,13 @@ Emiliano's request of 2026-09-28, section B2 (wave 4, ~458k Consultant relations
 - `ruff format` on a test file that CI never formats reflows unrelated hunks — `git restore` and re-apply only the intended hunk.
 - kforce-prod has no `~/.pg_service.conf` entry; the direct `db.hslptkvpsrawnrouwkhc.supabase.co:5432` URL with `SET default_transaction_read_only = on` works (collation-mismatch WARNING on every connect is harmless).
 
+## kforce-prod cleanup (2026-09-28, done)
+- Gonzalo ran the guarded script from the main checkout (`psql <url> -X -f cleanup.sql`): `\copy` backup of the 34 rows to `duplicate_consultant_relationships_2026-09-28.jsonl` (in the echo-backend main checkout dir, untracked), then `DELETE … USING` on the rows pointing at CIENA CORPORATION `7d82f097` whose keeper on Ciena `34f2e7c2` exists, with `kforce_relationship_id`/`application_id`/`role_placement_id` NULL and no activities; `COMMIT` only if `deleted_count=34 AND groups_after=0` (psql `\gset` + `\if`). Output: `COPY 34`, `deleted_count=34 groups_after=0`, `COMMITTED`.
+- Verified read-only afterwards: duplicate groups 0, rows with placement id 458,126, rows on the merged company 0, Ciena keepers 41. Comment left on Task 25210 and on release PR [#2365](https://github.com/taller-projects/echo-backend/pull/2365) (Pedro's qa → main, 17 commits, carries `n4yq7zr2wk9e`).
+- The auto-mode permission layer refused to let the session write/run the delete against prod ("Modify Shared Resources"); read-only checks were fine. Hand the script to the user for prod writes.
+
 ## Pending
-- **Decide the 34 kforce-prod rows** with Emi (delete via the SQL on Task 25210, or the pipeline re-points them) **before** the release that carries `n4yq7zr2wk9e`, or the kforce-prod migration step fails by design.
+- ~~Decide the 34 kforce-prod rows~~ done 2026-09-28 (see above). Still owed to Emi: confirm the old pipeline will not re-push placements against the merged-away company id; re-run the duplicate count right before approving `echo-backend-kforce-prod` on #2365.
 - CI on `e5e7b04b`; full local unit suite was still running at push time. **Merge only after #2359 merges** (then squash-merge #2361); Tasks 25210 / 25211 → Closed; dev deploy; tell Emi (`201 []` on a re-pushed placement; ids on `GET /contacts` relationships).
 - qa/main promotion.
 
