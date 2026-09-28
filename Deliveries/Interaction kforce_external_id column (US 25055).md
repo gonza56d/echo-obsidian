@@ -61,7 +61,7 @@ One reviewer flagged a "blocker" (ticket AC not ratified) + 4 nits. Resolution:
 
 ## Pending
 - CI green + merge; then US 25055 → Closed, dev deploy.
-- Write-path wiring now tracked as **Task 25072** (blocked on Kforce Silver-layer interaction shape).
+- Write-path wiring: **Task 25072 → PR [#2360](https://github.com/taller-projects/echo-backend/pull/2360) (2026-09-28)**, see [[Kforce interactions write path + internal list (Task 25072)]].
 - Write-path wiring (schema field + `bulk_create` idempotency via ON CONFLICT) when Kforce's interaction Silver shape is defined — the reason this is column-only.
 - qa/main promotion after dev QA.
 
