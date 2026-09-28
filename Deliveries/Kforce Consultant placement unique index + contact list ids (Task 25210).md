@@ -27,6 +27,8 @@ Emiliano's request of 2026-09-28, section B2 (wave 4, ~458k Consultant relations
 - [#2361](https://github.com/taller-projects/echo-backend/pull/2361) → dev — OPEN 2026-09-28 (branch `25210/relationship-kforce-placement-id-unique`, commit `07c889fd`; review round 1 fixes `e5e7b04b`, pushed from worktree `25210-review-nits`)
 - Twin: [#2246](https://github.com/taller-projects/echo-backend/pull/2246) `uq_contact_relationship_kforce_relationship_id`
 
+- Merge of `origin/dev` after #2360 landed: `3508216a` (waivers.toml conflict, both sides kept; never rebased)
+
 ## How
 - `Relationship.__table_args__` + migration `n4yq7zr2wk9e` (revises `v3kq8dn2mr7p`): `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS uq_contact_relationship_kforce_placement_id ON contact_relationship (tenant_id, contact_id, kforce_placement_id) WHERE kforce_placement_id IS NOT NULL` in an autocommit block, timeout cleared. The single-column `contact_relationship_kforce_placement_id_idx` stays.
 - **Precheck**: the upgrade counts duplicate groups and raises with the count before building; drops an INVALID leftover first. Verified on a throwaway `pgvector/pgvector:pg16`: CONCURRENTLY on duplicates fails and leaves `indisvalid = false`, and a re-run's `IF NOT EXISTS` keeps that INVALID index (NOTICE "already exists, skipping") — hence the precheck + drop.
