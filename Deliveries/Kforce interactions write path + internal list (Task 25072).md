@@ -25,7 +25,7 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - Emi's request file (repo root, untracked): `pedido-echo-backend-release-y-pendientes-2026-09-28.md`; his PRD side: `docs/prd-pedidos-a-echo-backend-2026-09-21.md` in the pipeline repo (not cloned locally)
 
 ## PRs
-- [#2360](https://github.com/taller-projects/echo-backend/pull/2360) → dev — OPEN 2026-09-28 (branch `25072/interaction-kforce-external-id-write-path`, commit `ee24a2bc`; review-round-1 fixes `ddbe8446` pushed from worktree `25072-review-nits-r1`, branch `25072/review-nits-r1`)
+- [#2360](https://github.com/taller-projects/echo-backend/pull/2360) → dev — OPEN 2026-09-28 (branch `25072/interaction-kforce-external-id-write-path`, commit `ee24a2bc`; review-round-1 fixes `ddbe8446` pushed from worktree `25072-review-nits-r1`, branch `25072/review-nits-r1`; Pedro's round 2 fix `28954230` pushed from worktree `25072-interaction-kforce-external-id`)
 - Prerequisite: [#2326](https://github.com/taller-projects/echo-backend/pull/2326) column + index (on dev/qa/main)
 
 ## How
@@ -50,15 +50,24 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - Azure comments posted on 25072 (narrowing to `BulkInteractionUpdate`, targetless DO NOTHING ≡ targeted, PATCH 400) and 25209 (order_by rules). Full unit + multitenancy: 5601 passed, 1 xpassed.
 - OUT-OF-SCOPE, not ticketed yet: bulk PATCH not tenant-scoped (filters on `id` only under DisableRLS; same in `ContactRepository.bulk_update_by_ids`), `created_by_id` unchecked on bulk POST/PATCH (nested `created_by` email leak, same class as Bug 25158), no item-count cap on the interaction bulk bodies, `get_all`'s `except AttributeError: pass` around `sort()`.
 
+## Review round 2 (2026-09-28, Pedro — CHANGES REQUESTED on `ddbe8446`)
+- **Blocker:** the bulk PATCH had no tenant predicate — `bulk_update_by_ids` / `get_contact_ids` filtered by id only; `/internal` is DisableRLS and the table policy is `using="true"`, so a foreign API key rewrote another tenant's interactions (a reviewer reproduced it: 202, row overwritten, foreign contact refreshed). Pre-existing, same gap #2351 closed for activities; Pedro made it a blocker because the PR extends that method with `kforce_external_id`.
+- **Fix `28954230`:** both UPDATEs + the contact lookup carry `tenant_id` passed by the service, which pins `get_tenant_id(required=True)`; `_assert_owned` → `ResourceNotFoundError(error_code="unknown_reference", context={"interactions": [...]})` before any write; unknown and foreign read the same. Full suite 5610 passed.
+- **Nits, all done in the same commit:** `tenant_query` on `_base_query()`; bulk POST `ON CONFLICT` targets `(tenant_id, kforce_external_id) WHERE kforce_external_id IS NOT NULL` via `functools.partial(do_nothing_on_conflict, index_elements=…, index_where=…)`; blank items dropped from `kforce_external_id__in` before the selective gate; duplicate 400 detail names the field, not the index (service catches `DuplicateError` and re-raises when `error.constraint == KFORCE_EXTERNAL_ID_INDEX`, constant moved to `interaction/models.py`); tests for the id swap (400, nothing written) and `size=30001`.
+- Reply posted on the PR; description gained a "Review round 2" section and the swap / 404 notes for the pipeline.
+
 ## Gotchas
+- Any `/internal` write path on a tenant-scoped table must carry its own `tenant_id` predicate: RLS is off there and `TenantScopedRepository._base_query` only helps reads. Raw `UPDATE … WHERE id IN (…)` in a repo is the smell (`ContactRepository.bulk_update_by_ids` at `contact/repository.py:1254` has the same shape — check how `/internal/contacts/bulk` PATCH is gated).
+- Another session had pushed `ddbe8446` on the same branch and updated this note; `git fetch` + `merge --ff-only` before touching a PR branch, and re-read the note before editing it.
 - `EXPLAIN` on kforce-dev before trusting an ORDER BY on this table: the planner happily picks a pkey walk for `LIMIT 100` when the estimated match count is high (heavy contacts appear in the MCV list) — and has no stats at all for the fresh column.
 - Worktree session: the guard refused `cmd; python3 - <<EOF`, `cat > f <<EOF; …`, `psql <<EOF | grep` chains and any heredoc whose text mentions the VCS command; single `python3 - <<EOF` (VCS-free text) and `psql -f file > out` work. Wrote SQL / PR-body / Azure / vault scripts as dot-files inside the worktree, ran them plainly, deleted them before committing.
 - `CREATE TEMP TABLE` is a write under `default_transaction_read_only`; materialise id lists with `\gset` instead.
 - `EnterWorktree` branched from the local `dev` (81b5eb08), not `origin/dev`: hard-reset onto `origin/dev` first.
 
 ## Pending
-- File a Bug for the bulk PATCH tenant-scope gap + `created_by_id` check (see Review round 1).
-- Re-review (round 2) + squash-merge #2360; then Task 25072 / 25209 → Closed; dev deploy; tell Emi the route shape + the ordering deviation + that a re-pushed id answers `201 []`.
+- Tenant-scope gap fixed in-PR (`28954230`, Pedro's blocker); still open from round 1: the `created_by_id` tenant check on bulk create/update → file a Bug.
+- Pedro re-review of `28954230` → squash-merge #2360 (no bad trailers on this branch); then Task 25072 / 25209 → Closed; dev deploy; tell Emi the route shape + the ordering deviation + `201 []` on a re-pushed id + `404 unknown_reference` on a foreign id + clear-one-side-first for id swaps.
+- Follow-up worth a ticket: `ContactRepository.bulk_update_by_ids` (`contact/repository.py:1254`) has the same id-only UPDATE shape; verify whether `/internal/contacts/bulk` PATCH is tenant-gated upstream.
 - kforce-dev has 0 rows with `kforce_external_id` → run `ANALYZE contact_interaction` after Emi's first push so the planner gets stats for the column (autovacuum will eventually).
 - qa/main promotion (rides the next release after [#2359](https://github.com/taller-projects/echo-backend/pull/2359)).
 
