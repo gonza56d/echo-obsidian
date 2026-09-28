@@ -25,7 +25,7 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - Emi's request file (repo root, untracked): `pedido-echo-backend-release-y-pendientes-2026-09-28.md`; his PRD side: `docs/prd-pedidos-a-echo-backend-2026-09-21.md` in the pipeline repo (not cloned locally)
 
 ## PRs
-- [#2360](https://github.com/taller-projects/echo-backend/pull/2360) → dev — OPEN 2026-09-28 (branch `25072/interaction-kforce-external-id-write-path`, commit `ee24a2bc`)
+- [#2360](https://github.com/taller-projects/echo-backend/pull/2360) → dev — OPEN 2026-09-28 (branch `25072/interaction-kforce-external-id-write-path`, commit `ee24a2bc`; review-round-1 fixes `ddbe8446` pushed from worktree `25072-review-nits-r1`, branch `25072/review-nits-r1`)
 - Prerequisite: [#2326](https://github.com/taller-projects/echo-backend/pull/2326) column + index (on dev/qa/main)
 
 ## How
@@ -41,6 +41,15 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - **Default order follows the lookup key, not a bare `id`** (deviation from Emi's "orden estable por id", told on Task 25209 and in the PR): `kforce_external_id, id` when `kforce_external_id__in` is given, else `contact_id, id`; any requested `order_by` gets `id` appended. Measured on kforce-dev (2.69M rows): bare `id` → planner walks the **pkey** and filters (2.8 s per page for the heaviest 100 contacts, 29k rows) vs 0.3 ms via the contact_id index + incremental sort; and `kforce_external_id` has **no pg_stats row** (never analysed, all NULL) so any order the contact_id index can serve made the planner scan all 2.69M rows (52 s) instead of probing the partial unique index (0.1 ms).
 - Duplicate handling stays `ON CONFLICT DO NOTHING` without target (there since 7efdaa85): a re-pushed id is skipped and absent from the response; a collision with any other unique key is skipped the same way.
 
+## Review round 1 (2026-09-28, self `/pr-review`)
+- Verdict on `ee24a2bc`: CHANGES REQUESTED, 1 blocker. **Blocker fixed in `ddbe8446`:** `InteractionSQLRepository.bulk_update_by_ids` had no `@TenantScopedRepository.handle_commit_errors`, so a PATCH setting an id another row of the tenant holds (or one id on two rows) raised a raw `UniqueViolation` → unmapped 500 on the adoption path. Now 400 `duplicate_item`, nothing written.
+- **`order_by` allow-list** (nit, fixed): fastapi_filter only checks `hasattr`, so relationships / JSON `data` → 500 and `__table__` / `date-` → silently unordered pages (`get_all` swallows `AttributeError`; the old override used `lstrip` vs the lib's `replace`). Now `date`, `type`, `kforce_external_id` and, on a contact lookup, `contact_id`; anything else 422.
+- **`id` always sorts last** (nit, fixed): `order_by=id` (Emi's assumed URL) returns the lookup order; `-id` only flips the tie-break. New kforce-dev EXPLAINs: `created_by_id` 15 s (heaviest 100 contacts), `id` / `created_by_id` on an external-id lookup > 90 s (cancelled); `date` / `kforce_external_id` 25 ms, `type` 660 ms cold, COUNT 21 ms (contact) / 0.1 ms (ext).
+- `kforce_external_id` capped at 255 (btree entry limit ~2.7 KB → unmapped 500 otherwise) and stored verbatim (blank still NULL) so writes match `__in` lookups.
+- `openapi` golden waiver gained the two `InteractionResponse{,WithCompany}` property paths; `last_interaction` waivers stay in #2361 (both PRs append at the end of `waivers.toml` → one-hunk conflict for whichever merges second).
+- Azure comments posted on 25072 (narrowing to `BulkInteractionUpdate`, targetless DO NOTHING ≡ targeted, PATCH 400) and 25209 (order_by rules). Full unit + multitenancy: 5601 passed, 1 xpassed.
+- OUT-OF-SCOPE, not ticketed yet: bulk PATCH not tenant-scoped (filters on `id` only under DisableRLS; same in `ContactRepository.bulk_update_by_ids`), `created_by_id` unchecked on bulk POST/PATCH (nested `created_by` email leak, same class as Bug 25158), no item-count cap on the interaction bulk bodies, `get_all`'s `except AttributeError: pass` around `sort()`.
+
 ## Gotchas
 - `EXPLAIN` on kforce-dev before trusting an ORDER BY on this table: the planner happily picks a pkey walk for `LIMIT 100` when the estimated match count is high (heavy contacts appear in the MCV list) — and has no stats at all for the fresh column.
 - Worktree session: the guard refused `cmd; python3 - <<EOF`, `cat > f <<EOF; …`, `psql <<EOF | grep` chains and any heredoc whose text mentions the VCS command; single `python3 - <<EOF` (VCS-free text) and `psql -f file > out` work. Wrote SQL / PR-body / Azure / vault scripts as dot-files inside the worktree, ran them plainly, deleted them before committing.
@@ -48,7 +57,8 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - `EnterWorktree` branched from the local `dev` (81b5eb08), not `origin/dev`: hard-reset onto `origin/dev` first.
 
 ## Pending
-- Review + squash-merge #2360; then Task 25072 / 25209 → Closed; dev deploy; tell Emi the route shape + the ordering deviation + that a re-pushed id answers `201 []`.
+- File a Bug for the bulk PATCH tenant-scope gap + `created_by_id` check (see Review round 1).
+- Re-review (round 2) + squash-merge #2360; then Task 25072 / 25209 → Closed; dev deploy; tell Emi the route shape + the ordering deviation + that a re-pushed id answers `201 []`.
 - kforce-dev has 0 rows with `kforce_external_id` → run `ANALYZE contact_interaction` after Emi's first push so the planner gets stats for the column (autovacuum will eventually).
 - qa/main promotion (rides the next release after [#2359](https://github.com/taller-projects/echo-backend/pull/2359)).
 
