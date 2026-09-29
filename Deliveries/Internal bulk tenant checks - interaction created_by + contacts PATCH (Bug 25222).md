@@ -25,12 +25,14 @@ Two tenant-isolation holes left open in the review of [#2360](https://github.com
 - Same contract as [[Activities bulk tenant ownership gate (Bug 25158)]]. Map: [[Map - Kforce]].
 
 ## PRs
-- [#2367](https://github.com/taller-projects/echo-backend/pull/2367) → dev, opened 2026-09-29, branch `25222/internal-bulk-tenant-refs` (one PR, two tickets), commits `5313ffb1` (25222) + `cedc63d7` (25223). Assigned gonza56d.
+- [#2367](https://github.com/taller-projects/echo-backend/pull/2367) → dev, opened 2026-09-29, branch `25222/internal-bulk-tenant-refs` (one PR, two tickets), commits `5313ffb1` (25222) + `cedc63d7` (25223). Assigned gonza56d. Self `/pr-review` r1 (CI green): READY WITH NITS, 0 blockers → nits fixed in `69702cc2` (pushed 2026-09-29 from worktree `.claude/worktrees/25222-nits`, branch `25222/internal-bulk-tenant-refs-nits`, refspec `HEAD:25222/internal-bulk-tenant-refs`; not posted as a GitHub review).
 
 ## How
 - **25222**: `InteractionService` injects `UserService`; `_assert_references(items, interaction_ids=())` batches `user_service.filter_existing_ids(created_by_ids)` (+ the pre-existing interaction ownership lookup on the bulk PATCH, merged into one 404 with per-kind context `{"interactions": [...], "users": [...]}`). Called from `bulk_create`, `bulk_update`, and new `create` / `update` overrides. 404 `unknown_reference`. `None` never looked up; inactive / soft-deleted own users accepted (tenant-only `UserRepository` predicate).
 - **25223**: `ContactService.bulk_update` pins `self._current_tenant_id()` (fail-closed) → `_assert_owned(contact_ids)` via `filter_existing_ids` → 404 `unknown_reference` `{"contacts": [...]}` before the prior-linkedin lookup / write / tracking / refresh. `ContactRepository.bulk_update_by_ids(updates, tenant_id)` adds `Contact.tenant_id == tenant_id` to every UPDATE (defense in depth). The later `tenant_id = self._current_tenant_id()` inside the linkedin block was dropped (reuses the pinned one).
 - Tests: new `test_interaction_created_by_reference.py` (13 cases) + `test_contact_bulk_update_tenant_scope.py` (6 cases). Adjusted: `InteractionService(...)` constructions get `user_service=MagicMock()`; `_make_service()` in `test_contact_service.py` sets `repo.filter_existing_ids.side_effect = set`; `tenant_context` fixture (fork_request_context) on the 4 bulk_update tests of `test_contact_crm_organization_id.py` and inline in `test_crm_company_match_recompute.py`.
+
+- **Review follow-ups (`69702cc2`)**: `_assert_references` pins `get_tenant_id(required=True)` first, so `create` / `update` / `bulk_create` fail closed like `bulk_update`; fail-closed test parametrized over all five entry points. Interactions bulk PATCH rejection tests assert no `refresh_contacts` (that route schedules it as a background task; `refresh_contact_attributes` is what POST + per-contact use) + unknown-user PATCH case. `bulk_update` docstring + OpenAPI descriptions of the three internal bulk routes state the all-or-nothing 404 `unknown_reference` (the bulk POST description was a stale contact copy-paste). Module-level context imports in `test_crm_company_match_recompute.py`. Touched modules: 165 passed.
 
 ## Verification
 - Full unit + multitenancy: 5646 passed, 1 failed (`test_crm_company_match_recompute::test_bulk_update_crm_organization_id_recomputes_without_refresh`, no request tenant → fixed); touched files re-run 169 passed. The 12 negative tests fail on `origin/dev`, the 7 acceptance ones pass on both.
@@ -52,6 +54,7 @@ Two tenant-isolation holes left open in the review of [#2360](https://github.com
 - Review + squash-merge [#2367](https://github.com/taller-projects/echo-backend/pull/2367) → Bugs 25222 / 25223 Closed (team convention: straight to Closed after merge); qa/main promotion.
 - Tell Emi: contacts bulk PATCH is now all-or-nothing on ids outside the tenant (e.g. a contact deleted since the pipeline read it → 404 listing ids; before: silently skipped). Unknown `created_by_id` on interactions: 404 instead of 500.
 - Unticketed: `crm_organization_id` on the contacts bulk PATCH is not tenant-checked.
+- Unticketed, same hole class (review out-of-scope list): contact's own `created_by_id` on `POST/PATCH /internal/contacts`; talent interactions `created_by_id` / `updated_by_id` on the `/internal/talents` bulk routes (`TalentInteractionService` has no reference check); `InteractionBase.related_company_id` (org FK, needs a different check); `FutureInteractionService._assert_users_in_tenant` raises without `error_code=unknown_reference`; `BulkContactsUpdate.contacts` has no `max_length`.
 - Vault `CLAUDE.md` says "NEVER push" but `CLAUDE.local.md` + the hook say push — reconcile.
 
 ## Related
