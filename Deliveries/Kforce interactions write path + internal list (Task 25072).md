@@ -65,9 +65,9 @@ Emiliano's request of 2026-09-28 (`pedido-echo-backend-release-y-pendientes-2026
 - `EnterWorktree` branched from the local `dev` (81b5eb08), not `origin/dev`: hard-reset onto `origin/dev` first.
 
 ## Pending
-- Tenant-scope gap fixed in-PR (`28954230`, Pedro's blocker); still open from round 1: the `created_by_id` tenant check on bulk create/update → file a Bug.
+- Tenant-scope gap fixed in-PR (`28954230`, Pedro's blocker); still open from round 1: the `created_by_id` tenant check on bulk create/update → filed as Bug 25222, fixed in [#2367](https://github.com/taller-projects/echo-backend/pull/2367) ([[Internal bulk tenant checks - interaction created_by + contacts PATCH (Bug 25222)]]).
 - Pedro re-review of `28954230` → squash-merge #2360 (no bad trailers on this branch); then Task 25072 / 25209 → Closed; dev deploy; tell Emi the route shape + the ordering deviation + `201 []` on a re-pushed id + `404 unknown_reference` on a foreign id + clear-one-side-first for id swaps.
-- Follow-up worth a ticket: `ContactRepository.bulk_update_by_ids` (`contact/repository.py:1254`) has the same id-only UPDATE shape; verify whether `/internal/contacts/bulk` PATCH is tenant-gated upstream.
+- ~~Follow-up worth a ticket: `ContactRepository.bulk_update_by_ids` id-only UPDATE~~ → Bug 25223 (not gated upstream), fixed in [#2367](https://github.com/taller-projects/echo-backend/pull/2367).
 - kforce-dev has 0 rows with `kforce_external_id` → run `ANALYZE contact_interaction` after Emi's first push so the planner gets stats for the column (autovacuum will eventually).
 - qa/main promotion (rides the next release after [#2359](https://github.com/taller-projects/echo-backend/pull/2359)).
 
