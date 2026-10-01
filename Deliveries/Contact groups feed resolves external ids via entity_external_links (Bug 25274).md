@@ -1,11 +1,13 @@
 ---
 type: delivery
-status: in-review
+status: promoting
 env: both
 delivered:
 tags: [bugfix, contacts, internal-api, external-links, hubspot, taller, kforce]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2378"
+  - "https://github.com/taller-projects/echo-backend/pull/2379"
+  - "https://github.com/taller-projects/echo-backend/pull/2380"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25274"
@@ -25,6 +27,14 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
 
 ## PRs
 - [#2378](https://github.com/taller-projects/echo-backend/pull/2378) → dev — OPEN 2026-10-01 (`c1280239`). Branch `25274/contact-groups-external-links`. Self `/pr-review` r1 (not posted) **CHANGES REQUESTED** → blockers + nits fixed in `4f6ca804` (pushed 2026-10-01 from worktree branch `25274/contact-groups-review-fixes`; PR body gained a "Review follow-ups" section). Self `/pr-review` r2 on `4f6ca804` (not posted): **READY WITH NITS**, CI green, 0 blockers / 0 regressions. All nits fixed in `5a6ab992`, pushed 2026-10-01 from worktree branch `25274/contact-groups-review-r2`. The PR body gained a "Review follow-ups r2" section, and its `grandchildren` UUID line was corrected. No FE PR (response additive only). No Data ticket (Data just needs to tolerate the new `code` value).
+
+- **2026-10-01 release:**
+  - #2378 squash-merged to dev as `10d2abd2` by Gonzalo's call (Pedro on vacation), no AI trailers; dev + kforce-dev deploy (Azure run 29964) green.
+  - [#2379](https://github.com/taller-projects/echo-backend/pull/2379) dev→qa: Flor APPROVED, merge commit `c283d9dc`.
+  - [#2380](https://github.com/taller-projects/echo-backend/pull/2380) qa→main OPEN. Prod deploys behind the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
+  - The release carries only #2378 + #2377 (test-only); no migrations.
+- **kforce-prod read-only check (2026-10-01):** 0 `entity_external_links` rows with `entity_type='contact'`, so 0 column-vs-link and 0 cross-platform collisions. KForce responses are unchanged. 1,999,840 contacts, 3,516 column-less.
+- The echo-backend pipeline is visible with the PAT in Azure project **Snapshot Exploration**, definition 121 (not Echo Core).
 
 ## How
 - `ContactGroupService._resolve_nodes`: column hits (`resolve_external_ids`) + link hits (`ExternalLinkService.resolve_entity_ids`, `entity_type=contact`, any platform, any status) merged per id. Every link target goes through `ContactGroupSQLRepository.nodes_by_ids` (tenant-scoped) **before** counting candidates (`4f6ca804`), so a link of a deleted contact is neither a node nor a candidate → exactly one existing contact = node; 2+ = ambiguous; none = unknown.
@@ -65,7 +75,7 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
 - Adding a defaulted field to a response model breaks exact-dict assertions (`test_feed_reports_unknown_ids…`, `test_feed_skips_group_when_child_would_keep_children`) — updated, not loosened.
 
 ## Pending
-- **Before the kforce-prod promotion:** count the collisions between `kforce_external_id` and another contact's contact link. The TrackerRMS outbox writes contact links, and kforce-prod has no pg service / creds here. SQL is in r2 nit 6 / the PR body.
+- ~~kforce-prod collision count~~ done 2026-10-01: 0 contact links. The SQL was only in the r2 chat report, not the PR body; the result is recorded in #2379 / #2380.
 - **Open decision (Q1 of r1):** a contact named by two different ids in one request applies the first reference by payload order (identical strings would be a 422). Options: refuse every reference (order-independent), or a separate `duplicate_contact` code. Left as-is in `4f6ca804`.
 - PRD wording to amend: latency criterion → "at most 3 extra queries, index-served" (the third is the PK lookup the no-cross-module-join rule forces); "tests existentes sin cambios de aserción" → "except the additive `contact_ids`".
 - Follow-up ticket: `ContactService.delete` should drop the contact's links.
