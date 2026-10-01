@@ -36,6 +36,28 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
 - **kforce-prod read-only check (2026-10-01):** 0 `entity_external_links` rows with `entity_type='contact'`, so 0 column-vs-link and 0 cross-platform collisions. KForce responses are unchanged. 1,999,840 contacts, 3,516 column-less.
 - The echo-backend pipeline is visible with the PAT in Azure project **Snapshot Exploration**, definition 121 (not Echo Core).
 
+- **Dev E2E 2026-10-01 (after the merge): 23/23 PASS.**
+  - Setup: merged code `10d2abd2` (tree identical to `5a6ab992`) ran locally against the Taller dev DB via the legacy shim, on the synthetic tenant Cortez `bb4455eb`, flag toggled on then restored. Fixtures were SQL-tagged rows (tag `e2e25274…`), all cleaned up: 0 leftovers.
+  - Covered:
+    - feature off → 404;
+    - link-only link / move / unlink / promote / dissolve on HubSpot and TrackerRMS, with an idempotent re-send;
+    - refresh job enqueued;
+    - column-vs-link and cross-platform ambiguity, with the rest of the batch applied;
+    - named twice;
+    - held child;
+    - dangling links;
+    - tenant isolation (both directions);
+    - link-named grandchildren;
+    - an exact KForce-shaped response;
+    - stale link and same-id organization link;
+    - naming precedence;
+    - 422.
+  - Logs: 4 warnings = Σ`ambiguous` over 14 `upserted` lines.
+  - Script: session scratchpad `e2e_25274.py`.
+- Deployed dev `/internal/openapi.json` serves the new contract: the description, both enums, and `contact_ids`.
+- **Real dev data (read-only):** 0 ambiguous ids in any tenant. Link-only contacts: Navitec 61,470 (tracker_rms, up to 10 links per contact), Hubspot - Taller 24,739, Eteam 4,203 (job_diva), Hubspot - Sandbox 1,120. The "Taller" tenant has 0 contact links.
+- **No Taller-dev tenant has `CONTACT_GROUPS`** (kforce-dev's KForce tenant does), so the feed answers 404 on dev until it is enabled for whichever tenant Data's dev key belongs to (HubSpot contacts live in "Hubspot - Taller" `3744ad0b`). The Taller prod flag check was classifier-blocked.
+
 ## How
 - `ContactGroupService._resolve_nodes`: column hits (`resolve_external_ids`) + link hits (`ExternalLinkService.resolve_entity_ids`, `entity_type=contact`, any platform, any status) merged per id. Every link target goes through `ContactGroupSQLRepository.nodes_by_ids` (tenant-scoped) **before** counting candidates (`4f6ca804`), so a link of a deleted contact is neither a node nor a candidate → exactly one existing contact = node; 2+ = ambiguous; none = unknown.
 - Replace-step guard (`4f6ca804`): a refused child id (ambiguous or already named) records its candidates in `_GroupPlan.held`; `_desired_parents` keeps a current child of that parent among them where it is instead of unlinking it.
