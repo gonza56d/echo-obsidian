@@ -31,3 +31,4 @@ Sentry tooling, and the family of prod timeout/resilience fixes it keeps surfaci
 ## Known pending
 - OpenAPI 500 via `partial_model` (Sentry `7600828395`, fastapi 0.139 bump; verified 1-line fix in `optional_model.py`) — **needs dev + kforce-dev PRs**.
 - Keyset pagination follow-up from the deep-pagination fix.
+- [[EventBus watchdog + telemetry bus split (Bug 25276)]] — single-thread EventBus hung on a client-side DB wait; watchdog + telemetry bus split + `/health` 503 (2026-10-01).
