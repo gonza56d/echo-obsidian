@@ -21,7 +21,7 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 - No PRD (incident fix). Memory of the investigation: `project_eventbus_stuck_worker_25276` + `reference_loki_grafana_access` in Claude memory.
 
 ## PRs
-- [#2381](https://github.com/taller-projects/echo-backend/pull/2381) → dev **OPEN 2026-10-01** (`d22e855e`, branch `25276/eventbus-watchdog`). 777 affected unit tests green locally; full unit+mt run pending at the time of writing.
+- [#2381](https://github.com/taller-projects/echo-backend/pull/2381) → dev **OPEN 2026-10-01** (`d22e855e` + test fix `e7d64053`, branch `25276/eventbus-watchdog`). Full unit+multitenancy run: 5710 passed; the only failure was my own DI test asserting identity against the module-global bus accessors (re-pointed by the worker tests' DependencyInjector) + a `processed`-counter race in two thread-name tests — both fixed in `e7d64053`, worker+EventBus pair green 3×.
 
 ## How (the investigation)
 - Bus `d6a83cee` = one uvicorn process, pod started 2026-09-30 21:16:16 UTC (qa `5afb7155`, template `68cd784dd8`). Loki has no `pod` label, so I isolated the worker **thread**: `[scope.get] NEW DatabaseResource scope_key=128545416709824` lands 0–1 ms after every `Event published` of that bus from 04:20 to 04:32:02 UTC; last line **04:32:03.949 = start of a `user.event` (adoption) handler**; nothing after. The ticket's `role_placement.updated` (04:35:26) was never dequeued. ~560 events queued by 19:00 UTC (max 1000, `Event queue full` never logged anywhere in 7 days).
@@ -45,7 +45,7 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 - The worktree-isolation hook refuses `source scripts/venv.sh` and any bash whose text contains "git" (heredocs and GitHub URLs included); run ruff/pytest via the main checkout's `.venv/bin/*` binaries, and put vault/Azure scripts in a file inside the worktree.
 
 ## Pending
-- Full unit+multitenancy run + CI green on `d22e855e`; Pedro review; squash-merge; qa/main.
+- CI green on `e7d64053`; Pedro review; squash-merge; qa/main.
 - Ops (needs kubectl, I have none): find the QA pod older than 04:32 UTC whose logs contain `d6a83cee`; `py-spy dump` via ephemeral debug container if still alive (no lines from it after 14:47 UTC — likely scaled in); re-run `roles_capacity.feature:1086`.
 - Infra: enable `probe.enabled` for qa/prod and point liveness at `/health` (ask Willian/Alan why it was disabled on 2026-03-17 first).
 - Grafana/Loki alert on `Event queue full` + `event_bus.handler_stuck` for all envs.
