@@ -58,6 +58,8 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
 - **Real dev data (read-only):** 0 ambiguous ids in any tenant. Link-only contacts: Navitec 61,470 (tracker_rms, up to 10 links per contact), Hubspot - Taller 24,739, Eteam 4,203 (job_diva), Hubspot - Sandbox 1,120. The "Taller" tenant has 0 contact links.
 - **No Taller-dev tenant has `CONTACT_GROUPS`** (kforce-dev's KForce tenant does), so the feed answers 404 on dev until it is enabled for whichever tenant Data's dev key belongs to (HubSpot contacts live in "Hubspot - Taller" `3744ad0b`). The Taller prod flag check was classifier-blocked.
 
+- **Bug 25274 → Closed 2026-10-02** (team convention: close on merge to dev), with a release comment (dev/qa merged, main #2380 pending, E2E 23/23, kforce-prod 0 links, follow-ups 25332 + 25344).
+
 ## How
 - `ContactGroupService._resolve_nodes`: column hits (`resolve_external_ids`) + link hits (`ExternalLinkService.resolve_entity_ids`, `entity_type=contact`, any platform, any status) merged per id. Every link target goes through `ContactGroupSQLRepository.nodes_by_ids` (tenant-scoped) **before** counting candidates (`4f6ca804`), so a link of a deleted contact is neither a node nor a candidate → exactly one existing contact = node; 2+ = ambiguous; none = unknown.
 - Replace-step guard (`4f6ca804`): a refused child id (ambiguous or already named) records its candidates in `_GroupPlan.held`; `_desired_parents` keeps a current child of that parent among them where it is instead of unlinking it.

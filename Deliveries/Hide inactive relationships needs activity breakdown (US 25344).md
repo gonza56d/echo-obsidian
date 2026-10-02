@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged-dev
 env: both
-delivered:
+delivered: 2026-10-02
 tags: [frontend, contacts, contact-groups, feature-flags, kforce, taller]
 prs: []
 fe_prs:
@@ -41,6 +41,8 @@ So turning `contact_groups` on for any non-KForce tenant would hide every sub-ro
     - each case fails if its `Table` prop goes back to `hasContactGroups`.
   - Gotcha: mocking `usePermissions` with a fresh `hasPermission` per render hung jest (render loop). Mock `AccessControlEnforcement` instead.
 - **`build` check is red.** The preview's ACM certificate rejects `hide-inactive-relationships-by-activity-breakdown.preview…` (> 64 chars). It's not required; the merge is only blocked by REVIEW_REQUIRED. Use FE branch names of ≤ ~40 chars if the preview is wanted.
+
+- **MERGED to dev 2026-10-02 19:29 UTC (`d47b03e3`, by gonza-taller).** US 25344 moved to Developed via the FE pipeline; it goes to Ready to Test at the next QA release. Merge-info comment added on the ticket.
 
 ## How
 - New hook `src/components/contacts/table/useHideInactiveRelationships.ts` = `CONTACT_GROUPS && CONTACTS_ACTIVITY_BREAKDOWN`. It's a separate module built on `useTenantFeature`, so the existing `jest.mock('@/hooks/useTenantFeatures', () => ({ useTenantFeature }))` mocks keep working.
