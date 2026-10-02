@@ -72,7 +72,7 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - ~~Merge of #2350~~ merged 2026-09-25 (`2441a3c6`). ~~Merge [#2356](https://github.com/taller-projects/echo-backend/pull/2356)~~ merged 2026-09-28 (`f396442d`). Now: confirm the next `dev` build is green, then close [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143).
 - Attach the `EXPLAIN ANALYZE` plans to [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) — only the timings were recorded here and in the PR body; re-run on Navitec prod (read-only) if the plans are wanted.
 - PRD annex (Pedro said he'll do it): Matched = status NULL and no step, comma-separated wire format, blank `role_id__in=` = no filter; still unmentioned by him: isolation on `/internal` is the explicit tenant predicate, not RLS.
-- Unticketed follow-up: centralize the non-Matched predicate (`Application.is_not_matched()`), now spelled in 5 places.
+- Unticketed follow-up: centralize the non-Matched predicate (`Application.is_not_matched()`). Partially: [#2375](https://github.com/taller-projects/echo-backend/pull/2375) (`46f11194`) shares one private select between the two `ApplicationRepository` lookups; the talent-side copies (`talent/repository.py`, `talent/models.py` ×2, `talent/filters.py`) remain.
 - ~~Azure~~ done 2026-09-25: [US 25143](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25143) → In revision, assigned Gonzalo, formal "GitHub Pull Request" link added (repo internal id `db75e3ff-226f-4014-86ae-37f4bcf56c43`, reusable for future PR links).
 - FE [US 25144](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25144) (unassigned); tell the FE dev the wire format is comma-separated.
 - ~~Tell Pedro: PRD contract example (repeated params) needs correcting~~ (he picked it up in his review); still: data_scope covered at the seam, not end to end; confirm the application-RLS narrowing for user/vendor scope is the intended meaning.
@@ -80,5 +80,6 @@ Navitec asked (2026-09-24, direct request, no Capa 1) to filter the Touchpoints 
 - Follow-up (outside PRD): role/touchpoint KPIs for management dashboards, where exact attribution (persist role/application on the touchpoint) gets decided.
 
 ## Related
+- [[Touchpoint Role filter options endpoint (US 25255)]] (follow-up: `GET /future-interactions/roles` feeds the FE Role filter with only the roles that have pending touchpoints; Florencia's PR #2375, reviewed + nit commit by me)
 - [[Public bulk-create touchpoints endpoint (US 24835)]] (same module, the `search` resolution pattern this reuses)
 - [[Candidates Stage filter divergence (Bug 24242)]] (multi-active `applications` EXISTS and its gate)
