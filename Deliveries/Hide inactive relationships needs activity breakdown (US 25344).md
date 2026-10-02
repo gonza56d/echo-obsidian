@@ -31,6 +31,17 @@ So turning `contact_groups` on for any non-KForce tenant would hide every sub-ro
   - No BE PR.
 - Docs: echo-flows-docs `03-contacts.md` (`1299bba`, pushed straight to `main` as the repo does).
 
+- **Review r1 (2026-10-02), Flor + Patricio, both COMMENTED, no blockers.** All addressed in `8c177880b` (pre-push: 208 + 1456 tests green). I replied on all 6 threads.
+  - **AND vs. replace** (AC1 said "no longer depends on CONTACT_GROUPS"): kept the AND, because it's Gonzalo's no-behavior-change requirement. With a replace, a tenant with the breakdown but no groups would start hiding. US 25344 Decision section + AC1 rewritten (rev 5), plus a comment.
+  - **Hook comment removed:** FE CLAUDE.md says "No comments — no comments, JSDoc, or inline annotations".
+  - **Tab-wiring tests added:**
+    - company tab in `companies/tabs/contacts/Contacts.test.js`;
+    - contacts list in `__pagesTests__/contacts/index.test.js`;
+    - both use a pass-through `AccessControlEnforcement` mock for `contacts.activity`, because the default `/users/me` mock only grants `talents` / `companies`;
+    - each case fails if its `Table` prop goes back to `hasContactGroups`.
+  - Gotcha: mocking `usePermissions` with a fresh `hasPermission` per render hung jest (render loop). Mock `AccessControlEnforcement` instead.
+- **`build` check is red.** The preview's ACM certificate rejects `hide-inactive-relationships-by-activity-breakdown.preview…` (> 64 chars). It's not required; the merge is only blocked by REVIEW_REQUIRED. Use FE branch names of ≤ ~40 chars if the preview is wanted.
+
 ## How
 - New hook `src/components/contacts/table/useHideInactiveRelationships.ts` = `CONTACT_GROUPS && CONTACTS_ACTIVITY_BREAKDOWN`. It's a separate module built on `useTenantFeature`, so the existing `jest.mock('@/hooks/useTenantFeatures', () => ({ useTenantFeature }))` mocks keep working.
 - Used by:
