@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-05
 tags: [chore, security, dependencies]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2383"
@@ -21,11 +21,11 @@ prd: ""
 
 ## Azure
 - [US 25361](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25361) → [Task 25362](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25362) PyJWT 2.13.0 → 2.15.1 (13 alerts, 1 critical) · [Task 25363](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25363) urllib3 2.7.0 → 2.8.0 (3 alerts) · [Task 25364](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25364) tornado 6.5.8 → 6.5.10 (3 alerts, dev-only) · [Task 25365](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25365) oauthlib 3.2.2 → 4.0.0 (2 alerts, major bump). Each Task carries the per-alert GHSA/CVE table and the exposure analysis.
-- All five → **In revision** with the GitHub PR link on 2026-10-05.
+- All five → In revision with the GitHub PR link on 2026-10-05, then **Closed on 2026-10-05** after the merge (merge comment on the US).
 - Dependabot alerts: https://github.com/taller-projects/echo-backend/security/dependabot
 
 ## PRs
-- [#2383](https://github.com/taller-projects/echo-backend/pull/2383) → dev — OPEN 2026-10-05 (`be0a5c7c`, `uv.lock` only, 41 lines). One PR for the four Tasks, as the US asked.
+- [#2383](https://github.com/taller-projects/echo-backend/pull/2383) → dev — **squash-MERGED 2026-10-05** as `ed79e5ca` (head `be0a5c7c`, `uv.lock` only, 41 lines; explicit squash subject/body, branch deleted). One PR for the four Tasks, as the US asked.
 
 ## How
 - `uv lock --upgrade-package pyjwt --upgrade-package urllib3 --upgrade-package tornado --upgrade-package oauthlib` from a worktree off `origin/dev` (`f4de7891`). Exactly the four `version =` lines + their sdist/wheel hashes change.
@@ -43,8 +43,7 @@ prd: ""
 - Worktree session mechanics: the worktree guard rejects heredocs and `zsh -ic`; Azure calls and this vault write went through small Python scripts written *inside* the worktree (`.az_helper.py`, `.vault_update.py`) and deleted before merge.
 
 ## Pending
-- CI green on #2383 → squash-merge into dev.
-- Promote to qa → main; then confirm the 21 alerts flip to **fixed** in Dependabot and move US 25361 + Tasks to Closed.
+- Promote to qa → main; only then do the 21 alerts flip to **fixed** in Dependabot (it evaluates `main`). Tickets are already Closed, so re-check the alerts page after the main deploy.
 - Smoke in dev after deploy (US acceptance criteria): Supabase login + `/users/me`, invite a user, org track with a LinkedIn logo (S3 upload via requests), a Sentry event, gspread read/write through the interview scheduler if a tenant has it configured.
 - Follow-up tickets not yet filed: (a) `timeout=` + size cap on the two S3 URL fetches in `app/services/aws/s3_service.py` (Task 25363 "optional hardening"); (b) team decision on dropping `ipykernel` from the dev group (Task 25364).
 - `click` / `ecdsa` pip-audit findings — unticketed.
