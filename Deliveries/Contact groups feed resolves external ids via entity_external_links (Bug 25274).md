@@ -12,6 +12,9 @@ fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25274"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24974"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25372"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25373"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25374"
 prd: "https://app.notion.com/p/3ecaedca11f0811bbd71d57f636ae830"
 ---
 
@@ -102,13 +105,13 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
 
 ## Pending
 - ~~kforce-prod collision count~~ done 2026-10-01: 0 contact links. The SQL was only in the r2 chat report, not the PR body; the result is recorded in #2379 / #2380.
-- **Open decision (Q1 of r1):** a contact named by two different ids in one request applies the first reference by payload order (identical strings would be a 422). Options: refuse every reference (order-independent), or a separate `duplicate_contact` code. Left as-is in `4f6ca804`.
+- ~~Open decision (Q1 of r1)~~ → [US 25374](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25374) (2026-10-05, parent Feature 24974): first-wins by payload order vs refuse all vs `duplicate_contact` code.
 - PRD wording to amend: latency criterion → "at most 3 extra queries, index-served" (the third is the PK lookup the no-cross-module-join rule forces); "tests existentes sin cambios de aserción" → "except the additive `contact_ids`".
-- Follow-up ticket: `ContactService.delete` should drop the contact's links.
+- ~~Follow-up ticket: `ContactService.delete` should drop the contact's links~~ → [Bug 25373](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25373) (2026-10-05).
 - Pedro review + squash-merge → Bug 25274 Closed, PRD Estado → Approved / In development, dev deploy.
 - Tell Nico (Slack): confirmed, option (b) any-platform shipped in #2378, new `ambiguous_external_id` + `contact_ids` in the response, Data re-sends the Taller groups once on dev/prod; ask them to run the verification SQL.
 - Check the Taller tenant in **dev** has `CONTACT_GROUPS` enabled before QA (Data's re-send is the QA).
-- Follow-up ticket: `GET /internal/contacts?kforce_external_id__in=` and `GET /internal/contacts/interactions?kforce_external_id__in=` are still column-only (same bug class) — reuse `resolve_entity_ids`.
+- ~~Follow-up ticket: `GET /internal/contacts?kforce_external_id__in=` column-only~~ → [Bug 25372](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25372) (2026-10-05). **Correction:** the interactions filter keys on the interaction's OWN `kforce_external_id`, not the contact's, so it is not the same bug and was left out of the ticket.
 - qa / main promotion after dev QA.
 
 ## Related
