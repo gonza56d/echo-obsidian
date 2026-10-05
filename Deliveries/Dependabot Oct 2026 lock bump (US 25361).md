@@ -7,6 +7,7 @@ tags: [chore, security, dependencies]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2383"
   - "https://github.com/taller-projects/echo-backend/pull/2384"
+  - "https://github.com/taller-projects/echo-backend/pull/2385"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25361"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25362"
@@ -27,7 +28,8 @@ prd: ""
 
 ## PRs
 - [#2383](https://github.com/taller-projects/echo-backend/pull/2383) → dev — **squash-MERGED 2026-10-05** as `ed79e5ca` (head `be0a5c7c`, `uv.lock` only, 41 lines; explicit squash subject/body, branch deleted). One PR for the four Tasks, as the US asked.
-- [#2384](https://github.com/taller-projects/echo-backend/pull/2384) dev → qa release ("Release dev -> qa 2026-10-05") — **OPEN 2026-10-05**, carries `ed79e5ca` + `f4de7891` ([[Touchpoint Role filter options endpoint (US 25255)]]). No migrations. Merge with a merge commit.
+- [#2384](https://github.com/taller-projects/echo-backend/pull/2384) dev → qa release ("Release dev -> qa 2026-10-05") — approved by Leo 19:08 UTC, **MERGED 2026-10-05 19:10 UTC** (merge commit `d2514be3`, merged by Gonzalo by hand: the auto-mode permission check blocked the agent's `gh pr merge`). Carries `ed79e5ca` + `f4de7891` ([[Touchpoint Role filter options endpoint (US 25255)]]). No migrations.
+- [#2385](https://github.com/taller-projects/echo-backend/pull/2385) qa → main release ("Release qa -> main 2026-10-05") — **OPEN 2026-10-05**. Deploys to prod + kforce-prod behind `echo-backend-prod` / `echo-backend-kforce-prod`.
 
 ## How
 - `uv lock --upgrade-package pyjwt --upgrade-package urllib3 --upgrade-package tornado --upgrade-package oauthlib` from a worktree off `origin/dev` (`f4de7891`). Exactly the four `version =` lines + their sdist/wheel hashes change.
@@ -45,7 +47,7 @@ prd: ""
 - Worktree session mechanics: the worktree guard rejects heredocs and `zsh -ic`; Azure calls and this vault write went through small Python scripts written *inside* the worktree (`.az_helper.py`, `.vault_update.py`) and deleted before merge.
 
 ## Pending
-- Merge [#2384](https://github.com/taller-projects/echo-backend/pull/2384) (dev → qa, merge commit), then open qa → main; only then do the 21 alerts flip to **fixed** in Dependabot (it evaluates `main`). Tickets are already Closed, so re-check the alerts page after the main deploy.
+- Merge [#2385](https://github.com/taller-projects/echo-backend/pull/2385) (qa → main, merge commit) + approve prod / kforce-prod; only then do the 21 alerts flip to **fixed** in Dependabot (it evaluates `main`). Tickets are already Closed, so re-check the alerts page after the main deploy.
 - Smoke in dev after deploy (US acceptance criteria): Supabase login + `/users/me`, invite a user, org track with a LinkedIn logo (S3 upload via requests), a Sentry event, gspread read/write through the interview scheduler if a tenant has it configured.
 - Follow-up tickets not yet filed: (a) `timeout=` + size cap on the two S3 URL fetches in `app/services/aws/s3_service.py` (Task 25363 "optional hardening"); (b) team decision on dropping `ipykernel` from the dev group (Task 25364).
 - `click` / `ecdsa` pip-audit findings — unticketed.
