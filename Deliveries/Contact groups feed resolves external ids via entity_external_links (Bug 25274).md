@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: promoting
+status: shipped-prod
 env: both
-delivered:
+delivered: 2026-10-05
 tags: [bugfix, contacts, internal-api, external-links, hubspot, taller, kforce]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2378"
@@ -33,6 +33,8 @@ Nico (Data, Slack 2026-10-01) found that `PUT /internal/contacts/groups/bulk` re
   - [#2379](https://github.com/taller-projects/echo-backend/pull/2379) dev→qa: Flor APPROVED, merge commit `c283d9dc`.
   - [#2380](https://github.com/taller-projects/echo-backend/pull/2380) qa→main OPEN. Prod deploys behind the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
   - The release carries only #2378 + #2377 (test-only); no migrations.
+- **2026-10-05 PROD RELEASE.** `main` ruleset ("Protect qa and main merge methods") needs 1 code-owner approval, merge commits only, auto-merge disabled and no admin bypass for `write` → the agent could not merge #2380 (requested Flor's review 2026-10-05; no review came in 2 h). Gonzalo merged it himself (`64fdd38f`, 18:21 UTC) and approved `echo-backend-prod` + `echo-backend-kforce-prod`. Azure build 30108 (Snapshot Exploration, def 121) green: Test, BuildAndPush, prod + kforce-prod migrations (none in this release), DeployArgoCD + DeployArgoCDKforceProd, finished 18:50 UTC. Release comment posted on Bug 25274.
+- **kforce-prod re-check 2026-10-05 (read-only):** `entity_external_links` is empty for EVERY entity_type (not only contacts); 1,999,840 contacts, 1,996,324 with `kforce_external_id`, `contact_groups` enabled on "Kforce Inc". The fix is a pure no-op there until some integration writes contact links.
 - **kforce-prod read-only check (2026-10-01):** 0 `entity_external_links` rows with `entity_type='contact'`, so 0 column-vs-link and 0 cross-platform collisions. KForce responses are unchanged. 1,999,840 contacts, 3,516 column-less.
 - The echo-backend pipeline is visible with the PAT in Azure project **Snapshot Exploration**, definition 121 (not Echo Core).
 
