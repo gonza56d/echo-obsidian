@@ -6,6 +6,7 @@ delivered: 2026-10-05
 tags: [chore, security, dependencies]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2383"
+  - "https://github.com/taller-projects/echo-backend/pull/2384"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25361"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25362"
@@ -26,6 +27,7 @@ prd: ""
 
 ## PRs
 - [#2383](https://github.com/taller-projects/echo-backend/pull/2383) → dev — **squash-MERGED 2026-10-05** as `ed79e5ca` (head `be0a5c7c`, `uv.lock` only, 41 lines; explicit squash subject/body, branch deleted). One PR for the four Tasks, as the US asked.
+- [#2384](https://github.com/taller-projects/echo-backend/pull/2384) dev → qa release ("Release dev -> qa 2026-10-05") — **OPEN 2026-10-05**, carries `ed79e5ca` + `f4de7891` ([[Touchpoint Role filter options endpoint (US 25255)]]). No migrations. Merge with a merge commit.
 
 ## How
 - `uv lock --upgrade-package pyjwt --upgrade-package urllib3 --upgrade-package tornado --upgrade-package oauthlib` from a worktree off `origin/dev` (`f4de7891`). Exactly the four `version =` lines + their sdist/wheel hashes change.
@@ -37,13 +39,13 @@ prd: ""
 - Exposure reasoning per package (why each is a hygiene bump rather than an incident): PyJWT unused by Echo (python-jose does auth; gotrue only uses PyJWT in `get_claims()`), tornado absent from the `--no-dev` image, oauthlib CVEs are server-side provider code and Echo uses a gspread service account, urllib3 proxy CVE n/a (no proxy configured).
 
 ## Gotchas
-- **Dependabot evaluates `main`**, so the alerts stay "open" until the bump is promoted dev → qa → main. Do not re-triage them in between.
+- **Dependabot evaluates `main`**, so the alerts stay "open" until the bump is promoted dev → qa → main. Do not re-triage them in between. Checked 2026-10-05 after the dev merge: `qa` and `main` still lock pyjwt 2.13.0 / urllib3 2.7.0 / tornado 6.5.8 / oauthlib 3.2.2, and all 21 alerts (#109–#129) are still open. Alert #129 (GHSA-gvp8-978c-rx2q, PyJWT `>= 2.11.0, <= 2.13.0`) shows no patched version in the API, but 2.15.1 is outside its range.
 - No `.github/dependabot.yml` → GitHub only raises alerts and never opens bump PRs; every remediation is a manual lock bump (precedent: [[WeasyPrint 62 to 68 upgrade (US 23479)]]).
 - tornado will keep recurring (10 alerts fixed historically) as long as `ipykernel` stays in the dev group — Dependabot cannot tell dev-only lock entries apart.
 - Worktree session mechanics: the worktree guard rejects heredocs and `zsh -ic`; Azure calls and this vault write went through small Python scripts written *inside* the worktree (`.az_helper.py`, `.vault_update.py`) and deleted before merge.
 
 ## Pending
-- Promote to qa → main; only then do the 21 alerts flip to **fixed** in Dependabot (it evaluates `main`). Tickets are already Closed, so re-check the alerts page after the main deploy.
+- Merge [#2384](https://github.com/taller-projects/echo-backend/pull/2384) (dev → qa, merge commit), then open qa → main; only then do the 21 alerts flip to **fixed** in Dependabot (it evaluates `main`). Tickets are already Closed, so re-check the alerts page after the main deploy.
 - Smoke in dev after deploy (US acceptance criteria): Supabase login + `/users/me`, invite a user, org track with a LinkedIn logo (S3 upload via requests), a Sentry event, gspread read/write through the interview scheduler if a tenant has it configured.
 - Follow-up tickets not yet filed: (a) `timeout=` + size cap on the two S3 URL fetches in `app/services/aws/s3_service.py` (Task 25363 "optional hardening"); (b) team decision on dropping `ipykernel` from the dev group (Task 25364).
 - `click` / `ecdsa` pip-audit findings — unticketed.

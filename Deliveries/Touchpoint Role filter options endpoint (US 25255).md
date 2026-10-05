@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-10-02
 tags: [feature, touchpoints, future-interaction, applications, roles, navitec, review]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2375"
+  - "https://github.com/taller-projects/echo-backend/pull/2384"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/3467"
 tickets:
@@ -23,8 +24,10 @@ Follow-up to [[Touchpoints filter by Role (US 25143)]]: the FE Role filter on `/
 - No Notion PRD; the Azure description + AC are the whole spec. Predecessor PRD: [Touchpoints — Filtro por Role — PRD Técnico](https://app.notion.com/p/3e5aedca11f0816a9118d23413fc431d).
 
 ## PRs
-- [#2375](https://github.com/taller-projects/echo-backend/pull/2375) → dev — **OPEN** (Florencia, branch `25255/touchpoint-role-options`). Her commits `cba00ed2` + `1a7237fc` + `ab3cc9dc` + `079864d1`; my nit commits `46f11194` (worktree `25255-touchpoint-role-options-r1`) and `91742dc7` (worktree `25255-touchpoint-role-options-r2`, branch `worktree-25255-touchpoint-role-options-r2`), both pushed to her branch. CI green on `079864d1` and `46f11194` (test+lint 13m38s); `91742dc7` pushed without waiting for CI. **APPROVED by me 2026-10-02 19:24 UTC** (review body = r2 summary + merge-order note). PR body patched with the FE link, the merge-order dependency and the 255-char bound.
+- [#2375](https://github.com/taller-projects/echo-backend/pull/2375) → dev — **squash-MERGED 2026-10-02 19:27 UTC** by Florencia as `f4de7891` ( branch `25255/touchpoint-role-options`). Her commits `cba00ed2` + `1a7237fc` + `ab3cc9dc` + `079864d1`; my nit commits `46f11194` (worktree `25255-touchpoint-role-options-r1`) and `91742dc7` (worktree `25255-touchpoint-role-options-r2`, branch `worktree-25255-touchpoint-role-options-r2`), both pushed to her branch. CI green on `079864d1` and `46f11194` (test+lint 13m38s); `91742dc7` pushed without waiting for CI. **APPROVED by me 2026-10-02 19:24 UTC** (review body = r2 summary + merge-order note). PR body patched with the FE link, the merge-order dependency and the 255-char bound.
 - FE: none from me. [echo-frontend #3467](https://github.com/taller-projects/echo-frontend/pull/3467) (US 25256, Florencia, title "⛔ NEEDS BE ⛔") **MERGED FE dev 2026-10-01** — points the Role dropdown at this route, so FE dev shows an empty dropdown (422 from `GET /{touchpoint_id}` with `"roles"`) until #2375 lands on dev. Contract: one new list route, `Page[T]` + `__ilike`, no permission / `/users/me` change. FE on `echo-frontend` origin/dev already consumes it (`TOUCHPOINT_ROLES_ENDPOINT`, `getDisplayText: item.name`, `searchParam: 'name__ilike'`).
+
+- [#2384](https://github.com/taller-projects/echo-backend/pull/2384) dev → qa release — **OPEN 2026-10-05**, rides together with the [[Dependabot Oct 2026 lock bump (US 25361)]] bump. FE #3467 still needs its own FE qa promotion.
 
 ## How
 - Router: `GET /roles` declared **before** `GET /{touchpoint_id}` (else "roles" parses as a UUID); inherits the router-level `Protected([Talents | ContactsView])`; `allowed_entity_types` without candidate → empty page before any query.
@@ -64,7 +67,8 @@ Local: 108 passed (`test_future_interaction.py` + `multitenancy/test_future_inte
 
 ## Pending
 - ~~Florencia: answer the two questions~~ — resolved in r2 by the ticket text + merged FE, no code change.
-- CI on `91742dc7` (approved before it ran — if red, fix forward on her branch). Then squash-merge [#2375](https://github.com/taller-projects/echo-backend/pull/2375) to dev **promptly** (FE #3467 already on FE dev depends on it); then [US 25255](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25255) → In revision / Closed (state untouched by me, only the PR hyperlink).
+- ~~CI on `91742dc7` + squash-merge #2375~~ — merged 2026-10-02 (`f4de7891`).
+- Merge [#2384](https://github.com/taller-projects/echo-backend/pull/2384) (dev → qa), then qa → main; FE #3467 must reach the same envs. Verify [US 25255](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25255) → In revision / Closed (state untouched by me, only the PR hyperlink).
 - Out-of-scope notes surfaced in the review, unticketed: FE default Owner chip can still open an offered role on an empty queue (explicit "no depende del owner"); FE gates the filter by `PROJECTS_VIEW` while BE answers on `Permission.Talents`; `_person_ids_matching(term=None)` could use `talent_service.filter_existing_ids` instead of materializing name projections (pre-existing shape).
 - Cross-module copies of the non-Matched predicate remain in `talent/repository.py`, `talent/models.py` (×2), `talent/filters.py` — the `Application.is_not_matched()` centralization from the 25143 note is still open.
 
