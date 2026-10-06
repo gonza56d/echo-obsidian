@@ -403,3 +403,6 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 ## 🗂 All deliveries
 
 Browse `Deliveries/` (40 notes, 2026-06-17 → 2026-07-24), or start from a Map above.
+
+## Recent activity
+- 2026-10-06 — [[Navitec duplicated Resources from reverse push — ats_external_ids vs entity_external_links (investigation)]] — root cause confirmed in echo-backend (dispatcher + manual sync read legacy columns); 28 dup Resources in PROD, 17+3+3 rows still exposed; no ticket yet
