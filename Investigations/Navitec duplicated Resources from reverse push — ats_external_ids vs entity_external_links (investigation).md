@@ -4,9 +4,11 @@ status: done
 env: taller
 delivered: 2026-10-06
 tags: [investigation, navitec, trackerrms, outbox, external-links, duplicates]
-prs: []
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/2388"
 fe_prs: []
-tickets: []
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390"
 prd: https://app.notion.com/p/383aedca11f0812c8c52cee6d9852d4b
 ---
 
@@ -94,6 +96,9 @@ and Echo PROD (read-only, tenant `2445fa20-f769-4f10-854e-a9e74df71ac5`).
   duplicate's link, or PATCHes keep targeting the Resource Navitec deletes.
 - Order of operations: close the cause (code fix or the column backfill for
   the 17+3+3 exposed rows) **before** Navitec merges pairs in Tracker.
+
+## Outcome
+- [Bug 25390](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390) filed 2026-10-06; fix PR [#2388](https://github.com/taller-projects/echo-backend/pull/2388) → dev — [[Reverse push duplicates TrackerRMS Resources - external ids read from entity_external_links (Bug 25390)]].
 
 ## Related
 - [[Map - TrackerRMS integration]]
