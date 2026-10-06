@@ -96,6 +96,33 @@ Resource. Root-cause analysis + PROD evidence:
   `sync_application` test. Dropped `1c987fa9`'s
   `test_stale_link_falls_back_to_column` (pinned the opposite rule).
 
+## Local end-to-end run (2026-10-06, branch `cherry_pick/25390_external_id_reads_qa` = the tree on qa/main)
+Real API (`uvicorn` :8010) + real `python -m app.dispatcher` + local pgvector
+Postgres (docker :55432, schema via `create_database()` like conftest) + a fake
+tracker-rms-api (:18080) logging every call. Scripts in the session scratchpad
+`e2e/` (bootstrap.py, seed_user.py, fake_tracker_rms_api.py, mint_jwt.py,
+run_scenarios.py, s8_ordering.py). **8/8 PASS**:
+- S1 Tracker-born talent (link only, `ats_external_ids=[]`) edited via `PATCH /talents/{id}` → dispatcher `PATCH candidate/<link id>`, no POST; write-back fills the column with the same id.
+- S2 manual `POST /talents/{id}/sync_tracker_rms` on a link-only talent → PATCH, `tracker_rms_id` = link id.
+- S3 manual application sync with talent AND role known only by link → `POST application`, 200 (was 409 `dependency_missing`).
+- S4 Tracker-born role (column NULL, link) edited via `PATCH /projects/{p}/roles/{id}` → `role.updated` emitted → `PATCH job/<link id>`.
+- S5 column-only talent (no link) → still `PATCH candidate/<column id>` on both paths.
+- S6 Echo-born talent: create → POST + write-back, edit → PATCH with the written-back id.
+- S7 role with `external_id` only (Jazz-shaped) → `PATCH job/<column id>` (column fallback intact).
+
+**Finding (pre-existing, NOT this PR): dispatcher batch order is not
+create-before-update.** `OutboxRepository.claim_batch` is `UPDATE … WHERE id IN
+(SELECT … ORDER BY available_at … FOR UPDATE SKIP LOCKED) RETURNING …`; the
+RETURNING order is not guaranteed and `_poll` iterates it as-is (no re-sort, no
+`has_pending_predecessors` guard for `.updated`, only for `.deleted`). Repro
+(s8_ordering.py): stop the dispatcher, create+edit N talents, start it →
+ONE worker (`locked_by local-10398`) processed `talent.updated` BEFORE
+`talent.created` for 5/6 talents: update → no link → POST (dup) → create → POST
+again → two links + two column ids per talent. A second batch gave 0/6
+(intermittent). Needs a backlog (restart/outage) or create+edit inside one
+poll window. Fix candidates: sort claimed rows by `occurred_at` in Python (or
+CTE + outer ORDER BY), and/or make `*.updated` wait like deletes. Not ticketed.
+
 ## Decisions
 - **Links-first, column fallback — never links-only.** Taller has 1,654 roles
   whose JazzHR id lives only in `role.external_id` (0 `jazz_hr` role links)
@@ -157,6 +184,11 @@ Resource. Root-cause analysis + PROD evidence:
 - `git merge-tree --write-tree --merge-base …` is not supported by the local
   git; its usage error read as "CONFLICTS". Dry-run a cherry-pick with a
   throwaway `git worktree add <scratch> -b <branch> origin/qa` instead.
+- Local full-stack recipe lives in the agent memory `reference_local_full_stack_outbox_e2e`
+  (docker pgvector, worktree `.env`, `create_database()` + conftest DDL,
+  `echo_dispatcher` role + grants, `tenant_integrations` row, fake tracker
+  answering `tracker_rms_id`, minted HS256 JWT, `grammar_check=false`,
+  `id=uuid4()` on factories, one `psql -c` per statement).
 - `TestCASWritebackTolerance._make_service` builds the service by hand —
   new collaborators must be added there and in
   `tests/unit/test_tracker_rms_sync_service.py::_make_service`.
@@ -190,6 +222,7 @@ Resource. Root-cause analysis + PROD evidence:
 - [ ] tracker-rms-api defensive guard on candidate/application create
       (resolve `echo_id` against `entity_mapping` / Echo links first).
 - [ ] Close Bug 25390 on merge.
+- [ ] File a bug for the dispatcher batch-order hazard (see Local end-to-end run): update processed before create in one batch → duplicate Resource.
 
 ## Related
 - [[Navitec duplicated Resources from reverse push — ats_external_ids vs entity_external_links (investigation)]]
