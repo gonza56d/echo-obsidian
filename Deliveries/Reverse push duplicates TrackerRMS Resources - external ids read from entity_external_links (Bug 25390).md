@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
 delivered:
 tags: [bugfix, navitec, trackerrms, outbox, external-links]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2388"
+  - "https://github.com/taller-projects/echo-backend/pull/2389"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390"
@@ -40,12 +41,26 @@ Resource. Root-cause analysis + PROD evidence:
 
 ## PRs
 - [#2388](https://github.com/taller-projects/echo-backend/pull/2388) → `dev`
-  — OPEN 2026-10-06, branch `25390/external_id_reads_from_links`, commits
+  — **squash-MERGED 2026-10-06 20:30 UTC (`97eb3540`)**, CI green on
+  `ca5c8483`; Leo did not re-review after `ca5c8483`. Branch
+  `25390/external_id_reads_from_links`, commits
   `e106a183` (fix) + `1c987fa9` (self-review nits, 2026-10-06, pushed from a
   second session while this one was mid-review) + `ca5c8483` (Leo's review
   round, rebased on top). No migration.
   Self-review via `/pr-review`: READY WITH NITS, 0 blockers, CI green;
   nits addressed in `1c987fa9`, PR body updated via `gh api` PATCH.
+- [#2389](https://github.com/taller-projects/echo-backend/pull/2389) `dev` → `qa`
+  — **OPEN 2026-10-06**, `Release dev -> qa 2026-10-06`. Carries #2388 plus
+  [#2386](https://github.com/taller-projects/echo-backend/pull/2386) (contact
+  external ids follow-ups),
+  [#2387](https://github.com/taller-projects/echo-backend/pull/2387)
+  (activity-companies range filter) and
+  [#2381](https://github.com/taller-projects/echo-backend/pull/2381) (EventBus
+  watchdog, `/health` 503). No migrations (the 6 July migrations that show
+  up in `git diff qa..dev` differ only in `down_revision` text, `qa` == `main`,
+  untouched by `dev` since the merge base — the merge keeps `qa`'s copy).
+  Merge with a merge commit, never squash. `mergeable_state: blocked` at
+  creation (branch protections / checks), as with every release PR.
 
 ## Review (Leo, 2026-10-06 19:38 UTC, COMMENTED — no blockers)
 1. `status = 'active'` had leaked into the link-only entities (org / contact /
@@ -76,17 +91,32 @@ Resource. Root-cause analysis + PROD evidence:
   whose JazzHR id lives only in `role.external_id` (0 `jazz_hr` role links)
   and the Jazz dispatcher path (`_deliver_jazz_hr_*`) resolves roles through
   the same `get_external_id`. Dropping the column read would break Taller.
-- **Both readers resolve `active` links only** (since `1c987fa9`): the
-  service path via `repo.get_active_links`, the dispatcher raw SQL in
-  `OutboxRepository._linked_external_id` with `AND status = 'active'`.
-  The original commit left the dispatcher status-agnostic; the review
-  flagged the divergence (manual sync would POST where the dispatcher
-  PATCHed a stale link) and aligning was cheaper than pinning it. Inert
-  today — nothing writes `stale` / `manual_intervention` — but a stale
-  link now falls back to the column on both paths.
+- **One link-resolution rule, any status** (final, `ca5c8483`):
+  `ORDER BY (status = 'active') DESC, updated_at DESC, created_at DESC,
+  external_id DESC LIMIT 1`, identical in `OutboxRepository._linked_external_id`
+  (dispatcher raw SQL) and `EntityExternalLinkSQLRepository.latest_link`
+  (behind `ExternalLinkService.resolve_external_id`, manual sync + role gate).
+  History: the first commit left the dispatcher status-agnostic and the
+  service active-only; `1c987fa9` made both active-only; Leo flagged that
+  this also hit the link-only entities (org / contact / user / touchpoints,
+  no column fallback), where a stale newest link would resolve to None →
+  POST → the same duplicate class. So the WHERE filter went away and
+  `active` became a preference. Consequence: a stale-only link now beats
+  the column for talent / role / application too (a PATCH 404 surfaces
+  instead of a silent duplicate); `1c987fa9`'s
+  `test_stale_link_falls_back_to_column` was dropped for
+  `test_stale_only_link_still_resolves` / `test_active_link_beats_newer_stale_link`
+  / `test_tie_on_updated_at_is_deterministic` (unit + system). Latent today:
+  nothing in `app/` writes `stale` / `manual_intervention` and
+  `ExternalLinkUpsertRequest` has no `status` field.
   `get_jazz_application_id` is still status-agnostic (out of scope).
-- Role gate checks the column first (free) then `external_ids_by_entity`
-  (any platform) — one query per role update, only for unlinked-column roles.
+- Role gate checks the column first (free) then
+  `resolve_external_id(role, TRACKER_RMS)` — the same resolver delivery
+  uses, so a role that opens the gate resolves to the same id there (Leo's
+  item 3; the first commit used `external_ids_by_entity`, any platform /
+  status). Tracker-only is safe: `_deliver_jazz_hr` handles only
+  `application` events and Jazz roles pass through the column. One query
+  per role update, only for unlinked-column roles.
 
 ## Gotchas
 - `asyncio.to_thread` + request context: the sync service resolves the link
@@ -129,12 +159,18 @@ Resource. Root-cause analysis + PROD evidence:
   shared PR branch.
 
 ## Pending
-- [ ] Review + squash-merge #2388 → dev; then qa / main promotion.
+- [x] #2388 squash-merged → `dev` 2026-10-06 (`97eb3540`).
+- [ ] Merge [#2389](https://github.com/taller-projects/echo-backend/pull/2389)
+      `dev` → `qa` with a merge commit; then `qa` → `main` + the two prod
+      approvals. Leo was never answered in-thread (answers live in the
+      #2388 body) — ping him if he asks.
 - [ ] After PROD deploy: cleanup of the duplicate pairs with Navitec —
       they pick the survivor per pair, then Echo drops the duplicate's link
       and re-points the column (28 talent pairs since 2026-06-20 + 1
       application `16378→16427`; Nico's doc lists the 11 since 07-24).
-      Newest-link-wins means a stale link keeps PATCHing a deleted Resource.
+      Newest-link-wins means a stale link keeps PATCHing a deleted Resource:
+      the cleanup must DELETE the duplicate's link row, never mark it
+      `stale` (a stale-only link still wins the resolver).
 - [ ] Optional pre-deploy mitigation: copy the active link id into the empty
       column for the 17 talents / 3 applications / 3 roles exposed.
 - [ ] tracker-rms-api defensive guard on candidate/application create
