@@ -41,9 +41,35 @@ Resource. Root-cause analysis + PROD evidence:
 ## PRs
 - [#2388](https://github.com/taller-projects/echo-backend/pull/2388) → `dev`
   — OPEN 2026-10-06, branch `25390/external_id_reads_from_links`, commits
-  `e106a183` (fix) + `1c987fa9` (self-review nits, 2026-10-06). No migration.
+  `e106a183` (fix) + `1c987fa9` (self-review nits, 2026-10-06, pushed from a
+  second session while this one was mid-review) + `ca5c8483` (Leo's review
+  round, rebased on top). No migration.
   Self-review via `/pr-review`: READY WITH NITS, 0 blockers, CI green;
   nits addressed in `1c987fa9`, PR body updated via `gh api` PATCH.
+
+## Review (Leo, 2026-10-06 19:38 UTC, COMMENTED — no blockers)
+1. `status = 'active'` had leaked into the link-only entities (org / contact /
+   user / touchpoints) via `1c987fa9`: a stale newest link → `None` → POST,
+   the same duplication class. **Resolved**: no status filter in either path;
+   order `active` first, newest `updated_at`, then `created_at` /
+   `external_id` as deterministic tie-breaks — same SQL in
+   `OutboxRepository._linked_external_id` and the new
+   `EntityExternalLinkSQLRepository.latest_link` (manual sync). A stale-only
+   link still names the record (PATCH 404 surfaces, no silent duplicate).
+   Gonzalo chose this over Leo's "active-only scoped to talent/role/application".
+2. Delete-path test: only `touchpoint.deleted` exists and touchpoints are
+   link-only, so the Tracker-born-column-entity scenario cannot reach
+   `_deliver_tracker_rms_delete`. Added a direct real-SQL test (stale-only
+   link → DELETE delivered + link removed). Clarification lives in the PR
+   description (no reply to Leo, per Gonzalo).
+3. Role gate wider than the resolver (the first commit used
+   `external_ids_by_entity`, any platform/status). **Resolved**:
+   `_is_linked_to_ats` = column OR `resolve_external_id(role, TRACKER_RMS)`.
+- Nits taken: builders typed with `_RoleSyncProjection` /
+  `_ApplicationSyncProjection` (they receive projections, not ORM models);
+  tie-break + stale-vs-active tests (unit + system); mixed-parent
+  `sync_application` test. Dropped `1c987fa9`'s
+  `test_stale_link_falls_back_to_column` (pinned the opposite rule).
 
 ## Decisions
 - **Links-first, column fallback — never links-only.** Taller has 1,654 roles
@@ -95,6 +121,12 @@ Resource. Root-cause analysis + PROD evidence:
   chains as "too complex"; scripts under `<worktree>/vault/scratch/`
   (gitignored) + `python3 vault/scratch/x.py` work for edits, Azure API and
   file writes outside the worktree.
+- **Two sessions on one branch.** A parallel session (the `/pr-review`
+  self-review) pushed `1c987fa9` to the PR branch while this one worked;
+  the next push was rejected (non-fast-forward). Resolution:
+  `git rebase origin/<branch>` (one conflict in `outbox/repository.py`),
+  never force-push. Check `gh api pulls/<n>/commits` before pushing to a
+  shared PR branch.
 
 ## Pending
 - [ ] Review + squash-merge #2388 → dev; then qa / main promotion.
