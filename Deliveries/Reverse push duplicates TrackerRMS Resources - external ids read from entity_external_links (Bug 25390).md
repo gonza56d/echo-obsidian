@@ -7,6 +7,7 @@ tags: [bugfix, navitec, trackerrms, outbox, external-links]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2388"
   - "https://github.com/taller-projects/echo-backend/pull/2390"
+  - "https://github.com/taller-projects/echo-backend/pull/2391"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390"
@@ -50,7 +51,7 @@ Resource. Root-cause analysis + PROD evidence:
   Self-review via `/pr-review`: READY WITH NITS, 0 blockers, CI green;
   nits addressed in `1c987fa9`, PR body updated via `gh api` PATCH.
 - [#2390](https://github.com/taller-projects/echo-backend/pull/2390) → `qa`
-  — **OPEN 2026-10-06**, branch `cherry_pick/25390_external_id_reads_qa` off
+  — **MERGED 2026-10-06 20:45 UTC (merge commit `375906b4`)**, branch `cherry_pick/25390_external_id_reads_qa` off
   `origin/qa`, `git cherry-pick -x` of the `dev` squash `97eb3540` →
   `cd4e1b0c`, applied clean (`qa` lacks #2386's additions to the same
   external-link files, but the hunks do not overlap). Verified on the `qa`
@@ -59,6 +60,17 @@ Resource. Root-cause analysis + PROD evidence:
   [#2389](https://github.com/taller-projects/echo-backend/pull/2389), a
   full `dev → qa` release I opened by mistake (would have dragged #2386,
   #2387, #2381 along) — closed 2026-10-06 20:39 UTC with a comment.
+- [#2391](https://github.com/taller-projects/echo-backend/pull/2391) → `main`
+  — **OPEN 2026-10-06**, branch `deploy/prod_2026-10-06_external-id-reads`
+  pushed at the `qa` tip `375906b4` (no new cherry-pick). After #2390, `qa` =
+  `main` + #2388 only (main-only commits are empty qa→main merges; tree diff
+  = #2388's 11 files), and `375906b4`'s tree == `cd4e1b0c`'s (the tested
+  one). Why a branch at the qa tip instead of a `_main` cherry-pick or head
+  `qa`: same SHAs on qa and main (no duplicate-commit drift, see
+  `reference_qa_main_vs_dev_migration_chain_text`), and the content stays
+  fixed even if more PRs land on `qa`. Merge commit; gated by
+  `echo-backend-prod` + `echo-backend-kforce-prod` approvals. Azure already
+  had the PR link (AB# auto-link); comment posted on Bug 25390.
 
 ## Review (Leo, 2026-10-06 19:38 UTC, COMMENTED — no blockers)
 1. `status = 'active'` had leaked into the link-only entities (org / contact /
@@ -161,9 +173,10 @@ Resource. Root-cause analysis + PROD evidence:
 
 ## Pending
 - [x] #2388 squash-merged → `dev` 2026-10-06 (`97eb3540`).
-- [ ] Merge [#2390](https://github.com/taller-projects/echo-backend/pull/2390)
-      → `qa` with a merge commit; then promote to `main` (cherry-pick again
-      or qa → main, the user's call) + the two prod approvals. Leo was never answered in-thread (answers live in the
+- [x] #2390 merged → `qa` 2026-10-06 (`375906b4`).
+- [ ] Merge [#2391](https://github.com/taller-projects/echo-backend/pull/2391)
+      → `main` with a merge commit + the two prod approvals
+      (`echo-backend-prod`, `echo-backend-kforce-prod`). Leo was never answered in-thread (answers live in the
       #2388 body) — ping him if he asks.
 - [ ] After PROD deploy: cleanup of the duplicate pairs with Navitec —
       they pick the survivor per pair, then Echo drops the duplicate's link
