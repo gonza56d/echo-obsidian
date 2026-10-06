@@ -6,7 +6,7 @@ delivered:
 tags: [bugfix, navitec, trackerrms, outbox, external-links]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2388"
-  - "https://github.com/taller-projects/echo-backend/pull/2389"
+  - "https://github.com/taller-projects/echo-backend/pull/2390"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390"
@@ -49,18 +49,16 @@ Resource. Root-cause analysis + PROD evidence:
   round, rebased on top). No migration.
   Self-review via `/pr-review`: READY WITH NITS, 0 blockers, CI green;
   nits addressed in `1c987fa9`, PR body updated via `gh api` PATCH.
-- [#2389](https://github.com/taller-projects/echo-backend/pull/2389) `dev` → `qa`
-  — **OPEN 2026-10-06**, `Release dev -> qa 2026-10-06`. Carries #2388 plus
-  [#2386](https://github.com/taller-projects/echo-backend/pull/2386) (contact
-  external ids follow-ups),
-  [#2387](https://github.com/taller-projects/echo-backend/pull/2387)
-  (activity-companies range filter) and
-  [#2381](https://github.com/taller-projects/echo-backend/pull/2381) (EventBus
-  watchdog, `/health` 503). No migrations (the 6 July migrations that show
-  up in `git diff qa..dev` differ only in `down_revision` text, `qa` == `main`,
-  untouched by `dev` since the merge base — the merge keeps `qa`'s copy).
-  Merge with a merge commit, never squash. `mergeable_state: blocked` at
-  creation (branch protections / checks), as with every release PR.
+- [#2390](https://github.com/taller-projects/echo-backend/pull/2390) → `qa`
+  — **OPEN 2026-10-06**, branch `cherry_pick/25390_external_id_reads_qa` off
+  `origin/qa`, `git cherry-pick -x` of the `dev` squash `97eb3540` →
+  `cd4e1b0c`, applied clean (`qa` lacks #2386's additions to the same
+  external-link files, but the hunks do not overlap). Verified on the `qa`
+  base: ruff clean, 203 passed across the 6 touched unit + system files
+  (Docker). No migration. Merge with a merge commit. Supersedes
+  [#2389](https://github.com/taller-projects/echo-backend/pull/2389), a
+  full `dev → qa` release I opened by mistake (would have dragged #2386,
+  #2387, #2381 along) — closed 2026-10-06 20:39 UTC with a comment.
 
 ## Review (Leo, 2026-10-06 19:38 UTC, COMMENTED — no blockers)
 1. `status = 'active'` had leaked into the link-only entities (org / contact /
@@ -144,6 +142,9 @@ Resource. Root-cause analysis + PROD evidence:
 - Worktree hooks (own worktree): `source …`, `$(…)` operands next to a
   python heredoc, and `zsh -ic` are refused; use the main venv binaries by
   absolute path and let python fetch tokens via `subprocess` itself.
+- `git merge-tree --write-tree --merge-base …` is not supported by the local
+  git; its usage error read as "CONFLICTS". Dry-run a cherry-pick with a
+  throwaway `git worktree add <scratch> -b <branch> origin/qa` instead.
 - `TestCASWritebackTolerance._make_service` builds the service by hand —
   new collaborators must be added there and in
   `tests/unit/test_tracker_rms_sync_service.py::_make_service`.
@@ -160,9 +161,9 @@ Resource. Root-cause analysis + PROD evidence:
 
 ## Pending
 - [x] #2388 squash-merged → `dev` 2026-10-06 (`97eb3540`).
-- [ ] Merge [#2389](https://github.com/taller-projects/echo-backend/pull/2389)
-      `dev` → `qa` with a merge commit; then `qa` → `main` + the two prod
-      approvals. Leo was never answered in-thread (answers live in the
+- [ ] Merge [#2390](https://github.com/taller-projects/echo-backend/pull/2390)
+      → `qa` with a merge commit; then promote to `main` (cherry-pick again
+      or qa → main, the user's call) + the two prod approvals. Leo was never answered in-thread (answers live in the
       #2388 body) — ping him if he asks.
 - [ ] After PROD deploy: cleanup of the duplicate pairs with Navitec —
       they pick the survivor per pair, then Echo drops the duplicate's link
