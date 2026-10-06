@@ -11,6 +11,7 @@ prs:
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25390"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396"
 prd: "https://app.notion.com/p/383aedca11f0812c8c52cee6d9852d4b"
 ---
 
@@ -121,7 +122,8 @@ ONE worker (`locked_by local-10398`) processed `talent.updated` BEFORE
 again → two links + two column ids per talent. A second batch gave 0/6
 (intermittent). Needs a backlog (restart/outage) or create+edit inside one
 poll window. Fix candidates: sort claimed rows by `occurred_at` in Python (or
-CTE + outer ORDER BY), and/or make `*.updated` wait like deletes. Not ticketed.
+CTE + outer ORDER BY), and/or make `*.updated` wait like deletes. Ticketed as
+[Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396).
 
 ## Decisions
 - **Links-first, column fallback — never links-only.** Taller has 1,654 roles
@@ -222,7 +224,7 @@ CTE + outer ORDER BY), and/or make `*.updated` wait like deletes. Not ticketed.
 - [ ] tracker-rms-api defensive guard on candidate/application create
       (resolve `echo_id` against `entity_mapping` / Echo links first).
 - [ ] Close Bug 25390 on merge.
-- [ ] File a bug for the dispatcher batch-order hazard (see Local end-to-end run): update processed before create in one batch → duplicate Resource.
+- [x] Dispatcher batch-order hazard filed as [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) (New, assigned to me, related to 25390) — 2026-10-06.
 
 ## Related
 - [[Navitec duplicated Resources from reverse push — ats_external_ids vs entity_external_links (investigation)]]
