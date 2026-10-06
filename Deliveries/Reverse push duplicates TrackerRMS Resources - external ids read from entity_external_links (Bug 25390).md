@@ -40,18 +40,25 @@ Resource. Root-cause analysis + PROD evidence:
 
 ## PRs
 - [#2388](https://github.com/taller-projects/echo-backend/pull/2388) → `dev`
-  — OPEN 2026-10-06, branch `25390/external_id_reads_from_links`, commit
-  `e106a183`. No migration.
+  — OPEN 2026-10-06, branch `25390/external_id_reads_from_links`, commits
+  `e106a183` (fix) + `1c987fa9` (self-review nits, 2026-10-06). No migration.
+  Self-review via `/pr-review`: READY WITH NITS, 0 blockers, CI green;
+  nits addressed in `1c987fa9`, PR body updated via `gh api` PATCH.
 
 ## Decisions
 - **Links-first, column fallback — never links-only.** Taller has 1,654 roles
   whose JazzHR id lives only in `role.external_id` (0 `jazz_hr` role links)
   and the Jazz dispatcher path (`_deliver_jazz_hr_*`) resolves roles through
   the same `get_external_id`. Dropping the column read would break Taller.
-- Service path reads `active` links (`repo.get_active_links`); dispatcher raw
-  SQL keeps the existing no-status-filter link query (one behaviour inside
-  `get_external_id`). Only diverges on non-active rows, which nothing
-  produces today.
+- **Both readers resolve `active` links only** (since `1c987fa9`): the
+  service path via `repo.get_active_links`, the dispatcher raw SQL in
+  `OutboxRepository._linked_external_id` with `AND status = 'active'`.
+  The original commit left the dispatcher status-agnostic; the review
+  flagged the divergence (manual sync would POST where the dispatcher
+  PATCHed a stale link) and aligning was cheaper than pinning it. Inert
+  today — nothing writes `stale` / `manual_intervention` — but a stale
+  link now falls back to the column on both paths.
+  `get_jazz_application_id` is still status-agnostic (out of scope).
 - Role gate checks the column first (free) then `external_ids_by_entity`
   (any platform) — one query per role update, only for unlinked-column roles.
 
@@ -69,6 +76,18 @@ Resource. Root-cause analysis + PROD evidence:
   organization_id=…, max_seats=None)`).
 - `tests/system/test_tracker_rms_sync_endpoints.py` 403s locally unless
   `TRACKER_RMS_ENABLED_TENANT_IDS=""` is exported (pre-existing).
+- `ApplicationCreate.external_id` is `Optional` → polyfactory randomizes it:
+  `create_entity(ApplicationFactory, …)` without `external_id=None` yields
+  an application the sync treats as an update (column fallback), so a
+  create-path endpoint test silently exercises PATCH.
+- `tests/system/test_tracker_rms_sync_endpoints.py::mock_tracker_rms` returns
+  one shared `_TRM_ID` for every call; the CAS write-back then upserts that
+  id for a second entity of the same type and trips
+  `uq_entity_external_links_external_id` (tenant, entity_type, external_id,
+  platform) → 500. Override `mock.<call>.return_value` with a per-test id.
+- Worktree hooks (own worktree): `source …`, `$(…)` operands next to a
+  python heredoc, and `zsh -ic` are refused; use the main venv binaries by
+  absolute path and let python fetch tokens via `subprocess` itself.
 - `TestCASWritebackTolerance._make_service` builds the service by hand —
   new collaborators must be added there and in
   `tests/unit/test_tracker_rms_sync_service.py::_make_service`.
