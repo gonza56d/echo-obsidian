@@ -45,7 +45,9 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
 - [#2393](https://github.com/taller-projects/echo-backend/pull/2393) → `dev` — **OPEN 2026-10-07**, branch
   `25396/dispatcher_batch_order` off `origin/dev` (`97eb3540`), commits
   `7c495209` (fix) + `d1dbf8cd` (2026-10-07: event-order SQL tests moved to
-  the unit suite, see Review). Original worktree already removed; follow-up
+  the unit suite, see Review) + `f5ce9634` (2026-10-07: link re-read after the
+  predecessor check + Leo's test nits). **Leo APPROVED** `d1dbf8cd`
+  (review 5444365371); CI green on `d1dbf8cd`. Original worktree already removed; follow-up
   commit made in `.claude/worktrees/dispatcher-batch-order-25396-ci` (local
   branch `25396/dispatcher_batch_order_ci_tests`, pushed with
   `git push origin HEAD:25396/dispatcher_batch_order`). PR body Tests bullet
@@ -68,8 +70,14 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `_event_rank()` live once in `outbox/repository.py` and feed both the claim
   `ORDER BY` and the predecessor row-value comparison, so the two orders can
   never disagree.
-- Dispatcher: the guard sits right after `get_external_id` in
-  `_deliver_tracker_rms`; linked updates and `.created` never consult it.
+- Dispatcher: update and delete share `_resolve_external_id(event, platform=,
+  stale_error=)` (`f5ce9634`): link read → if none, `has_pending_predecessors`
+  (raise `stale_error`) → if nothing pending, **read the link again**. Closes
+  the two-dispatcher TOCTOU (a create completing between the first read and
+  the check): `_deliver` persists the link in its own committed transaction
+  before `mark_delivery_success` / `complete_event`, so whoever sees the create
+  as not pending also sees its link. Linked updates and `.created` never
+  consult the outbox.
   `_handle_delivery_failure` budgets on `PendingPredecessorError`.
 - Tests (after `d1dbf8cd`): `tests/unit/test_outbox_event_order.py` (real
   Postgres, **runs in CI**) holds the claim order with reverse-inserted pairs,
@@ -104,7 +112,11 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   repository contract is "ordered" and the test pins it at the SQL level.
 - Only one dispatcher replica runs (infra `values-dev.yaml` / `values-prod.yaml`
   `replicaCount: 1`; qa and kforce run none), so the live hazard was in-batch
-  order + retry backoff; the guard also covers a second replica.
+  order + retry backoff. BUT `dispatcher-deployment.yaml` sets no `strategy`
+  → default RollingUpdate: with 1 replica the new pod starts before the old
+  one stops (SIGTERM, 30 s grace, finishes its in-flight event) — two
+  dispatchers overlap on every deploy. That is why the re-read landed in this
+  PR instead of a follow-up.
 
 ## Review
 - Self-review r1 2026-10-07 (`/pr-review`, NOT posted): **CHANGES REQUESTED** —
@@ -112,8 +124,21 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `tests/system`, which CI never runs, so reverting the outer `ORDER BY`,
   dropping the rank, or going back to `<=` would merge green. **Fixed in
   `d1dbf8cd`** (moved to `tests/unit/test_outbox_event_order.py`, ids pinned).
-- Open nits (not done): re-read the link after `has_pending_predecessors` →
-  False (two-replica TOCTOU, also on delete); pending check is per event not per
+- Self-review nit #1 (re-read after the predecessor check, update + delete)
+  **DONE in `f5ce9634`**.
+- Leo r1 (APPROVED on `d1dbf8cd`, 3 nits): (1) delete-path real-SQL tests still
+  system-only → **DONE `f5ce9634`** (whole `TestDeleteReorderRaceRealSql`
+  moved to `tests/unit/test_outbox_event_order.py` as
+  `TestDeletePredecessorOrder`, same-ts ids pinned); (2) cross-reference line
+  in `_event_rank` → skipped (user: not important; the `_EVENT_RANK_SQL`
+  comment already covers both); (3) Docker note in the module header →
+  **DONE `f5ce9634`**. No reply posted on the PR.
+- Mutation-checked `f5ce9634`: re-read removed → 3 tests fail (2 mocked + 1
+  real-SQL `test_create_completing_between_the_reads_is_patched`); rank dropped
+  from both sides of the predicate → update + delete same-ts tests fail.
+  Gotcha: `git restore <file>` to undo a mutation also reverts uncommitted
+  edits in that file — undo mutations with an inverse `sed` instead.
+- Open nits (not done): pending check is per event not per
   platform (`completed_at` waits on every platform's delivery — a TrackerRMS
   update can wait on a Jazz-only pending create); rank defined twice (SQL CASE +
   `_event_rank`) → single definition or parity test; equal 409 budgets can
@@ -147,7 +172,8 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `.env` still has to be copied in.
 
 ## Pending
-- [ ] CI green on `d1dbf8cd` + team review → squash-merge #2393.
+- [ ] CI green on `f5ce9634` (Leo approved `d1dbf8cd`; re-request if the
+      re-read needs his eyes) → squash-merge #2393.
 - [ ] Decide on the open review nits (see Review); file the `occurred_at`
       causality follow-up ticket.
 - [ ] Promote to `qa` / `main` (cherry-pick, merge commit) — pairs naturally
