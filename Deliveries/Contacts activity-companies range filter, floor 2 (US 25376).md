@@ -7,6 +7,7 @@ tags: [feature, contacts, filters, kforce-scale, review]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2387"
   - "https://github.com/taller-projects/echo-backend/pull/2218"
+  - https://github.com/taller-projects/echo-backend/pull/2395
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25376"
@@ -27,6 +28,7 @@ The company-detail Contacts tab had a `multi_company_activity` Yes/No toggle (Pa
 - [#2218](https://github.com/taller-projects/echo-backend/pull/2218) → dev — merged 2026-09-04 (`1cb35705`): the original toggle. MATERIALIZED CTE `multi_company_activity_matches` over `contact_relationship` + partial index `ix_contact_relationship_multi_company_activity`, `id = ANY(ARRAY(...))` instead of a join (planner guesses ~140k matches and merge-joins the whole pkey, 40 s).
 - [#2387](https://github.com/taller-projects/echo-backend/pull/2387) → dev — OPEN. Patricio `fbe520ce` (range, `ge=1`) + my `c18b669f` 2026-10-06 (floor 2, tests, docs). PR body rewritten by me to match floor 2 (`gh api -F body=@file`; `-f body=@file` sends the literal string).
 - FE: none yet. Additive query params only; `multi_company_activity` still honoured; no response-shape change.
+- [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` release "Release qa -> main 2026-10-07" — **OPEN 2026-10-07** (head `qa` directly, merge commit; carries #2381, #2386, #2387, #2393, plus #2388 as history only since it is already on main via #2391; no migrations). qa got them via [#2392](https://github.com/taller-projects/echo-backend/pull/2392) + [#2394](https://github.com/taller-projects/echo-backend/pull/2394), both merged 2026-10-07. CI on the qa tip was still running when the PR was opened.
 
 ## How
 - `MIN_ACTIVITY_COMPANIES = 2` in `app/modules/contact/constants.py` (with the why). Both params `Field(ge=MIN_ACTIVITY_COMPANIES)`; `filter()` computes `min_companies = gte or MIN_ACTIVITY_COMPANIES`, `max_companies = lte`, builds the HAVING bounds inline (`count(distinct company_id) >= min [AND <= max]`) on the existing CTE. `multi_company_activity=true` is `gte=2`; `false`/unset is "toggle off".
@@ -45,11 +47,12 @@ The company-detail Contacts tab had a `multi_company_activity` Yes/No toggle (Pa
 - `uv run` in a fresh worktree creates its own `.venv` (fine, ~1 s); Pyright then shows bogus missing-import diagnostics.
 
 ## Pending
+- [ ] Merge release [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` (merge commit; `main` needs a code-owner review), then the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
 - CI on `c18b669f` + Patricio's ack of the floor change (his US comment proposed it).
 - Update Task 25377 / US 25376 text: floor 2, `lte`-only = from 2.
 - kforce-prod distribution query (US comment) → decide FE options with product (on kforce-dev every range above 2 is empty).
 - Saved shortcuts mapping (`user_shortcuts.filter` JSONB, `true` → 2+, `false` → none) has no owner; needed before removing the alias. Precedent: migration `4f430d2b4997`.
-- Squash-merged dev 2026-10-06 (`b6790711`). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2381 + #2386). Next: merge it, then qa → main.
+- Squash-merged dev 2026-10-06 (`b6790711`). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **MERGED 2026-10-07** (with #2381 + #2386); qa → main via #2395.
 
 ## Related
 - [[Map - Contact Relationships]] · [[Map - Kforce]]

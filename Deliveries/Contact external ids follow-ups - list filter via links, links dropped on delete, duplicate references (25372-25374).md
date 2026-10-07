@@ -6,6 +6,7 @@ delivered: 2026-10-06
 tags: [bugfix, contacts, internal-api, external-links, contact-groups, taller, kforce]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2386"
+  - https://github.com/taller-projects/echo-backend/pull/2395
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25372"
@@ -29,6 +30,7 @@ The three follow-ups of [[Contact groups feed resolves external ids via entity_e
 - 2026-10-06 `e1c2451a` pushed to the same branch: review nits (see Review below). PR body Tests section refreshed.
 - 2026-10-06 `9ff969d0`: Leo's three nits (worktree `.claude/worktrees/25372-leo-review-nits`, branch `25372/leo-review-nits`, pushed as `HEAD:25372/contact-external-links-followups`). PR body Tests section refreshed again; reply comment posted.
 - **Squash-merged to `dev` 2026-10-06 as `655cc079`** (REST merge, PR title + bullet of the three commits; Leo APPROVED 14:32 UTC, GH Actions `test and lint` green on `9ff969d0`). Deploys to dev + kforce-dev automatically; prod/kforce-prod with the next release.
+- [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` release "Release qa -> main 2026-10-07" — **OPEN 2026-10-07** (head `qa` directly, merge commit; carries #2381, #2386, #2387, #2393, plus #2388 as history only since it is already on main via #2391; no migrations). qa got them via [#2392](https://github.com/taller-projects/echo-backend/pull/2392) + [#2394](https://github.com/taller-projects/echo-backend/pull/2394), both merged 2026-10-07. CI on the qa tip was still running when the PR was opened.
 
 ## How
 - **25372 — shared resolver.** `ContactService.resolve_external_ids(ids) -> {ext: {contact ids}}`: column via the new `ContactRepository.ids_by_kforce_external_ids(tenant_id, ids)` ∪ links via `ExternalLinkService.resolve_entity_ids`. Does NOT verify link targets exist (callers do). `ContactService.get_all` rewrites `kforce_external_id__in` → `id__in` (ambiguous id = every candidate; unknown = nothing; caller `id__in` intersects; the group-children predicate steps aside like for `id__in`). `ContactGroupService._resolve_nodes` uses the same resolver through `injector.get(ContactService)` (ContactService constructor-injects ContactGroupService → lazy) and `nodes_by_ids` over every candidate; `ContactGroupSQLRepository.resolve_external_ids` removed. Still 3 queries; on KForce the PK batch now also covers column hits.
@@ -56,8 +58,9 @@ The three follow-ups of [[Contact groups feed resolves external ids via entity_e
 - `ContactService.delete` must work without a request context (tests and jobs call it on the injector directly) → anything it delegates to must take the tenant from the row, never from `_current_tenant_id()` alone.
 
 ## Pending
+- [ ] Merge release [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` (merge commit; `main` needs a code-owner review), then the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
 - dev smoke after the auto-deploy: `GET /internal/contacts?kforce_external_id__in=<hubspot id>` on "Hubspot - Taller" (`3744ad0b`) returns the contact.
-- Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2381 + #2387). Next: merge it (merge commit), then qa → main.
+- Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **MERGED 2026-10-07** (with #2381 + #2387); qa → main via #2395.
 - Follow-ups still unticketed: dangling-link backfill (`DELETE … WHERE NOT EXISTS`); link cleanup on talent/application/role/user delete. Both named in the Bug 25373 closing comment and the PRD changelog.
 - Product veto window on `duplicate_contact` vs first-wins (recorded in US 25374 + PRD); Nico/Emiliano to ack the Task 25332 comment.
 - Done 2026-10-06: merged `655cc079`; Bug 25372 / Bug 25373 / US 25374 Closed with closing comments (25372 notes the public `GET /contacts` / `/contacts/relationships` change and the interactions-filter correction); Notion PRD updated; Data notified on Task 25332.

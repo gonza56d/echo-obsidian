@@ -7,6 +7,7 @@ tags: [bugfix, outbox, dispatcher, trackerrms, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2393"
   - "https://github.com/taller-projects/echo-backend/pull/2394"
+  - https://github.com/taller-projects/echo-backend/pull/2395
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396"
@@ -59,6 +60,7 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
 
 - [#2394](https://github.com/taller-projects/echo-backend/pull/2394) `dev` → `qa` "Release dev -> qa 2026-10-07 (2)" — **OPEN 2026-10-07** (head = `dev` itself per team convention, not a cherry-pick; user asked for qa<-dev). Only #2393 rides it (#2392 promoted everything else earlier that day); no merge conflicts; effective diff = outbox files only, no migrations (the 6 July-2026 `down_revision`-text diffs stay qa's). Merge with a merge commit.
 - `qa` (and both KForce envs) define NO `dispatcher` block in their Helm values → the change is inert on qa; it acts on dev now and on prod after the main release.
+- [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` release "Release qa -> main 2026-10-07" — **OPEN 2026-10-07** (head `qa` directly, merge commit; carries #2381, #2386, #2387, #2393, plus #2388 as history only since it is already on main via #2391; no migrations). qa got them via [#2392](https://github.com/taller-projects/echo-backend/pull/2392) + [#2394](https://github.com/taller-projects/echo-backend/pull/2394), both merged 2026-10-07. CI on the qa tip was still running when the PR was opened.
 
 ## How
 - **Verified before fixing** (real Postgres through the repo fixtures, probe
@@ -176,9 +178,10 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `.env` still has to be copied in.
 
 ## Pending
+- [ ] Merge release [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` (merge commit; `main` needs a code-owner review), then the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
 - [x] CI green on `f5ce9634` → squash-merged #2393 (`62742b97`). Leo's
       approval was on `d1dbf8cd`; the re-read commit landed without his re-review.
-- [ ] Merge #2394 (dev → qa, merge commit), then a `main` release.
+- [x] #2394 (dev → qa) merged 2026-10-07; `main` release = #2395.
 - [ ] Decide on the open review nits (see Review); file the `occurred_at`
       causality follow-up ticket.
 - [ ] Promote to `qa` / `main` (cherry-pick, merge commit) — pairs naturally

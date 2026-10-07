@@ -6,6 +6,7 @@ delivered:
 tags: [bugfix, reliability, eventbus, notifications, adoption, infra, taller, kforce]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2381"
+  - https://github.com/taller-projects/echo-backend/pull/2395
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25276"
@@ -22,6 +23,7 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 
 ## PRs
 - [#2381](https://github.com/taller-projects/echo-backend/pull/2381) → dev **OPEN 2026-10-01** (`d22e855e` + test fix `e7d64053`, branch `25276/eventbus-watchdog`). Full unit+multitenancy run: 5710 passed; the only failure was my own DI test asserting identity against the module-global bus accessors (re-pointed by the worker tests' DependencyInjector) + a `processed`-counter race in two thread-name tests — both fixed in `e7d64053`, worker+EventBus pair green 3×.
+- [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` release "Release qa -> main 2026-10-07" — **OPEN 2026-10-07** (head `qa` directly, merge commit; carries #2381, #2386, #2387, #2393, plus #2388 as history only since it is already on main via #2391; no migrations). qa got them via [#2392](https://github.com/taller-projects/echo-backend/pull/2392) + [#2394](https://github.com/taller-projects/echo-backend/pull/2394), both merged 2026-10-07. CI on the qa tip was still running when the PR was opened.
 
 ## How (the investigation)
 - Bus `d6a83cee` = one uvicorn process, pod started 2026-09-30 21:16:16 UTC (qa `5afb7155`, template `68cd784dd8`). Loki has no `pod` label, so I isolated the worker **thread**: `[scope.get] NEW DatabaseResource scope_key=128545416709824` lands 0–1 ms after every `Event published` of that bus from 04:20 to 04:32:02 UTC; last line **04:32:03.949 = start of a `user.event` (adoption) handler**; nothing after. The ticket's `role_placement.updated` (04:35:26) was never dequeued. ~560 events queued by 19:00 UTC (max 1000, `Event queue full` never logged anywhere in 7 days).
@@ -45,7 +47,8 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 - The worktree-isolation hook refuses `source scripts/venv.sh` and any bash whose text contains "git" (heredocs and GitHub URLs included); run ruff/pytest via the main checkout's `.venv/bin/*` binaries, and put vault/Azure scripts in a file inside the worktree.
 
 ## Pending
-- Merged dev 2026-10-06 (`cac40d3f`, merge commit). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2386 + #2387). Next: merge it (merge commit), then qa → main.
+- [ ] Merge release [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` (merge commit; `main` needs a code-owner review), then the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
+- Merged dev 2026-10-06 (`cac40d3f`, merge commit). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **MERGED 2026-10-07** (with #2386 + #2387); qa → main via #2395. Then qa → main.
 - Ops (needs kubectl, I have none): find the QA pod older than 04:32 UTC whose logs contain `d6a83cee`; `py-spy dump` via ephemeral debug container if still alive (no lines from it after 14:47 UTC — likely scaled in); re-run `roles_capacity.feature:1086`.
 - Infra: enable `probe.enabled` for qa/prod and point liveness at `/health` (ask Willian/Alan why it was disabled on 2026-03-17 first).
 - Grafana/Loki alert on `Event queue full` + `event_bus.handler_stuck` for all envs.
