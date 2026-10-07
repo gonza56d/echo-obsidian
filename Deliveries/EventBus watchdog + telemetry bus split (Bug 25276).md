@@ -45,7 +45,7 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 - The worktree-isolation hook refuses `source scripts/venv.sh` and any bash whose text contains "git" (heredocs and GitHub URLs included); run ruff/pytest via the main checkout's `.venv/bin/*` binaries, and put vault/Azure scripts in a file inside the worktree.
 
 ## Pending
-- CI green on `e7d64053`; Pedro review; squash-merge; qa/main.
+- Merged dev 2026-10-06 (`cac40d3f`, merge commit). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2386 + #2387). Next: merge it (merge commit), then qa → main.
 - Ops (needs kubectl, I have none): find the QA pod older than 04:32 UTC whose logs contain `d6a83cee`; `py-spy dump` via ephemeral debug container if still alive (no lines from it after 14:47 UTC — likely scaled in); re-run `roles_capacity.feature:1086`.
 - Infra: enable `probe.enabled` for qa/prod and point liveness at `/health` (ask Willian/Alan why it was disabled on 2026-03-17 first).
 - Grafana/Loki alert on `Event queue full` + `event_bus.handler_stuck` for all envs.

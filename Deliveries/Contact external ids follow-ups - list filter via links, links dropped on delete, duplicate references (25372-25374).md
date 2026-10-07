@@ -57,7 +57,7 @@ The three follow-ups of [[Contact groups feed resolves external ids via entity_e
 
 ## Pending
 - dev smoke after the auto-deploy: `GET /internal/contacts?kforce_external_id__in=<hubspot id>` on "Hubspot - Taller" (`3744ad0b`) returns the contact.
-- qa → main promotion with the next release (merge commits, never squash).
+- Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2381 + #2387). Next: merge it (merge commit), then qa → main.
 - Follow-ups still unticketed: dangling-link backfill (`DELETE … WHERE NOT EXISTS`); link cleanup on talent/application/role/user delete. Both named in the Bug 25373 closing comment and the PRD changelog.
 - Product veto window on `duplicate_contact` vs first-wins (recorded in US 25374 + PRD); Nico/Emiliano to ack the Task 25332 comment.
 - Done 2026-10-06: merged `655cc079`; Bug 25372 / Bug 25373 / US 25374 Closed with closing comments (25372 notes the public `GET /contacts` / `/contacts/relationships` change and the interactions-filter correction); Notion PRD updated; Data notified on Task 25332.

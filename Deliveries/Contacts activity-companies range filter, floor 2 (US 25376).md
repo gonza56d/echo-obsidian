@@ -49,7 +49,7 @@ The company-detail Contacts tab had a `multi_company_activity` Yes/No toggle (Pa
 - Update Task 25377 / US 25376 text: floor 2, `lte`-only = from 2.
 - kforce-prod distribution query (US comment) → decide FE options with product (on kforce-dev every range above 2 is empty).
 - Saved shortcuts mapping (`user_shortcuts.filter` JSONB, `true` → 2+, `false` → none) has no owner; needed before removing the alias. Precedent: migration `4f430d2b4997`.
-- Squash-merge → qa → main.
+- Squash-merged dev 2026-10-06 (`b6790711`). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **OPEN 2026-10-07** (with #2381 + #2386). Next: merge it, then qa → main.
 
 ## Related
 - [[Map - Contact Relationships]] · [[Map - Kforce]]
