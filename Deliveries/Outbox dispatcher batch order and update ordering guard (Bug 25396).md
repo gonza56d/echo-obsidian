@@ -43,8 +43,13 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
 
 ## PRs
 - [#2393](https://github.com/taller-projects/echo-backend/pull/2393) → `dev` — **OPEN 2026-10-07**, branch
-  `25396/dispatcher_batch_order` off `origin/dev` (`97eb3540`), single commit
-  `7c495209`, worktree `.claude/worktrees/dispatcher-batch-order-25396`.
+  `25396/dispatcher_batch_order` off `origin/dev` (`97eb3540`), commits
+  `7c495209` (fix) + `d1dbf8cd` (2026-10-07: event-order SQL tests moved to
+  the unit suite, see Review). Original worktree already removed; follow-up
+  commit made in `.claude/worktrees/dispatcher-batch-order-25396-ci` (local
+  branch `25396/dispatcher_batch_order_ci_tests`, pushed with
+  `git push origin HEAD:25396/dispatcher_batch_order`). PR body Tests bullet
+  rewritten to match.
   No migration, no flag. 219 unit + system outbox tests green locally
   (`test_outbox_dispatcher` unit, `test_outbox_dispatcher` / `test_outbox_loop`
   / `test_outbox_dispatcher_jazz_hr` / `test_worker_lease_chaos` system).
@@ -66,21 +71,28 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
 - Dispatcher: the guard sits right after `get_external_id` in
   `_deliver_tracker_rms`; linked updates and `.created` never consult it.
   `_handle_delivery_failure` budgets on `PendingPredecessorError`.
-- Tests: claim order with reverse-inserted pairs + same-timestamp lifecycle
-  order (both **fail on the old query**, verified by reverting `app/`);
-  `TestUpdateReorderRaceRealSql` in `test_outbox_loop.py` (pending create,
-  same-timestamp create, two same-timestamp updates, terminal create, full
-  claim → updated-first → create POST → retry PATCH cycle ending with one link
-  and one column id); unit consult / wait / skip matrix + 409 budget.
+- Tests (after `d1dbf8cd`): `tests/unit/test_outbox_event_order.py` (real
+  Postgres, **runs in CI**) holds the claim order with reverse-inserted pairs,
+  the same-timestamp lifecycle order, and the update-path predecessor SQL
+  (pending create, same-timestamp create, two same-timestamp updates, terminal
+  create). Same-timestamp cases pin event ids (`_ordered_id` prefix) so id order
+  contradicts lifecycle order. Mutation-checked: old claim SQL, rank dropped
+  from the claim `ORDER BY`, rank dropped from the predicate, `<` → `<=` — each
+  fails at least one test. `TestUpdateReorderRaceRealSql` in
+  `tests/system/test_outbox_loop.py` keeps only the full claim → updated-first
+  → create POST → retry PATCH cycle. Unit (mocked): consult / wait / skip
+  matrix + 409 budget.
 
 ## Decisions
 - **Order by `occurred_at`, not `available_at`, inside the batch**: a retried
   `.created` (later `available_at`) must still run before a fresh `.updated`.
 - **Strict total order with a lifecycle-rank tiebreak** instead of the old
   inclusive `<=`: same-transaction events share `occurred_at` (server default
-  `now()`) and ids are random uuids. `ContactService` batches several
-  `.updated` in one commit — an inclusive check would make two unlinked updates
-  block each other until both dead-letter. The rank keeps "created before its
+  `now()`) and ids are random uuids; an inclusive check would make two
+  same-transaction unlinked updates of one entity block each other until both
+  dead-letter. (Correction from review: `ContactService.bulk_create_relationships`
+  dedupes contact ids, so it writes one `.updated` per contact — it is NOT an
+  example of two same-entity updates; the PR body still cites it.) The rank keeps "created before its
   same-transaction update/delete" (the case the old `<=` protected).
 - **Keep the POST fallback when nothing is pending**: entities created before
   the integration was enabled, and updates after a dead-lettered create
@@ -93,6 +105,31 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
 - Only one dispatcher replica runs (infra `values-dev.yaml` / `values-prod.yaml`
   `replicaCount: 1`; qa and kforce run none), so the live hazard was in-batch
   order + retry backoff; the guard also covers a second replica.
+
+## Review
+- Self-review r1 2026-10-07 (`/pr-review`, NOT posted): **CHANGES REQUESTED** —
+  one blocker (T2): the claim-order + predecessor SQL tests lived only in
+  `tests/system`, which CI never runs, so reverting the outer `ORDER BY`,
+  dropping the rank, or going back to `<=` would merge green. **Fixed in
+  `d1dbf8cd`** (moved to `tests/unit/test_outbox_event_order.py`, ids pinned).
+- Open nits (not done): re-read the link after `has_pending_predecessors` →
+  False (two-replica TOCTOU, also on delete); pending check is per event not per
+  platform (`completed_at` waits on every platform's delivery — a TrackerRMS
+  update can wait on a Jazz-only pending create); rank defined twice (SQL CASE +
+  `_event_rank`) → single definition or parity test; equal 409 budgets can
+  dead-letter the waiter first; full-cycle system test compares DB `now()` vs
+  Python `datetime.now()`; `claim_batch(500)` in tests grabs unrelated module
+  rows; budget ceiling unit case for `StaleUpdateOrderError`;
+  `OrderingNotReadyError` docstring still names `StaleDeleteOrderError`;
+  ContactService example in PR body; jazz_hr unit-test format churn.
+- Out of scope → follow-up ticket (unfiled): `occurred_at` is transaction start
+  time and the bulk contact path writes `CONTACT_CREATED` in a second
+  transaction (`contact/service.py:397-413`), so an edit committing in between
+  sorts before its create and POSTs; `.created` never checks for an existing
+  link. Also: same-entity same-transaction updates tie-break on random uuid
+  (needs a sequence column).
+- Prod read of tenants with several enabled integrations was denied by the
+  auto-mode classifier — still unchecked.
 
 ## Gotchas
 - A bare `MagicMock` is truthy: the unit `dispatcher` fixture now defaults
@@ -110,14 +147,17 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `.env` still has to be copied in.
 
 ## Pending
-- [ ] CI green on `7c495209` + team review → squash-merge #2393.
+- [ ] CI green on `d1dbf8cd` + team review → squash-merge #2393.
+- [ ] Decide on the open review nits (see Review); file the `occurred_at`
+      causality follow-up ticket.
 - [ ] Promote to `qa` / `main` (cherry-pick, merge commit) — pairs naturally
       with the #2391 prod cutover of 25390.
 - [ ] Close [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) on merge.
 - [ ] After prod: read-only Navitec check for pairs minted seconds apart by
       this path (beyond the 25390 set); cleanup = DELETE the duplicate's link,
       never mark `stale`.
-- [ ] Remove the worktree once merged.
+- [ ] Remove the worktree `.claude/worktrees/dispatcher-batch-order-25396-ci`
+      once merged.
 
 ## Related
 - [[Reverse push duplicates TrackerRMS Resources - external ids read from entity_external_links (Bug 25390)]] — the sibling fix (what the readers look at); this one is
