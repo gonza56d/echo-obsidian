@@ -224,7 +224,7 @@ CTE + outer ORDER BY), and/or make `*.updated` wait like deletes. Ticketed as
 - [ ] tracker-rms-api defensive guard on candidate/application create
       (resolve `echo_id` against `entity_mapping` / Echo links first).
 - [ ] Close Bug 25390 on merge.
-- [x] Dispatcher batch-order hazard filed as [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) (New, assigned to me, related to 25390) — 2026-10-06.
+- [x] Dispatcher batch-order hazard filed as [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) (New, assigned to me, related to 25390) — 2026-10-06. Fix in [[Outbox dispatcher batch order and update ordering guard (Bug 25396)]] — [#2393](https://github.com/taller-projects/echo-backend/pull/2393) → dev OPEN 2026-10-07.
 
 ## Related
 - [[Navitec duplicated Resources from reverse push — ats_external_ids vs entity_external_links (investigation)]]
