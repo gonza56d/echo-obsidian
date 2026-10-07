@@ -48,7 +48,7 @@ Gisel's automation found that accepting a partner allocation in QA sometimes emi
 
 ## Pending
 - [ ] Merge release [#2395](https://github.com/taller-projects/echo-backend/pull/2395) `qa` → `main` (merge commit; `main` needs a code-owner review), then the `echo-backend-prod` / `echo-backend-kforce-prod` approvals.
-- Merged dev 2026-10-06 (`cac40d3f`, merge commit). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **MERGED 2026-10-07** (with #2386 + #2387); qa → main via #2395. Then qa → main.
+- Merged dev 2026-10-06 (`cac40d3f`, merge commit). Release [#2392](https://github.com/taller-projects/echo-backend/pull/2392) `dev` → `qa` **MERGED 2026-10-07** (with #2386 + #2387); qa → main via #2395.
 - Ops (needs kubectl, I have none): find the QA pod older than 04:32 UTC whose logs contain `d6a83cee`; `py-spy dump` via ephemeral debug container if still alive (no lines from it after 14:47 UTC — likely scaled in); re-run `roles_capacity.feature:1086`.
 - Infra: enable `probe.enabled` for qa/prod and point liveness at `/health` (ask Willian/Alan why it was disabled on 2026-03-17 first).
 - Grafana/Loki alert on `Event queue full` + `event_bus.handler_stuck` for all envs.
