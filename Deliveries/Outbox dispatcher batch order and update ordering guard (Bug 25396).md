@@ -6,6 +6,7 @@ delivered:
 tags: [bugfix, outbox, dispatcher, trackerrms, navitec]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2393"
+  - "https://github.com/taller-projects/echo-backend/pull/2394"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396"
@@ -42,7 +43,7 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   2026-10-07.
 
 ## PRs
-- [#2393](https://github.com/taller-projects/echo-backend/pull/2393) → `dev` — **OPEN 2026-10-07**, branch
+- [#2393](https://github.com/taller-projects/echo-backend/pull/2393) → `dev` — **SQUASH-MERGED 2026-10-07 15:46 UTC (`62742b97`)**, CI green on `f5ce9634`, branch
   `25396/dispatcher_batch_order` off `origin/dev` (`97eb3540`), commits
   `7c495209` (fix) + `d1dbf8cd` (2026-10-07: event-order SQL tests moved to
   the unit suite, see Review) + `f5ce9634` (2026-10-07: link re-read after the
@@ -55,6 +56,9 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   No migration, no flag. 219 unit + system outbox tests green locally
   (`test_outbox_dispatcher` unit, `test_outbox_dispatcher` / `test_outbox_loop`
   / `test_outbox_dispatcher_jazz_hr` / `test_worker_lease_chaos` system).
+
+- [#2394](https://github.com/taller-projects/echo-backend/pull/2394) `dev` → `qa` "Release dev -> qa 2026-10-07 (2)" — **OPEN 2026-10-07** (head = `dev` itself per team convention, not a cherry-pick; user asked for qa<-dev). Only #2393 rides it (#2392 promoted everything else earlier that day); no merge conflicts; effective diff = outbox files only, no migrations (the 6 July-2026 `down_revision`-text diffs stay qa's). Merge with a merge commit.
+- `qa` (and both KForce envs) define NO `dispatcher` block in their Helm values → the change is inert on qa; it acts on dev now and on prod after the main release.
 
 ## How
 - **Verified before fixing** (real Postgres through the repo fixtures, probe
@@ -172,13 +176,14 @@ did not cover it. Fixed by ordering the claimed batch and by making an unlinked
   `.env` still has to be copied in.
 
 ## Pending
-- [ ] CI green on `f5ce9634` (Leo approved `d1dbf8cd`; re-request if the
-      re-read needs his eyes) → squash-merge #2393.
+- [x] CI green on `f5ce9634` → squash-merged #2393 (`62742b97`). Leo's
+      approval was on `d1dbf8cd`; the re-read commit landed without his re-review.
+- [ ] Merge #2394 (dev → qa, merge commit), then a `main` release.
 - [ ] Decide on the open review nits (see Review); file the `occurred_at`
       causality follow-up ticket.
 - [ ] Promote to `qa` / `main` (cherry-pick, merge commit) — pairs naturally
       with the #2391 prod cutover of 25390.
-- [ ] Close [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) on merge.
+- [ ] Close [Bug 25396](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25396) (Azure comment 29000352 posted 2026-10-07 with merge + #2394; PR link auto-added by the AB# tag).
 - [ ] After prod: read-only Navitec check for pairs minted seconds apart by
       this path (beyond the 25390 set); cleanup = DELETE the duplicate's link,
       never mark `stale`.
