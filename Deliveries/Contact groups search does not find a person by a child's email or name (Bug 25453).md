@@ -23,7 +23,8 @@ Leandro's second contact-groups finding of 2026-10-08: with `TenantFeature.CONTA
 - Design note `docs/contact-groups.md`: search paragraph added to the Public API bullet, two new Open follow-ups.
 
 ## PRs
-- [#2399](https://github.com/taller-projects/echo-backend/pull/2399) → **base `25451/contact_groups_tracker_filter`** (stacked on [#2398](https://github.com/taller-projects/echo-backend/pull/2398)) — OPEN 2026-10-08 (`632ec65e`, branch `25453/contact_groups_search_filter`). r1 fixes `f1377c99` (tenant bound + review nits), then `95347223` merges the moved base (#2398's test commit `4c064773`) to clear the conflict — merged, not rebased, so no force push. Head `95347223`, MERGEABLE. Retargets to `dev` when #2398 merges; rebase then (the squash of #2398 will be patch-equivalent to its commit here). No FE PR.
+- [#2399](https://github.com/taller-projects/echo-backend/pull/2399) → **base `25451/contact_groups_tracker_filter`** (stacked on [#2398](https://github.com/taller-projects/echo-backend/pull/2398)) — OPEN 2026-10-08 (`632ec65e`, branch `25453/contact_groups_search_filter`). r1 fixes `f1377c99` (tenant bound + review nits), then `95347223` merges the moved base (#2398's test commit `4c064773`) to clear the conflict — merged, not rebased, so no force push. Head `95347223`, MERGEABLE. No FE PR.
+- 2026-10-08 — #2398 squash-merged into dev as `c4f51462`; GitHub retargeted the base to **`dev`** and the PR went CONFLICTING (4 files: `app/modules/contact/filters.py`, `docs/contact-groups.md`, `tests/unit/test_contact_groups.py`, `tests/multitenancy/test_contact_group_isolation.py` — the squash is a different commit from the `60e82aac`/`4c064773` ancestors in this branch). Resolved by **merging** `origin/dev` in (`04e3e538`, merge commit, no rebase / no force push) and taking the branch side of all 4 files: dev's copy of them equals the branch ancestor `4c064773` (verified: the squash's extra diff touches 19 other files only), and the PR delta over dev is byte-identical to the delta over the old base (594-line diff compared). Lint clean; 104 targeted tests (contact groups + org merge refresh) green; full unit + multitenancy run before the push's CI. Head `04e3e538`, MERGEABLE (checks pending).
 
 ## How
 - `ContactFilter._lift_search_to_group_roots` (`app/modules/contact/filters.py`), called after the tracker lift under `rows_represent_groups`: `contact.id IN (SELECT coalesce(m.parent_contact_id, m.id) FROM contact m WHERE <search predicate on m>)`, then `search` is cleared so `JoinFilter.filter` adds no per-row search.
@@ -52,13 +53,11 @@ Leandro's second contact-groups finding of 2026-10-08: with `TenantFeature.CONTA
 
 ## Pending
 - Leandro's OK on the dense-term trade-off (Azure comment 29015745, which also corrects the earlier "byte-idéntica" / "sigue usando el índice único de LinkedIn" claims of comment 29014575).
-- CI on `95347223`; review.
-- When #2398 squash-merges: confirm GitHub retargeted the base to `dev`, then **merge** `origin/dev` into the branch (it already carries merge commits — a rebase would need a force push), re-run the module.
+- CI on `04e3e538`; review.
 - Squash-merge → Bug 25453 Closed → dev + kforce-dev deploy; dev check on the Kforce tenant (search a child's email).
 - qa / main promotion together with #2398.
 - Product tickets under Feature 24974: children's emails / phones on the parent; common-token search cost (pre-existing).
-- Remove worktree `.claude/worktrees/25453-contact-groups-search-filter` after merge.
-- Vault push still blocked (SSH identity for github.com = gonza-taller; add the personal key).
+- Remove worktrees `.claude/worktrees/25453-contact-groups-search-filter`, `.claude/worktrees/25453-search-filter-r1` and `.claude/worktrees/25453-search-filter-merge-dev` (branch `25453/contact_groups_search_filter_merge_dev`, pushed into the PR branch) after merge.
 
 ## Related
 - [[Map - Kforce]] · [[Contact groups tracker filter hides child-only tracked contacts (Bug 25451)]] · [[Contact groups feed resolves external ids via entity_external_links (Bug 25274)]] · [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]]
