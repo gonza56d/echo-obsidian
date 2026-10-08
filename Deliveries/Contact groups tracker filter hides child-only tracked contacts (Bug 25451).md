@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: kforce
-delivered:
+delivered: 2026-10-08
 tags: [bugfix, contacts, contact-groups, kforce, performance]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2398"
@@ -11,6 +11,7 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25451"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24974"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25274"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25463"
 prd: ""
 ---
 
@@ -19,11 +20,12 @@ prd: ""
 Leandro found (2026-10-08) that with `TenantFeature.CONTACT_GROUPS` on, a user who tracks only a **child** version of a grouped contact loses the person from "Mis contactos": `GET /contacts?contact_tracker__tracked_by_id__in=<me>` (the FE default view) ANDed two per-row predicates — the `contact_tracker` JOIN on the row's own id and `parent_contact_id IS NULL` — so the child passed the tracker and was dropped by the group predicate while the parent passed the predicate and had no tracker row. kforce-prod: 411 child-only trackers, 55 users, 290 hidden children. The fix lifts each tracker / follower match to its group root with a semi-join driven from the member rows; the ticket's proposed correlated `EXISTS … OR … IN (children)` shape **timed out at 60 s on kforce-dev** and was rejected on measurement.
 
 ## Azure / docs
-- [Bug 25451](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25451) (Leandro, BE, Sprint 45, parent [Feature 24974](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24974) "Kforce - Merge contacts pipeline", related [Bug 25274](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25274)) — assigned to Gonzalo; measurement comment + PR link posted (see Pending for the state of the ArtifactLink).
+- [Bug 25451](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25451) (Leandro, BE, Sprint 45, parent [Feature 24974](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/24974) "Kforce - Merge contacts pipeline", related [Bug 25274](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25274)) — assigned to Gonzalo; measurement comment + PR auto-linked via the `AB#25451` mention; **Closed** 2026-10-08 after the squash-merge (comment 29016438).
+- [Task 25463](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25463) (Gonzalo, tags contact-groups / Contacts / tech-debt, related to 25451) — Leo's review nit: resolve the pre-existing untracked TODO (`# TODO: check were is the best place for this function`, agusmdev 2025-05-20, `73437d71`) on `started_tracking_at_sort` in `app/modules/contact/filters.py`; decide where the sort lives (contact filters vs `contact/tracker/`), whether to share with the organization twin, fix the typo, no SQL change.
 - Design note `docs/contact-groups.md` updated in the PR (Public API bullet + Open follow-ups). No PRD (bugfix inside a shipped, documented feature).
 
 ## PRs
-- [#2398](https://github.com/taller-projects/echo-backend/pull/2398) → dev — OPEN 2026-10-08 (head `4c064773` = fix `60e82aac` + tests `4c064773`, branch `25451/contact_groups_tracker_filter`). Full unit + multitenancy run before the first push: 5834 passed, 1 xpassed (11 min). No FE PR: response shapes, routes and params unchanged.
+- [#2398](https://github.com/taller-projects/echo-backend/pull/2398) → dev — **SQUASH-MERGED 2026-10-08** (`c4f51462`; head was `4c064773` = fix `60e82aac` + tests `4c064773`, branch `25451/contact_groups_tracker_filter`). Leo APPROVED (review 5461740088): zero blockers across arch / tests-security / bug compliance; tenant isolation of the semi-join PASS by construction (conjunctive restriction on the RLS-governed outer `contact` query). Nits left as follow-ups: `contact_follower` path lacks dedup / empty-set / paging twins; "byte-identical" claim backed by a proxy assertion; the `filters.py` TODO → Task 25463. Full unit + multitenancy run before the first push: 5834 passed, 1 xpassed (11 min). No FE PR: response shapes, routes and params unchanged.
 - Self-review r1 (2026-10-08, `/pr-review` on `60e82aac`, not posted): **READY WITH NITS** — 0 blockers; arch 11 PASS / 0 FAIL, tests-sec 11 / 0, ticket 8/9 (AC6 partial: product follow-ups recorded, not ticketed). Missing-tests nit shipped as `4c064773` (6 tests, see How). Nits left open: inner `aliased(Contact)` in the semi-join has no tenant predicate (outer query is tenant-bound, `parent_contact_id` is a plain FK by design → defense in depth); `filter()` non-idempotent after the lift (single call on the list path, same convention as `reengage`); PR wording "byte-identical (asserted)" overstates the fragment assertions; ticket description still describes the discarded EXISTS shape.
 
 ## How
@@ -49,13 +51,12 @@ Leandro found (2026-10-08) that with `TenantFeature.CONTACT_GROUPS` on, a user w
 - `/pr` skill wants snake_case branches and a one-line commit without conventional prefix; CLAUDE.md wants Conventional Commits. Used `25451/contact_groups_tracker_filter` + `fix(contact): …` one-liner (recent dev history uses prefixes).
 
 ## Pending
-- Azure: ArtifactLink to #2398 + state "In revision" + measurement comment (first PATCH with the `vstfs:///GitHub/PullRequest/<repo>%2f2398` relation returned 400; re-checking the format against Bug 25222).
-- Review (Leandro / Pedro) → squash-merge → Bug 25451 Closed → dev + kforce-dev deploy.
-- qa / main promotion after dev check on the Kforce tenant (a KForce user who tracks only a child).
+- qa / main promotion after dev check on the Kforce tenant (a KForce user who tracks only a child); dev + kforce-dev deploy auto on green.
 - `EXPLAIN` the default view on kforce-prod post-deploy (tracker seq scan size).
 - Product tickets (separate, under Feature 24974): dashboard child-loose; FE parent "tracked" state / double-track; group semantics of `started_tracking_at__isnull` / `tracking_status__in` / sort.
-- Optional nits from the self-review (not blocking): tenant predicate on the inner alias; idempotency guard on `_lift_member_filters_to_group_roots`; reword "byte-identical (asserted in a test)" in the PR body; amend the ticket description (EXISTS shape → semi-join, followers included) or get Leandro's ack.
-- Remove worktrees `.claude/worktrees/25451-contact-groups-tracker-filter` and `.claude/worktrees/25451-contact-groups-tracker-filter-tests` (branch `25451/contact_groups_tracker_filter_tests`, pushed into the PR branch) after merge.
+- Leo's non-blocking nits: follower dedup + empty-set tests; soften / assert the "byte-identical" wording. The TODO nit is [Task 25463](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25463).
+- #2399 (Bug 25453) is stacked on this branch: merge `dev` into it (no rebase) now that #2398 is in.
+- Remove worktrees `.claude/worktrees/25451-contact-groups-tracker-filter` and `.claude/worktrees/25451-contact-groups-tracker-filter-tests` (branch `25451/contact_groups_tracker_filter_tests`, pushed into the PR branch).
 
 ## Related
 - Sibling, same root cause, stacked PR #2399: [[Contact groups search does not find a person by a child's email or name (Bug 25453)]]
