@@ -27,7 +27,8 @@ only covers terminal steps (`cancels_interview`). Prod 2026-10-08: ~422 Pending,
 candidate returns to the step; orphans (no application on the role) hidden too.
 
 ## What
-- `InterviewFilter.hide_out_of_step_pending` (opt-in) appends
+- `InterviewFilter._hide_out_of_step_pending` (private switch, same shape as
+  `ContactFilter._hide_group_children`) appends
   `status != 'Pending' OR EXISTS(application in a creates_interview step for the
   talent on the assessment's role) OR NOT EXISTS(creates_interview step on the
   role's workflow)`. Reuses the `Interview.status` column_property CASE as the
@@ -40,8 +41,8 @@ candidate returns to the step; orphans (no application on the role) hidden too.
   `creates_interview` step with a live interview raised 400
   "An interview already exists" and aborted the step move — the AC "back to 5 →
   reappears" was impossible. `AssessmentService.create_interview_from_application`
-  now no-ops via `InterviewService.has_active_interview`; a cancelled one is
-  still reactivated by `create` (the #2312 terminal detour).
+  now no-ops via `InterviewService.create_if_absent` (one lookup: keep live /
+  reactivate cancelled / insert); the public `create` keeps its 400.
 
 ## Azure
 - [US 25462](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25462) — Leandro's spec (very detailed: prod numbers, rule, safeguard, dev test roles); In revision, GitHub PR link added.
@@ -49,16 +50,18 @@ candidate returns to the step; orphans (no application on the role) hidden too.
 
 ## PRs
 - [#2402](https://github.com/taller-projects/echo-backend/pull/2402) → dev — OPEN 2026-10-08 (`eb392c98`); branch `25462/pending_scheduling_step_filter`, worktree `.claude/worktrees/25462-pending-scheduling-step-filter`.
+- Self `/pr-review` r1 2026-10-08 (full, 3 agents): **READY WITH NITS, 0 blockers, CI green**. Nits fixed in `83bcd651` (pushed from worktree `.claude/worktrees/25462-review-nits`, branch `25462/pending_scheduling_step_filter_r1`): PrivateAttr switch, `create_if_absent`, `tenant_id` on every EXISTS join, annotations, +2 tests (first step entry creates, No Show), `enabled_for_interviews` pinned. PR body refreshed; implementation notes posted on US 25462 (comment 29016752).
 
 ## How
-- `app/modules/assessment/interview/filters.py`: `filter()` override — strips
-  the non-column field via `model_copy(update=...)` and `super(InterviewFilter, copy).filter()`
-  (same pattern as `ApplicationFilter.recruiter_id__in`), then two correlated
-  `EXISTS` helpers. `Application.tenant_id == Interview.tenant_id` is what lets
+- `app/modules/assessment/interview/filters.py`: `_hide_out_of_step_pending`
+  is a pydantic `PrivateAttr` (not a query param on either app, nothing for the
+  generic field loop to walk); `filter()` calls `super().filter()` then appends
+  the two correlated `EXISTS` helpers, every join matching `tenant_id`. `Application.tenant_id == Interview.tenant_id` is what lets
   the planner use `uq_application_tenant_role_talent`.
-- `routers.py`: `interview_filter.hide_out_of_step_pending = True` (pydantic
-  setattr marks the field set; `filter()` reads the attribute directly anyway).
-- Tests `tests/unit/test_interview_pending_step_filter.py` (17): reuse the
+- `routers.py`: `interview_filter._hide_out_of_step_pending = True` (same as
+  `contact/routers.py` with `_hide_group_children`). Tests set it the same way
+  through the `_listed_ids` helper.
+- Tests `tests/unit/test_interview_pending_step_filter.py` (20): reuse the
   #2312 fixture helpers; a `Pipeline` helper builds before/ready/after/terminal
   steps on one role.
 
@@ -68,21 +71,29 @@ candidate returns to the step; orphans (no application on the role) hidden too.
   workflow (legacy status-driven) or without a flagged step behave as today.
 - Router-level, not filter default: the internal API and service callers must
   keep the raw Pending set (Slack notice logic).
-- Field exposed as a query param (`hide_out_of_step_pending`) — harmless, and
-  gives the internal API an opt-in.
+- Review nit: the first cut exposed the switch as a query param (documented
+  but ignored on the public route, undocumented opt-in on internal). Replaced by
+  the PrivateAttr; the internal API has no opt-in now, by design.
 
 ## Gotchas
 - RLS edge: the `EXISTS` on `application` runs under the application policy; a
   `talents`-permissioned user with `user`/`vendor` scope would also lose Pending
   rows for applications they cannot see. ACs are global-scope; noted in the PR.
 - `WorkflowStepFactory` randomizes `creates_interview` / `cancels_interview`
-  — pin both in tests or a random True cancels/duplicates mid-test.
+  — pin both in tests or a random True cancels/duplicates mid-test. Same for
+  `AssessmentFactory.enabled_for_interviews`: a random False silently skips
+  the step-entry interview creation (the first cut passed by luck).
+- Known edge (no code change, asked product on the ticket): `talents`-permission
+  users with `user`/`vendor` data scope lose Pending rows for applications RLS
+  hides from them; the role-workflow safeguard cannot rescue those. ACs are
+  global-scope.
 - Dev check (psql `echo-dev`, Taller): NK Sr FE Job6777 17 → 10, ME C#/.Net
   Job2924 10 → 8, Node/Python B 3 → 2, tenant-wide 127 → 109. EXPLAIN: both
   subplans index-only lookups.
 
 ## Pending
-- Review + squash-merge #2402 to dev; dev smoke on the three roles; qa / main.
+- Team review + squash-merge #2402 to dev (strip Co-Authored-By if any); dev smoke on the three roles; qa / main.
+- Product answer on the user/vendor data-scope edge (asked on US 25462).
 - Close US 25462 after merge; tell Leandro / Palo.
 - Separate tickets (per the US, unfiled): prod backfill of #2312's stranded
   terminal interviews (`scripts/cancel_pending_interviews_terminal_steps.sql`,
