@@ -56,4 +56,5 @@ Leandro found (2026-10-08) that with `TenantFeature.CONTACT_GROUPS` on, a user w
 - Remove worktree `.claude/worktrees/25451-contact-groups-tracker-filter` after merge.
 
 ## Related
+- Sibling, same root cause, stacked PR #2399: [[Contact groups search does not find a person by a child's email or name (Bug 25453)]]
 - [[Map - Kforce]] · [[Contact groups feed resolves external ids via entity_external_links (Bug 25274)]] · [[Kforce push echo-backend requests - kforce_external_id__in filter (US 25054)]] · [[Contact external ids follow-ups - list filter via links, links dropped on delete, duplicate references (25372-25374)]] · [[Contacts activity-companies range filter, floor 2 (US 25376)]]
