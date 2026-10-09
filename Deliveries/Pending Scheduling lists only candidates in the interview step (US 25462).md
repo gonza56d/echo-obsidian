@@ -102,3 +102,18 @@ candidate returns to the step; orphans (no application on the role) hidden too.
 
 ## Related
 - [[Map - JazzHR integration]] (interview creation path) · #2312 (no note; Pedro's).
+
+## 2026-10-09 — Leo's review nits (r2)
+
+Leo reviewed [#2402](https://github.com/taller-projects/echo-backend/pull/2402) against US 25462: **all AC met, no blockers**, 7 inline nits. Fixed and pushed to the PR branch as commit `5095d221`:
+
+- **Public filter method** — `InterviewFilter.hide_out_of_step_pending()` replaces the router writing the private `_hide_out_of_step_pending` attribute directly (same spirit as `JoinFilter.add_custom_field_conditions`). Router calls the method; the `_listed_ids` test helper does too.
+- **Model from `Constants.model`** — `filter()` + the two EXISTS helpers (`_in_interview_step_application`, `_role_has_interview_step`) now take `interview_model = self.Constants.model` instead of the hardcoded `Interview` class, matching `current_status_sort`. Avoids silent breakage if the filter is ever applied over an aliased Interview.
+- **`_create_or_reactivate` param renamed** `existing` → `cancelled: Interview | None` + docstring, making the caller precondition (None or a *cancelled* interview) visible in the signature.
+- **4 new tests** (file now 24, was 20):
+  - application on the flagged role but `workflow_step_id = NULL` → hidden (pins the inner-join-to-WorkflowStep "step 5 only" rule).
+  - legacy **status path** re-entry (`_handle_status_transition`, role with no interview workflow): READY → other → READY with a live interview is a no-op, not the old 400.
+  - two cross-tenant isolation guards (built a full second-tenant `Pipeline` via `_make_tenant_pipeline`): another tenant's in-step application does not un-hide this tenant's out-of-step Pending; another tenant's flagged workflow does not trip this tenant's `~_role_has_interview_step` safeguard.
+  - reworded the `test_workflow_without_interview_step_is_not_filtered` docstring (was mislabelled "Multi-tenant safeguard"; it is single-tenant, exercising the `NOT EXISTS` branch).
+- Verified: `tests/unit/test_interview_pending_step_filter.py` 24 passed; `tests/unit -k "interview or assessment"` 279 passed; `ruff` clean.
+- Out of PR (Leo, for the ticket): product answer on the user/vendor data-scope RLS edge still pending; US description to note the role-workflow safeguard + the re-entry no-op.
