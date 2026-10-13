@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: taller
-delivered:
+delivered: 2026-10-13
 tags: [bugfix, security, talent, access-control, vendor, visibility]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2414"
@@ -21,7 +21,7 @@ Taller prod: the external vendors **TeamUp** (12 users) and **WES** (13 users) c
 - No PRD (bugfix).
 
 ## PRs
-- [#2414](https://github.com/taller-projects/echo-backend/pull/2414) → dev — **OPEN** 2026-10-13, branch `25504/linkedin_source_external_vendor_visibility`, commits `93669f35` (fix) + `0aa9b899` (review r1: RLS test, logger, docstrings). Leo r1 CHANGES REQUESTED (review 5508502577) → addressed same day, re-review pending.
+- [#2414](https://github.com/taller-projects/echo-backend/pull/2414) → dev — **MERGED** 2026-10-13 20:00 UTC as squash `c5c544a2` (branch `25504/linkedin_source_external_vendor_visibility`, commits `93669f35` fix + `0aa9b899` review r1). Leo r1 CHANGES REQUESTED (review 5508502577) → addressed same day → approved. Pipeline build 31033 (20261013.4): BuildAndPush / Test / ReleaseDev / ReleaseKforceDev all succeeded; GH Actions test run 38459432591 green. Bug 25504 → Closed with the deploy comment.
 - Follow-up [Task 25510](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25510) (child of the Bug): guard channel sources on `PATCH /vendors` + resolve the own source before the INSERT on `/sync` cold-start.
 - No FE change (visibility is RLS-only; FE just lists what the API returns).
 
@@ -47,8 +47,8 @@ Taller prod: the external vendors **TeamUp** (12 users) and **WES** (13 users) c
 - App Comm ownership (`application/ownership.py::application_content_allowed`) keys on the application **snapshot** `source_id` when there is no owner — dropping a vendor↔source link without moving the snapshots would deny the vendor its own App Comm. Hence step F1b in the SQL.
 
 ## Pending
-- [ ] Leo re-review of `0aa9b899` → approve + merge #2414 → dev, then qa / main promotion.
-- [ ] **Data fix on prod Taller, once the PR is approved and before merge** (Gonzalo): audit (A1 across tenants on prod + kforce-prod, A2/A3 Taller), then re-source the 4 LinkedIn talents created/owned by TeamUp (1) / WES (3) to their vendor's own source with `talent_change_history` rows, move their LinkedIn application snapshots to the same source (F1b), delete the two `(vendor, LinkedIn)` rows. SQL attached to Bug 25504 and in the worktree at `docs/bug_25504_prod_taller_data_fix.sql` (gitignored).
+- [ ] qa / main promotion of `c5c544a2` (next release).
+- [ ] **Data fix on prod Taller — NOT RUN YET, must happen BEFORE the prod release** (Gonzalo): `bug_25504_audit.sql` (read-only; D1/D2 exact names, A1 external vendors on channel sources across tenants, A3 the 4 TeamUp/WES LinkedIn talents) then `bug_25504_prod_taller_data_fix_v2.sql` (guarded: aborts unless exactly 1 tenant + 2 vendors with own source; re-source + history rows + application snapshots + delete 2 links; idempotent). Both attached to Bug 25504 and in the worktree `docs/` (gitignored). Validated 2026-10-13 on a seeded test schema via a throwaway pytest + `psql -f` (TeamUp, `WES ` with trailing space, internal Taller vendor, creator- and owner-based talents, LinkedIn app snapshot). Claude sessions cannot run prod psql (classifier) → run it from the terminal: `PGSERVICE=echo-prod psql -f <file>` (no `-X`, the FIX block flips read-only off itself). Until it runs, TeamUp/WES still see the org's LinkedIn candidates.
 - [ ] Decide `Taller Recruitment` vendor kind (external → internal?) with Paloma — open question posted on Bug 25504 and in the PR.
 - [ ] [Task 25510](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25510): channel-source guard in `VendorService.create/update` + `/sync` cold-start own-source link.
 - [ ] Only if an external vendor needs the extension: attribute their LinkedIn imports to the vendor's own source at intake (like user-bound keys) — today they get the 403.
