@@ -8,6 +8,10 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2423"
 fe_prs: []
 tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25572"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25573"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25574"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25575"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25504"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25510"
 prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
@@ -20,7 +24,7 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 ## Azure / docs
 - PRD (Claude Doc, team-reviewed 2026-10-15, Tier B, all tenants, no flag): [PRD: Talent channel (LinkedIn extension)](https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9)
 - Lineage: [Bug 25504](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25504) / [#2414](https://github.com/taller-projects/echo-backend/pull/2414). Follow-up [Task 25510](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25510) (vendor channel-source guard) is NOT in this PR.
-- **No Feature / US created yet** — the PRD proposes: Bug "Accreditation to Taller Recruitment broken by trailing space in vendor name" (M0 + schema strip), Feature "Talent channel" + backend US (M1), optional extension-cleanup Task.
+- Azure (created 2026-10-15 after the merge, all under Sprint 45 except the Feature/Task): Feature [25572](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25572) (New; PR + commit linked) → US [25573](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25573) (**Closed** on merge, PR #2423 + commit `b70a79bc` as GitHub links, AC = the PRD contract) · Bug [25574](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25574) (**In development** until the M0 prod `btrim` UPDATE runs; related to 25504; PR linked) · Task [25575](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25575) (optional extension cleanup, unassigned, no deadline). Comments posted on Bug 25504 (supersedes its "no re-attribution" decision; Referral-403 leftover) and Task 25510 (still needed).
 
 ## PRs
 - [#2423](https://github.com/taller-projects/echo-backend/pull/2423) → dev — **OPEN** 2026-10-15, commit `97e8bfa1`, assignee gonza56d. Local: full unit + multitenancy green (4551 + 1793 + 37 in two runs after one expected test update), `tests/system/test_talent_set_source.py` 12 green.
@@ -65,10 +69,10 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 ## Pending
 - [x] Leo APPROVED r2 → **MERGED dev `b70a79bc` 2026-10-15** (dev + kforce-dev auto-deploy; migration is a no-op on KForce).
 - [ ] Promote dev → qa → main (merge commit, never squash) after M0 and the product sign-off below.
-- [ ] Trail of #2414's superseded decision: comment on [Bug 25504](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25504) linking #2423 + the PRD; one-line fix of the hook comment at `app/modules/talent/models.py:733` (the "accepted 403" is Referral/Self-applied only now); PRD contract row for Referral by an external vendor-scope recruiter with `edit_source` → 403.
+- [x] Comment on Bug 25504 posted 2026-10-15 (supersession + Referral-403 leftover). Still to do: one-line fix of the hook comment at `app/modules/talent/models.py:733` (the "accepted 403" is Referral/Self-applied only now); PRD contract row for Referral by an external vendor-scope recruiter with `edit_source` → 403.
 - [ ] Chore (not this PR): 4 other test modules still carry their own `_act_as` copy → migrate them to `tests/act_as.py`.
 - [ ] **M0 prod data fix, before the prod release**: `UPDATE vendor SET name = btrim(name)` for `Taller Recruitment ` from the terminal (`PGSERVICE=echo-prod`); tell Guadalupe the manual `PATCH /applications/{id}/source` is no longer needed. Not verified from this session.
-- [ ] Azure tickets (Bug whitespace / Feature + US talent channel / optional extension Task) — create and link the PR (`GitHub Pull Request` relation) once they exist.
+- [x] Azure tickets created 2026-10-15: Feature 25572, US 25573 (Closed), Bug 25574 (In development), Task 25575; PR #2423 body updated with the links; GitHub PR/commit relations on Feature + US + Bug.
 - [ ] Product sign-off on the Taller `by_source` change (historical LinkedIn imports now count for `Taller` / `Taller Recruitment`) before `main`.
 - [ ] Post-release verification: `GET /talents?channel=linkedin`, no `(external, LinkedIn)` `vendor_sources` row, `classify_intake` lines in Loki.
 - [ ] Open product question: referred candidates worked by `Taller Recruitment` — `Referral` or `Taller Recruitment`?
