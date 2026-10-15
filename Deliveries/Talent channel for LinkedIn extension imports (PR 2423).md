@@ -24,6 +24,7 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 
 ## PRs
 - [#2423](https://github.com/taller-projects/echo-backend/pull/2423) → dev — **OPEN** 2026-10-15, commit `97e8bfa1`, assignee gonza56d. Local: full unit + multitenancy green (4551 + 1793 + 37 in two runs after one expected test update), `tests/system/test_talent_set_source.py` 12 green.
+- Rubric review 2026-10-15 (`/pr-review`, full mode, PRD as the source): **no blockers**, 0 missing requirements, 0 scope creep, CI green; 14 nits + 1 informational question. Commit `d6a77e0b` (same day, pushed to the PR) closes 13 nits: new route cases (channel + partner source → 404/201 as sent, channel + own vendor, every spelling for external/no-vendor, real `/sync` update branch, `talent.updated` payload), migration `INSERT … ON CONFLICT DO NOTHING` + re-read and typed helpers, migration test with a second tenant + `RESET` of the session timeouts, RLS probe via the injector, shared `tests/act_as.py`, stripped vendor name on `/sync`. The 14th (golden `openapi` waiver) was moot — see Gotchas.
 - FE contract: additive only — `channel` (`"linkedin" | null`) on talent detail + list responses, accepted on `POST /talents` / `/sync` (422 on unknown), filters `channel` / `channel__in` / `channel__isnull`. No FE PR.
 
 ## How
@@ -41,6 +42,7 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 - `btrim` belt in `canonical_source_id_for_vendor` included (cheap, makes the snapshot test meaningful).
 - Enum guard = `sa.Enum(...).create(checkfirst=True)` (precedent `eenjg7rqq0s8`), not a `pg_type` lookup as the PRD text said.
 - Log line lives in `classify_intake` (decision point, no talent id yet) with `created_by_id` / `vendor_id` / `re_credited` instead of the PRD's `talent_id`.
+- The PRD's "RLS probe case that still denies another external vendor's source" does not exist at the policy level: the insert hook links the creator's vendor to ANY non-channel source, so a vendor-scope recruiter WITH `edit_source` crediting a partner gets linked to the partner's row and the INSERT passes (pre-existing, Task 25510 territory). The denial is the router's 404 without `edit_source`; covered at route level with `channel` sent.
 
 ## Gotchas
 - `tests/unit/test_referral_source_validation.py::test_post_with_channel_source_by_external_recruiter_does_not_link_vendor` asserted `source_id == LinkedIn row` for an external recruiter — renamed to `..._never_links_the_channel` and now asserts the credit to the agency's own row + no LinkedIn link.
@@ -48,6 +50,9 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 - `uv run` inside a worktree creates a second `.venv` there (163 packages) — use `/Users/gonza56d/taller/repos/echo-backend/.venv/bin/python -m pytest` and `.venv/bin/ruff` directly; the worktree guard refuses `source …` lines.
 - fastapi-filter list params are comma-separated (`id__in=a,b`), not repeated keys.
 - Downgrade + upgrade leaves re-credited talents without a channel (source is the vendor now) — documented in the revision docstring; history rows are the trail.
+- `tests/golden_snapshots/baseline/openapi.json` carries NO `/talents*` routes and no `Talent*` schemas (recorded from the fork, which had no recruiting) — adding fields to talent schemas or filters needs no `[openapi]` waiver.
+- `tests/act_as.py` is now the shared impersonation helper (ENABLE_ACCESS_CONTROL on + `current_user_id` override). Two private copies remain untouched in `test_application_source_transfer.py` and `test_candidate_email_send_permission.py`.
+- Pyright in the worktree reports unresolved `sqlalchemy` / `alembic` imports — venv not resolved there, not a real error; ruff + pytest from the main `.venv` are the signal.
 
 ## Pending
 - [ ] Review + merge [#2423](https://github.com/taller-projects/echo-backend/pull/2423) (pipeline: dev + kforce-dev auto-deploy; migration is a no-op on KForce).
@@ -56,6 +61,8 @@ prd: "https://claude.ai/code/artifact/34631c54-12ea-4b80-8690-6db066703db9"
 - [ ] Product sign-off on the Taller `by_source` change (historical LinkedIn imports now count for `Taller` / `Taller Recruitment`) before `main`.
 - [ ] Post-release verification: `GET /talents?channel=linkedin`, no `(external, LinkedIn)` `vendor_sources` row, `classify_intake` lines in Loki.
 - [ ] Open product question: referred candidates worked by `Taller Recruitment` — `Referral` or `Taller Recruitment`?
+- [ ] Review question (informational): prod `SELECT count(*) FROM talent` or an `EXPLAIN` of the backfill — `talent.source_id` has no index, both data statements hash-join over a full `talent` scan; sub-second at tens of thousands of rows, unmeasured against the 25 s cap.
+- [ ] PRD text to amend for the documented deviations: `channel` on `TalentListBase` (every list view), log fields (`created_by_id`, no `talent_id`), "pg_type lookup" → `checkfirst=True`, inference on every `create_talent` caller.
 - [ ] Later: `self_applied` enum value (`ADD VALUE IF NOT EXISTS` inside `op.get_context().autocommit_block()`); optional extension cleanup (send `channel`, drop the `LinkedIn` stamp).
 
 ## Related
