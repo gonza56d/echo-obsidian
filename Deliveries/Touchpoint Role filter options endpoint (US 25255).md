@@ -76,3 +76,4 @@ Local: 108 passed (`test_future_interaction.py` + `multitenancy/test_future_inte
 ## Related
 - [[Touchpoints filter by Role (US 25143)]] (the filter this feeds; predicate, seam-test convention, `commitments=None` trap)
 - [[Public bulk-create touchpoints endpoint (US 24835)]] (same module)
+- [[Touchpoints Role filter offers every open-stage role (US 25567)]] — **the pending-touchpoint rule of this endpoint was reverted by product request (Navitec CR 25557)** on 2026-10-15: options are now every Open/Active/Filled-stage role.

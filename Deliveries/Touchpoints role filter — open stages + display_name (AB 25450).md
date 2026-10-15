@@ -53,3 +53,4 @@ Local after fix: 132 passed (`test_future_interaction.py`) + 31 (`TestRoleOption
 ## Related
 - [[Touchpoint Role filter options endpoint (US 25255)]] (the endpoint this extends)
 - [[Touchpoints filter by Role (US 25143)]]
+- [[Touchpoints Role filter offers every open-stage role (US 25567)]] — keeps this stage rule, drops the 25255 touchpoint predicate (Navitec CR 25557, 2026-10-15). #2403 merged dev `eaa3bd20` 2026-10-09.
