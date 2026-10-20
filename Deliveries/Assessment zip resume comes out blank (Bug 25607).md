@@ -7,7 +7,7 @@ tags: [bugfix, export, interviews, assessments, frontend]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2441"
 fe_prs:
-  - "https://github.com/taller-projects/echo-frontend/pull/3564"
+  - "https://github.com/taller-projects/echo-frontend/pull/3565"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25607"
 prd: ""
@@ -23,8 +23,8 @@ Paloma (CSR, Sprint 45, 2026-10-20): **Download Assessment** on the public asses
 
 ## PRs
 - [#2441](https://github.com/taller-projects/echo-backend/pull/2441) → dev — **OPEN** 2026-10-20 (branch `25607/assessment-zip-resume`, head `0216602a`). No FE contract change: same route, same zip, same filenames.
-- FE: [#3564](https://github.com/taller-projects/echo-frontend/pull/3564) → dev — **DRAFT** 2026-10-20 (branch `assessment-preview-resume-hint`, head `5de612c45`). Hint above the embedded resume on the public preview ("If the resume doesn't display in your browser, use Open in new tab or Download Assessment."), `fallbackHint` prop on `BaseResume`, constant in `constants/interviewPreviews.ts`, `Resume.test.js` + `PreviewTabs.test.js`. No API change. Verified in Chrome against the dev API (screenshot attached to the Bug).
-- Docs: `echo-flows-docs` branch `assessment-preview-resume-hint` (`67933d4`, pushed, no PR): Flow 11 + endpoints table + "For the chat" Q in `06-interviews.md`, `help/interviews.md` preview paragraph. Merge to `main` once both PRs are in `dev`.
+- FE: [#3565](https://github.com/taller-projects/echo-frontend/pull/3565) → dev — **DRAFT** 2026-10-20 (branch `preview-resume-fallback-hint`, head `e3fc11479`; #3564 closed, same commit re-authored with the work email). Hint above the embedded resume on the public preview ("If the resume doesn't display in your browser, use Open in new tab or Download Assessment."), `fallbackHint` prop on `BaseResume`, constant in `constants/interviewPreviews.ts`, `Resume.test.js` + `PreviewTabs.test.js`. No API change. Verified in Chrome against the dev API (screenshot attached to the Bug).
+- Docs: `echo-flows-docs` branch `preview-resume-fallback-hint` (`67933d4`, pushed, no PR): Flow 11 + endpoints table + "For the chat" Q in `06-interviews.md`, `help/interviews.md` preview paragraph. Merge to `main` once both PRs are in `dev`.
 
 ## How
 - `FileExportService.export_snapshot_zip(snapshot, tenant_id, talent_id)`: resume = `export_talent_by_id(talent_id, PDF)` (tenant logo + custom CV template when the tenant has one); resume file skipped when `snapshot.include_resume_on_export` is false (FE already hides the Resume tab in that case). Router passes `snapshot.talent_id` (deferred column_property through the interview).
@@ -41,7 +41,7 @@ Paloma (CSR, Sprint 45, 2026-10-20): **Download Assessment** on the public asses
 - Ruff over `tests/unit/export` rewrites 5 unrelated test files (CI only lints `app/`): revert them before committing.
 
 ## Pending
-- Review + squash-merge #2441; FE #3564 out of draft + review + merge (independent, no merge-order constraint); qa / main promotion of both; close Bug 25607; reply to Paloma (resume in the zip = live talent data, same as the direct download).
+- Review + squash-merge #2441; FE #3565 out of draft + review + merge (independent, no merge-order constraint); qa / main promotion of both; close Bug 25607; reply to Paloma (resume in the zip = live talent data, same as the direct download).
 - Merge the `echo-flows-docs` branch into `main` after both land in `dev`.
 - Out of scope, worth a ticket: the "Candidate's Resume" checkbox in Generate Preview is still not sent by the FE (`GeneratePreviewModal.tsx` keeps `includeResume` in state only; docs Known limitations 2). The BE now honours `include_resume_on_export: false` in the ZIP, so wiring the checkbox is an FE-only change.
 - `corepack enable pnpm` was run on this machine (pre-commit hook needs `pnpm` on PATH; the FE CLAUDE.md documents it).
