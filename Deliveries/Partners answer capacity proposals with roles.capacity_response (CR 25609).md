@@ -32,6 +32,7 @@ Melina Cantamutto authored the PR. I reviewed it and pushed the nit fixes.
     - `32e8a1d8`: only the other side accepts or rejects.
     - `68ccdce9`: `POST /commitments` gated, plus the vendor check on create.
   - My r2 commit: `6c15c119`, module-off test covers create. PR body refreshed.
+  - Formal `/pr-review` r2 (2026-10-21, head `6c15c119`, after Patricio's 10-situation scope update on the CR): CHANGES REQUESTED, 1 blocker. Fixed by me in `50eac7a5`. PR body refreshed.
 - FE: [#3566](https://github.com/taller-projects/echo-frontend/pull/3566).
   - Adds `ROLES_CAPACITY_RESPONSE` to `ACCESS_LEVELS`.
   - Accept / Counter / Reject show with `roles.edit` OR `roles.capacity_response`.
@@ -45,6 +46,7 @@ Melina Cantamutto authored the PR. I reviewed it and pushed the nit fixes.
 - `CommitmentService._get_answerable_commitment`: a partner (`recruitment_role_name == Partner`, meaning `vendor.kind = 'external'`) on another vendor's commitment gets `NotFoundError`. RLS on `vendor_role_commitment` already hides those rows.
   - `create` uses the same check (`_is_another_vendor`) and answers `Vendor <id> not found`.
   - `accept` / `reject` go through `_get_counterparty_proposal`: the commitment must be Pending and proposed by the other side, otherwise 400 `state_precondition`. The vendor 404 runs first.
+  - `reject` on a first offer (`commitment_level` NULL) routes to `decline()` since `50eac7a5`. Before, it fell back to Active with no level.
 - Migration `7rpzhrwn1jy7` (revises `07mq6am8dpgm`): `UPDATE access_role` matching on `btrim(name)`.
   - Since `cb851bdc` it only touches tenants with the `recruiting` or `all` module enabled.
   - Downgrade strips the permission from every role.
@@ -63,6 +65,8 @@ Melina Cantamutto authored the PR. I reviewed it and pushed the nit fixes.
 - **Rollout window accepted.** The pipeline migrates before the ArgoCD rollout, so old pods return 500 on `/users/me` for the granted roles until the new image is live. Same as `9l2oltiymw26`. I wrote this into the PR body, replacing the wrong "Deploy order" section.
 
 ## Gotchas
+- **`reject()` only restores an agreed level.** The agreed value lives in `commitment_level`, which `propose()` never touches, so rejecting a change on Active brings the old value back. A first offer has no agreed level, so before `50eac7a5` a reject there turned Active with a NULL level.
+  - The FE hides Reject on first offers (`isFirstOffer`), so only the API could reach it.
 - **The grant is a no-op on dev.** Dev's partner role is `External Recruiter` (no brackets). qa has `[External] Recruiter`. Prod names were not checked yet.
 - **Existing roles don't get the permission at deploy.**
   - Admin / Member roles only pick it up at the next module sync.
@@ -73,6 +77,16 @@ Melina Cantamutto authored the PR. I reviewed it and pushed the nit fixes.
 ## Pending
 - **Prod name check before the `main` deploy.** The query is in the PR body. If the names differ, the grant silently does nothing.
 - Leo / teammate review → squash-merge → qa / main. FE #3566 merge.
+- r2 non-blocking leftovers, not done:
+  - Stale comment at `tenant/modules.py:39` and in the migration docstring.
+  - Race in accept/reject: no row lock.
+  - Tests not pinned: vendor-404-before-400 order, migration with the module disabled, S4 and S7.
+- Prod checks before main:
+  - Pending rows with `proposed_by` NULL.
+  - Users in the granted roles whose vendor is internal or missing (they would act as Taller).
+- Out of scope:
+  - Taller declining an Active capacity is unilateral. Leave a note on the CR.
+  - `vendor_role_commitment.vendor_id` FK is not composite with `tenant_id`.
 - ~~Follow-ups for the turn rule and create gating~~: Patricio did both in this PR (`32e8a1d8`, `68ccdce9`). `GET /commitments` is still login-only (RLS scopes it).
 - Maybe update CR 25609 to record product's wider scope (partners can offer capacity; symmetric rule).
 - Close CR 25609 once it ships to prod and Camila confirms.
