@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
 delivered:
 tags: [bugfix, adoption, customer-metrics, event-bus]
@@ -48,7 +48,8 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 - Contact emitter emits for every contact passed (not only newly inserted trackers), company emitter only for inserted rows; internal automated contact tracks (`source="automated"`) emit, internal company tracks pass `emit_event=False` — left as is (pre-Oct-1 behavior, routed to M1's `source` column; noted in the PR body).
 
 ## Pending
-- [ ] CI on `db9b4361`, then squash-merge #2456 (Leo approved). Reply to Leo's review (drafted in session, not posted).
+- [x] Squash-merged to dev (`ceeff2a1`, 2026-10-22). M1 continues in [[Customer metrics M1 - user_events v2 and durable write path (US 25637)]].
+- [ ] (was) CI on `db9b4361`, then squash-merge #2456 (Leo approved). Reply to Leo's review (drafted in session, not posted).
 - [ ] M1 (US 25637 — these three are now in its description "Follow-ups from the M0 review" + 3 acceptance criteria, rev 2, 2026-10-22): decide whether "contacts tracked" counts re-tracks and `source="automated"` internal tracks (PRD l.84/l.107 say `/internal/*` bulk syncs write 0 rows — true for companies only); pass `tenant_id` in the payload; telemetry queue (1000) overflows on internal bulk tracks > 1000 contacts until the durable write lands.
 - [ ] Nico's "resume from M0" dashboard note should say KForce "contacts tracked" is inflated by automated tracks until M1.
 - [ ] Verify on dev after deploy: Echo Usage contacts/companies tracked count new tracks (AC 2); then qa / main promotion.

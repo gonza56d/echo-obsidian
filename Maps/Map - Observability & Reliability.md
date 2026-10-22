@@ -32,4 +32,5 @@ Sentry tooling, and the family of prod timeout/resilience fixes it keeps surfaci
 - OpenAPI 500 via `partial_model` (Sentry `7600828395`, fastapi 0.139 bump; verified 1-line fix in `optional_model.py`) — **needs dev + kforce-dev PRs**.
 - Keyset pagination follow-up from the deep-pagination fix.
 - [[EventBus watchdog + telemetry bus split (Bug 25276)]] — single-thread EventBus hung on a client-side DB wait; watchdog + telemetry bus split + `/health` 503 (2026-10-01).
+- [[Customer metrics M1 - user_events v2 and durable write path (US 25637)]] — M1: durable same-transaction user_events writes, POST /events, polling excluded from sessions; RLS RETURNING/ON CONFLICT gotcha.
 - [[Customer metrics M0 - tracked events on the telemetry bus (Bug 25636)]] — follow-up regression: tracker emitters still published `user.event` on the default bus (2026-10-22).
