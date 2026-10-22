@@ -27,6 +27,7 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
 ## PRs
 - [#2458](https://github.com/taller-projects/echo-backend/pull/2458) → dev, OPEN 2026-10-22 (`fb8d4b92`, branch `25637/user-events-v2`, worktree `.claude/worktrees/25637-user-events-v2`).
   - Opened before the second full-suite run finished. Run 1: 6568 passed, 1 failed (my own new test, see Gotchas; fixed before commit).
+  - Self-review r1 (2026-10-22, `/pr-review` full mode, 3 reviewers): 1 blocker (`cv_downloaded` was committed in a second transaction after the CV version, PRD §3 "same transaction") + nits → fixed in `f821f3d6`, pushed from worktree `.claude/worktrees/25637-user-events-v2-review` (branch `25637/user-events-v2-review` → `HEAD:25637/user-events-v2`): `commit=False` threaded through `DocumentService.create_talent_cv_version` / `create_talent_document` / `create_document`, one commit with the event; 4 KB limit measured on UTF-8 bytes (`ensure_ascii=False`); `user_event.write_failed` also on the POST /events insert; `open_session_ids` filters by tenant; schema-qualified INVALID-index probe in the migration; `UserEventSpec.data` → `payload_schema`; new tests (version rolled back with a failed event write, entity/id null pairs, 4096-byte boundary, non-ASCII payload). 285 tests in the touched files green locally. No PR comment posted (user's call).
 
 ## How
 - **Migration `w305gb1epmd1`** (parent `7rpzhrwn1jy7`):
@@ -63,6 +64,8 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
   - Fix: Core inserts without RETURNING + own-row SELECT policy. This extension of decision 3 was flagged to the user.
 - The full alembic chain does not run from an empty DB (an old migration fails on `project_scope_enum`). The smoke used `create_all` + rewinding user_events to the pre-M1 shape + stamping the parent on the throwaway DB.
 - `capture_logs` misses `EventBus` logs in the full suite (the bus caches its bound logger). Mock `bus.logger` like `test_event_bus.py` does.
+- Same family, module loggers: structlog runs with `cache_logger_on_first_use=True`, so `adoption/service.py`'s `logger` binds once per process and `capture_logs` only sees it when the capturing test is the FIRST user of that logger → pass/fail depended on file order (write_path before tracker tests broke `test_a_failed_event_write_fails_the_track_and_keeps_nothing`). Assert with `patch("app.modules.adoption.service.logger")` instead; both log assertions were switched in `f821f3d6`.
+- `DocumentService.create_document` → `repo.save` commits by default, so the cv-versions route committed the version before the event. Fixed with a `commit` kwarg down the three methods; the blob upload and the Echo document indexing stay outside the transaction (a failed upload now rolls the Document row back instead of leaving it committed).
 - Supabase SQL editor shows only the LAST statement's result: run multi-statement queries one at a time. kforce-prod has 5 `user_events` relnames (other schemas); filter on `public`.
 - `ruff format` on test files reformats unrelated lines (CI only lints `app/`). Restore the file from HEAD and re-apply only your edits.
 
@@ -71,7 +74,8 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
 - At 1.5M rows (301 MB): upgrade 3.9 s; partial indexes 56 kB / 8 kB; per-tenant/type/month query 3.1 ms (index-only scan); one durable write adds p95 0.99 ms locally.
 
 ## Pending
-- [ ] Full suite run 2 green, CI on #2458, review, squash-merge.
+- [ ] CI on `f821f3d6`, Leo's review, squash-merge.
+- [ ] r1 items that need my call, not code: (1) kforce-dev EXPLAIN of the index builds + Nico's per-tenant/type/month query — the ticket says "before merge, attached to the PR" and I attached a 1.5M-row synthetic run instead → pre-build the partial indexes on kforce-dev by hand (`IF NOT EXISTS`, seconds at 339k rows) and attach, or amend AC 9 + PRD; (2) AC 2 says "on dev before merge", impossible since dev gets the migration on merge → reword to "migrated Postgres before merge, dev Member check before qa"; (3) AC 12 clause 2 (write time of a KForce-sized batch) → paste the 1,500-row insert timing or amend now that /internal writes nothing; (4) Grafana alert → Task under US 25637 so the US cannot close without it; (5) Nico's `.sql` under docs/ (PRD Lineage: per milestone) → now or with M5; (6) onboarding auto-tracks (`workspace_setup`, `super_admin`) now land as `company_tracked` `source=ui` on the new user → decide whether they should be `system`; (7) US 25641 (M5 BE) scope now that the FE types are already client-emittable.
 - [ ] AC 2: manual RLS check on dev with a Member user (track a contact, download a CV, POST /events). AC 7: p95 from Loki `http_access.process_time_ms` on dev.
 - [ ] Grafana alert on `telemetry.event_dropped|Event queue full` > 10/min per env (needs an editor token; LogQL in the PR body).
 - [ ] Tell Dami/Paloma + Nico: the contacts tracked drop (84% / 97%), polling no longer counts in sessions/page views, and the cross-tenant export rule; dashboard note with the deploy date.
