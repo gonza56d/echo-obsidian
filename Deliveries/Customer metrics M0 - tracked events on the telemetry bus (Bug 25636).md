@@ -49,7 +49,7 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 
 ## Pending
 - [ ] CI on `db9b4361`, then squash-merge #2456 (Leo approved). Reply to Leo's review (drafted in session, not posted).
-- [ ] M1 (US 25637): decide whether "contacts tracked" counts re-tracks and `source="automated"` internal tracks (PRD l.84/l.107 say `/internal/*` bulk syncs write 0 rows — true for companies only); pass `tenant_id` in the payload; telemetry queue (1000) overflows on internal bulk tracks > 1000 contacts until the durable write lands.
+- [ ] M1 (US 25637 — these three are now in its description "Follow-ups from the M0 review" + 3 acceptance criteria, rev 2, 2026-10-22): decide whether "contacts tracked" counts re-tracks and `source="automated"` internal tracks (PRD l.84/l.107 say `/internal/*` bulk syncs write 0 rows — true for companies only); pass `tenant_id` in the payload; telemetry queue (1000) overflows on internal bulk tracks > 1000 contacts until the durable write lands.
 - [ ] Nico's "resume from M0" dashboard note should say KForce "contacts tracked" is inflated by automated tracks until M1.
 - [ ] Verify on dev after deploy: Echo Usage contacts/companies tracked count new tracks (AC 2); then qa / main promotion.
 - [ ] Data side (Nico): dashboard note that the 2026-10 gap → deploy can't be backfilled.
