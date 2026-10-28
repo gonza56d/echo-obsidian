@@ -16,7 +16,7 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 
 # Customer metrics M3 - AI suggestion snapshots (US 25639)
 
-Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five kinds (job description, matching instructions, assessment, team composition, case study) leaves an `ai_suggestion` snapshot of what the generator returned; a user's save that CHANGES the content resolves it (`accepted` / `edited` + `changed_fields`), a new generation of the same part resolves the previous one as `regenerated`. STACKED on [[Customer metrics M2 - domain history (US 25638)]].
+Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five kinds (job description, matching instructions, assessment, team composition, case study) leaves an `ai_suggestion` snapshot of what the generator returned; a user's save that CHANGES the content resolves it (`accepted` / `edited` + `changed_fields`), a new generation of the same part resolves the previous one as `regenerated`. Builds on [[Customer metrics M2 - domain history (US 25638)]] (merged into dev squashed as `b2c1426e`, 2026-10-28).
 
 ## Azure / docs
 - [US 25639](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25639) (In revision since 2026-10-27, PR linked as GitHub Pull Request). Parent [Feature 25635](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25635); business contract [CR 25592](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25592).
@@ -25,6 +25,7 @@ Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five 
 
 ## PRs
 - [#2475](https://github.com/taller-projects/echo-backend/pull/2475) → `25638/domain-history` (STACKED on [#2469](https://github.com/taller-projects/echo-backend/pull/2469)), OPEN 2026-10-27, `9dddc18c` (branch `25639/ai-suggestion-snapshots` off `ad72edfe`, worktree `.claude/worktrees/25639-ai-suggestion`, upstream unset before the first push so a bare push could not land on M2). Retarget to dev after #2469 merges. Body draft in the worktree's `.claude/worktrees/tmp/pr_m3_body.md`.
+- 2026-10-28: base already `dev` after #2469 merged squashed (`b2c1426e`) → PR CONFLICTING (add/add on the M2 files). Fixed with a merge of `origin/dev`, no force push: worktree `.claude/worktrees/25639-ai-suggestion-merge-dev` (branch `25639/ai-suggestion-snapshots-merge-dev`), `git read-tree --reset -u origin/dev` + `git apply --3way --index` of the `9dddc18c` diff (old git 2.39 has no `merge-tree --merge-base`) → merge commit **`feff409c`** pushed; diff vs dev = exactly the M3 commit (27 files, +2530/−115). Only overlaps with dev's newer changes: import moves in `adoption/schemas.py` and `DEFAULT_INDUSTRY` → `tenant.industry` (M3 already used it). Single head `bmyaawpi69zn`, ruff clean, full local unit + multitenancy **6892 passed** (the 4 `test_export_rfq_logic` failures seen on the M2 head are gone). PR body stacked line → "Builds on M2 (#2469, merged into dev)".
 
 ## How
 - **Migration `bmyaawpi69zn`** (parent `m8qz4tkv2wdc`): new table `ai_suggestion` (PRD columns + `updated_at`, FKs to user SET NULL on `requested_by_id` / `outcome_by_id`), indexes (tenant, kind, created_at) and (tenant, entity_type, entity_id, created_at), RLS = tenant expression (custom_fields form) for ALL, plain builds (new empty table), guarded re-run.
@@ -53,7 +54,8 @@ Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five 
 - The 5 SQL queries run on seeded data with the expected counts.
 
 ## Pending
-- [ ] CI on `9dddc18c`; Leo / Pedro review; merge after #2469, retarget to dev.
+- [ ] CI on `feff409c`; Leo / Pedro review; merge (#2469 merged, base dev, conflicts fixed 2026-10-28).
+- [ ] Self-review r1 blockers (not posted, still open): B1 `team_composition_v3` / `role_v3` / `regenerate_challenge` don't load the entity in the tenant (snapshot + event for foreign ids); B2 AC4 test gaps (`regenerate_assessment`, add-question `regenerate_question`, `update_and_sync`, enhancement JD auto, standalone-create JD auto).
 - [ ] PRD changelog rows (change-only resolution / kept vs ignored, assessment targets, payload shape, model / prompt_version meaning, role_v3 in scope, legacy out) — ask the user before editing the PRD.
 - [ ] Measure payload size on dev after deploy (PRD risk).
 - [ ] Tell Nico (SQL, series start at the M3 deploy) and Flor (full-assessment autosave limit).
