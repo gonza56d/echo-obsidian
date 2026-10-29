@@ -27,7 +27,7 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - [#2480](https://github.com/taller-projects/echo-backend/pull/2480) → dev, OPEN 2026-10-29 (`ec90cd59`, branch `25640/proposal-entity`, worktree `.claude/worktrees/25640-proposal-entity`).
 - Self-review 2026-10-29 (pr-review skill, full mode): **READY WITH NITS**, 0 blockers. Arch 16 PASS, PRD 19/20 (the extra `(tenant_id, project_id, version)` index is correctly omitted — the unique key serves it), tests 14 PASS. Confirmed: `projects.view` gate via router mount, DI auto-bind (no registry entry, `ai_suggestion` precedent), RLS `FOR ALL USING` covers INSERT/RETURNING, atomic rollback, header-merge order safe.
 - Review round 2 2026-10-29 (pr-review skill on `6892e27c`, not posted): **READY WITH NITS**, 0 blockers, 7 nits. All fixed + pushed `91c626b4` (branch `25640/proposal-entity-r2-nits` → `origin/25640/proposal-entity`; user: fix all nits, push without waiting for local tests): `next_version` filters by the request tenant itself; the GET's 404 gate moved into `ProjectService.get_proposals` (router no longer injects `ProposalService`); renames `ProposalExportRecord` / `RenderedProposal`; new tests: `projects.view` gate via `tests/act_as.py` (200 / 404), page 2, failed commit stores nothing and frees the version, `Content-Disposition` survives the header merge, CORS exposes `X-Echo-Proposal-Id` (`tests/unit/test_cors.py`), policy pin checks `FOR ALL` / no `WITH CHECK`; the concurrency test waits on `pg_locks` (ungranted advisory lock of the second session's pid) instead of `join(0.5)`. Ruff clean, imports + collection OK; the targeted tests were not run locally. PR body refreshed.
-- CI on `ec90cd59` and `6892e27c` failed with 2 failures in `tests/multitenancy/test_user_events_isolation.py`. Those tests are from M1 and fail on every branch: a fixed `occurred_at` is past the 7-day window. Fixed in [#2481](https://github.com/taller-projects/echo-backend/pull/2481). Re-run #2480's checks once the fix is on dev.
+- CI on `ec90cd59` and `6892e27c` failed with 2 failures in `tests/multitenancy/test_user_events_isolation.py`. Those tests are from M1 and fail on every branch: a fixed `occurred_at` is past the 7-day window. Fixed in [#2481](https://github.com/taller-projects/echo-backend/pull/2481), squash-merged dev `428b6b19` 2026-10-29. CI on `91c626b4` still red (branch predates the fix) → user: fix it in the same PR → merged origin/dev into the branch, pushed `3d2e0161` (2 tests green locally; CI re-running).
 - Nits fixed + pushed `6892e27c` 2026-10-29 (branch `25640/proposal-entity-nits` → `origin/25640/proposal-entity`): 2 edge-case tests (empty GET list, empty-team `roles_count=0`) + comments on `next_version`/lock `project_id`-only scoping and why the list skips the `response_model=` planner. ruff clean; both new tests green locally.
 
 ## How
@@ -57,7 +57,8 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 ## Pending
 - [x] Self-review done (READY WITH NITS, nits fixed in `6892e27c`).
 - [x] Review round 2 nits fixed + pushed `91c626b4`.
-- [ ] [#2481](https://github.com/taller-projects/echo-backend/pull/2481) merged on dev → re-run #2480 CI (on `91c626b4`); reviews (Leo / Pedro / Gise); merge.
+- [x] [#2481](https://github.com/taller-projects/echo-backend/pull/2481) merged on dev; dev merged into #2480 (`3d2e0161`).
+- [ ] #2480 CI green on `3d2e0161`; reviews (Leo / Pedro / Gise); merge.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
 - [ ] qa / main promotion after merge.
