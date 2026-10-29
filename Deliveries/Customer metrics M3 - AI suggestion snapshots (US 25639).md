@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
 delivered:
 tags: [feature, adoption, customer-metrics, migration, rls, ai]
@@ -66,7 +66,7 @@ Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five 
 - The 5 SQL queries run on seeded data with the expected counts.
 
 ## Pending
-- [ ] CI on `72492bae` (in progress 2026-10-28); Leo + Gise re-review (replies posted); Pedro review; merge after Nico's OK.
+- [x] Merged to dev 2026-10-28 (`1a1f281c`), on main via release #2479 the same day (prod deploy approval unverified). Was: CI on `72492bae` (in progress 2026-10-28); Leo + Gise re-review (replies posted); Pedro review; merge after Nico's OK.
 - [ ] Nico's sign-off on the PRD section "Metric 3 definition: AI leverage" (rev 78) + the SQL; both reviewers asked for it before merge.
 - [ ] Answer Leo's out-of-scope: screening questions not in "assessments"? (confirm); ticket for missing `Protected(...)` on `team_composition_v3` / `role_v3` / `regenerate/job_description` (pre-existing; Leo + Gise).
 - [x] Self-review r1 blockers B1 + B2 + auto-snapshot requester → `a03e9684` (2026-10-28).
@@ -76,4 +76,5 @@ Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five 
 - [ ] Tell Nico (SQL, series start at the M3 deploy) and Flor (full-assessment autosave limit).
 
 ## Related
+- Next: [[Customer metrics M4 - proposal versions (US 25640)]]
 - [[Customer metrics M2 - domain history (US 25638)]] · [[Customer metrics M1 - user_events v2 and durable write path (US 25637)]] · [[Customer metrics M0 - tracked events on the telemetry bus (Bug 25636)]]
