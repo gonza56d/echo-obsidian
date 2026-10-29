@@ -58,7 +58,8 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - [x] Self-review done (READY WITH NITS, nits fixed in `6892e27c`).
 - [x] Review round 2 nits fixed + pushed `91c626b4`.
 - [x] [#2481](https://github.com/taller-projects/echo-backend/pull/2481) merged on dev; dev merged into #2480 (`3d2e0161`).
-- [ ] #2480 CI green on `3d2e0161`; reviews (Leo / Pedro / Gise); merge.
+- [x] #2480 CI green on `3d2e0161` (6959 passed).
+- [ ] Reviews (Leo / Pedro / Gise); merge.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
 - [ ] qa / main promotion after merge.
