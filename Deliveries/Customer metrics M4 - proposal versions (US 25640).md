@@ -31,7 +31,7 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - Nits fixed + pushed `6892e27c` 2026-10-29 (branch `25640/proposal-entity-nits` → `origin/25640/proposal-entity`): 2 edge-case tests (empty GET list, empty-team `roles_count=0`) + comments on `next_version`/lock `project_id`-only scoping and why the list skips the `response_model=` planner. ruff clean; both new tests green locally.
 
 ## How
-- `app/modules/project/proposal/` (models, schemas, repository, service). Migration `p9sz72wa88h5` (parent `bmyaawpi69zn`): composite FK `(project_id, tenant_id)` CASCADE, `UNIQUE (project_id, version)`, tenant RLS `FOR ALL` like `ai_suggestion`, `exported_by_id` SET NULL, TimestampMixin (`created_at` = API `exported_at`).
+- `app/modules/project/proposal/` (models, schemas, repository, service). Migration `p9sz72wa88h5` (parent `r68n8jlvbspz` since `3704680c`; was `bmyaawpi69zn`): composite FK `(project_id, tenant_id)` CASCADE, `UNIQUE (project_id, version)`, tenant RLS `FOR ALL` like `ai_suggestion`, `exported_by_id` SET NULL, TimestampMixin (`created_at` = API `exported_at`).
 - `ProjectService.export_proposal(..., *, exported_by_id)` returns `ExportedProposal(content, filename, proposal_id)`; after the render, `ProposalService.record_export` runs `lock_versions` (advisory xact lock) → `next_version` → `save(commit=False)` → `user_event_service.record` → `repo.commit()`.
 - Router: `X-Echo-Proposal-Id` header via the new `headers` kwarg on `DownloadableFileResponse`, exposed in CORS (`app/main.py`). GET route checks `project_service.get_by_id` first (404), then the page.
 - `docs/customer_metrics_m4_solutioning.sql` (6a started / finished, 6b exports, 6c conversion, 6d minutes from M5 active_time), added with `-f`.
@@ -59,6 +59,7 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - [x] Review round 2 nits fixed + pushed `91c626b4`.
 - [x] [#2481](https://github.com/taller-projects/echo-backend/pull/2481) merged on dev; dev merged into #2480 (`3d2e0161`).
 - [x] #2480 CI green on `3d2e0161` (6959 passed).
+- [x] Chain fix: Leo's #2483 (`r68n8jlvbspz`, PSA welcome form) merged on the same parent `bmyaawpi69zn` → two heads. Dev merged in (`25e3e43e`), `p9sz72wa88h5` now Revises `r68n8jlvbspz`, pushed `3704680c` (single head; throwaway PG: downgrade ×2 + upgrade head OK; proposal migration tests 7 passed). PR body updated. CI re-running.
 - [ ] Reviews (Leo / Pedro / Gise); merge.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
