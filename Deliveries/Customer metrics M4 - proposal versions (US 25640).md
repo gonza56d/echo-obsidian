@@ -60,9 +60,12 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - [x] [#2481](https://github.com/taller-projects/echo-backend/pull/2481) merged on dev; dev merged into #2480 (`3d2e0161`).
 - [x] #2480 CI green on `3d2e0161` (6959 passed).
 - [x] Chain fix: Leo's #2483 (`r68n8jlvbspz`, PSA welcome form) merged on the same parent `bmyaawpi69zn` → two heads. Dev merged in (`25e3e43e`), `p9sz72wa88h5` now Revises `r68n8jlvbspz`, pushed `3704680c` (single head; throwaway PG: downgrade ×2 + upgrade head OK; proposal migration tests 7 passed). PR body updated. CI re-running.
+- [x] Team review 2026-10-29: Gisel (READY WITH NITS, then APPROVED), Leo APPROVED + review comment, Pedro comment; 0 blockers. User: address the good nits now → pushed `ec6a44ad`: record_export no longer commits (ProjectService closes via `ProposalService.commit()`, M3 pattern; id read before commit), `FileExportService.includes_rate_card`, list returns `Page[ProposalExportResponse]` via paginate transformer, `case_studies: list[dict]`, no model defaults on NOT NULL counts, tests (next_version tenant filter pinned + mutation caught, failed RFQ render, `ProposalFactory`, whitespace-proof policy pin, call-order guard docstring), SQL `statement_timeout 25s` + roles-only not attributed to PRD. Local: 73 + export 365 passed. Deferred: `export/enums.py` (14 importers), 6c role-attribution test (no metrics SQL under test yet). PR body: nits round + kforce-prod off-peak lock note + Nico questions in After merge.
 - [ ] Reviews (Leo / Pedro / Gise); merge.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
+- [ ] Ask Nico: 6c = current status Filled (not ever reached), 6a excludes roles-only; time 6c on kforce-prod first.
+- [ ] Follow-ups: 6c role-attribution test; `export/enums.py` for ExportFormats/ProposalType.
 - [ ] qa / main promotion after merge.
 
 ## Related
