@@ -36,6 +36,8 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
 - **2026-10-28: qa release [#2478](https://github.com/taller-projects/echo-backend/pull/2478) "Release dev -> qa 2026-10-28" OPEN → `qa`** (branch `deploy/qa_2026-10-28` off `origin/qa`, merge with a merge commit). Carries #2458 (picked as one commit, `cherry-pick -m 1 77e1c47e`, because its branch has a dev merge with conflict resolutions), #2474, #2469, #2475 with `-x`. Branch == dev except the 6 known old-migration headers; single head `bmyaawpi69zn` (`buzhuenvl99s` → `w305gb1epmd1` → `m8qz4tkv2wdc` → `bmyaawpi69zn`). Next: merge, then qa → main.
 - **2026-10-28: qa release [#2478](https://github.com/taller-projects/echo-backend/pull/2478) MERGED (`5a81df55`); prod release [#2479](https://github.com/taller-projects/echo-backend/pull/2479) "Release qa -> main 2026-10-28" OPEN, head `qa` → `main`** (merge commit; clean merge, merged tree == qa). At open: dev + kforce-dev at `m8qz4tkv2wdc`, `bmyaawpi69zn` pending in dev run 32177, qa deploying (run 32178, qa DB still `buzhuenvl99s`). Approve prod only after both are green.
 
+- [#2481](https://github.com/taller-projects/echo-backend/pull/2481) → dev OPEN 2026-10-29 (branch `fix/user-events-isolation-relative-occurred-at`, `783fda61`): the 2 isolation tests sent a fixed `occurred_at` 2026-10-22T12:00Z. Since 2026-10-29 12:00Z it is older than `CLIENT_EVENT_MAX_AGE` (7 days) → `occurred_at_out_of_range`, `accepted 0`, red CI on every branch. Now `now - 1 minute`. Locally 2 passed.
+
 ## How
 - **Migration `w305gb1epmd1`** (parent `buzhuenvl99s` since r2; was `7rpzhrwn1jy7`, a second head on dev):
   - `LOCK TABLE user_sessions, user_events IN ACCESS EXCLUSIVE MODE` first (the telemetry worker reads a session then inserts the event; the reverse order deadlocks).
@@ -82,6 +84,8 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
 - Supabase SQL editor shows only the LAST statement's result: run multi-statement queries one at a time. kforce-prod has 5 `user_events` relnames (other schemas); filter on `public`.
 - `ruff format` on test files reformats unrelated lines (CI only lints `app/`). Restore the file from HEAD and re-apply only your edits.
 
+- Tests that go through `POST /events` must build `occurred_at` relative to now (`_occurred_at()` in `tests/unit/test_client_events.py`). A fixed date expires 7 days later (`CLIENT_EVENT_MAX_AGE`) and breaks CI everywhere ([#2481](https://github.com/taller-projects/echo-backend/pull/2481)).
+
 ## Evidence
 - kforce-dev 2026-10-26 (339k rows / 87 MB; migration DDL in one rolled-back transaction, plans as `echo_backend` with a viewer's and a Member's claims): plain index builds 50-65 ms each (8 kB / 8 kB / 296 kB); per-type-per-month 90 d 28.7 ms, contact_tracked per month YTD 10.3 ms, distinct users per month 12.4 ms, all on `ix_user_events_tenant_type_created`; entity lookup 0.03 ms; Nico's page_viewed-per-day query unchanged (`ix_user_events_tenant_date`, 218 ms for 68.5k rows); Member insert 14.6 ms, dedupe 4.7 ms then 0.1 ms, own session 1.3 ms, sees own rows only. Script: worktree `.claude/worktrees/tmp/kforce_dev_m1_explain.sql` (+ `.out`).
 - Local bulk `record()`: 1,500 rows 166 ms; 10,000 rows 1.35 s.
@@ -98,6 +102,8 @@ Customer metrics M1. `user_events` gets entity / source / client event id column
 - [ ] Tell Flor: optional `role_id` on cv-versions; the POST /events flush must use `fetch` with `keepalive` (sendBeacon can't send the Bearer header); ticket 25642.
 - [ ] qa / main promotion; the migration builds the partial indexes on prod (expect ~1 min).
 - [ ] [US 25649](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25649): re-measure growth 2 weeks after the M1 deploy.
+
+- [ ] [#2481](https://github.com/taller-projects/echo-backend/pull/2481): CI, review, squash-merge; it also has to reach qa / main with the next release (M1 is on main), or those pipelines fail the same 2 tests.
 
 ## Related
 - [[Customer metrics M0 - tracked events on the telemetry bus (Bug 25636)]] · [[Map - Observability & Reliability]] · [[EventBus watchdog + telemetry bus split (Bug 25276)]]
