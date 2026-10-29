@@ -19,6 +19,7 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 `contact_tracked` / `company_tracked` were published on the **default** EventBus, which since the telemetry split (d22e855e, [[EventBus watchdog + telemetry bus split (Bug 25276)]]) excludes `user.event` → queued, no handler, no `user_events` row. Echo Usage "contacts / companies tracked" under-report since that release. M0 of the customer-metrics program: swap both emitters to `get_telemetry_event_bus()` + a test that proves the row is written.
 
 ## Azure / docs
+- Bug 25636 **Closed 2026-10-29** (user: merged to dev = closed; comment links [#2456](https://github.com/taller-projects/echo-backend/pull/2456), merged to dev 2026-10-22).
 - [Bug 25636](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25636) (M0, Sprint 45, In development 2026-10-22, PR link added) — child of [Feature 25635](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25635); business contract [CR 25592](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25592).
 - Tech PRD: [Customer Metrics Event History — Technical PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) (Approved, section 6 Milestone 0). M1-M7 = US 25637-25644.
 

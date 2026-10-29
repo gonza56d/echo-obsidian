@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-29
 tags: [feature, customer-metrics, migration, rls, proposal]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2480"
@@ -19,12 +19,13 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /projects/{id}/export/proposal`, standard or RFQ, pdf / docx / pptx) stores the project's next version in a new `proposal` table with what the file carried, plus a durable `proposal_exported` event, after the render and in one commit. `GET /projects/{id}/proposals` lists the versions. Builds on [[Customer metrics M3 - AI suggestion snapshots (US 25639)]] (on main since release [#2479](https://github.com/taller-projects/echo-backend/pull/2479), 2026-10-28).
 
 ## Azure / docs
+- US 25640 **Closed 2026-10-29** (user: merged to dev = closed; comment links [#2480](https://github.com/taller-projects/echo-backend/pull/2480), merged to dev 2026-10-29).
 - [US 25640](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25640) (In revision since 2026-10-29, PR linked as GitHub Pull Request). Parent [Feature 25635](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25635); business contract [CR 25592](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25592).
 - [Tech PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) rev 84: M4 checklist, API and schema blocks as built, 3 changelog rows (2026-10-29).
 - US 25640 description still says `ai_roles_count` and "project has a Rate Card document" (rev 2): to update.
 
 ## PRs
-- [#2480](https://github.com/taller-projects/echo-backend/pull/2480) → dev, OPEN 2026-10-29 (`ec90cd59`, branch `25640/proposal-entity`, worktree `.claude/worktrees/25640-proposal-entity`).
+- [#2480](https://github.com/taller-projects/echo-backend/pull/2480) → dev, **MERGED 2026-10-29 17:58Z** (merge commit `7493d134`, not a squash: dev carries its 7 commits). Opened 2026-10-29 (`ec90cd59`, branch `25640/proposal-entity`, worktree `.claude/worktrees/25640-proposal-entity`).
 - Self-review 2026-10-29 (pr-review skill, full mode): **READY WITH NITS**, 0 blockers. Arch 16 PASS, PRD 19/20 (the extra `(tenant_id, project_id, version)` index is correctly omitted — the unique key serves it), tests 14 PASS. Confirmed: `projects.view` gate via router mount, DI auto-bind (no registry entry, `ai_suggestion` precedent), RLS `FOR ALL USING` covers INSERT/RETURNING, atomic rollback, header-merge order safe.
 - Review round 2 2026-10-29 (pr-review skill on `6892e27c`, not posted): **READY WITH NITS**, 0 blockers, 7 nits. All fixed + pushed `91c626b4` (branch `25640/proposal-entity-r2-nits` → `origin/25640/proposal-entity`; user: fix all nits, push without waiting for local tests): `next_version` filters by the request tenant itself; the GET's 404 gate moved into `ProjectService.get_proposals` (router no longer injects `ProposalService`); renames `ProposalExportRecord` / `RenderedProposal`; new tests: `projects.view` gate via `tests/act_as.py` (200 / 404), page 2, failed commit stores nothing and frees the version, `Content-Disposition` survives the header merge, CORS exposes `X-Echo-Proposal-Id` (`tests/unit/test_cors.py`), policy pin checks `FOR ALL` / no `WITH CHECK`; the concurrency test waits on `pg_locks` (ungranted advisory lock of the second session's pid) instead of `join(0.5)`. Ruff clean, imports + collection OK; the targeted tests were not run locally. PR body refreshed.
 - CI on `ec90cd59` and `6892e27c` failed with 2 failures in `tests/multitenancy/test_user_events_isolation.py`. Those tests are from M1 and fail on every branch: a fixed `occurred_at` is past the 7-day window. Fixed in [#2481](https://github.com/taller-projects/echo-backend/pull/2481), squash-merged dev `428b6b19` 2026-10-29. CI on `91c626b4` still red (branch predates the fix) → user: fix it in the same PR → merged origin/dev into the branch, pushed `3d2e0161` (2 tests green locally; CI re-running).
@@ -61,7 +62,7 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - [x] #2480 CI green on `3d2e0161` (6959 passed).
 - [x] Chain fix: Leo's #2483 (`r68n8jlvbspz`, PSA welcome form) merged on the same parent `bmyaawpi69zn` → two heads. Dev merged in (`25e3e43e`), `p9sz72wa88h5` now Revises `r68n8jlvbspz`, pushed `3704680c` (single head; throwaway PG: downgrade ×2 + upgrade head OK; proposal migration tests 7 passed). PR body updated. CI re-running.
 - [x] Team review 2026-10-29: Gisel (READY WITH NITS, then APPROVED), Leo APPROVED + review comment, Pedro comment; 0 blockers. User: address the good nits now → pushed `ec6a44ad`: record_export no longer commits (ProjectService closes via `ProposalService.commit()`, M3 pattern; id read before commit), `FileExportService.includes_rate_card`, list returns `Page[ProposalExportResponse]` via paginate transformer, `case_studies: list[dict]`, no model defaults on NOT NULL counts, tests (next_version tenant filter pinned + mutation caught, failed RFQ render, `ProposalFactory`, whitespace-proof policy pin, call-order guard docstring), SQL `statement_timeout 25s` + roles-only not attributed to PRD. Local: 73 + export 365 passed. Deferred: `export/enums.py` (14 importers), 6c role-attribution test (no metrics SQL under test yet). PR body: nits round + kforce-prod off-peak lock note + Nico questions in After merge.
-- [ ] Reviews (Leo / Pedro / Gise); merge.
+- [x] Reviews (Leo / Pedro / Gise); merged 2026-10-29.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
 - [ ] Ask Nico: 6c = current status Filled (not ever reached), 6a excludes roles-only; time 6c on kforce-prod first.

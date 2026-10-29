@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-27
 tags: [feature, adoption, customer-metrics, rls, migration]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2479"
@@ -22,6 +22,7 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 Customer metrics M1. `user_events` gets entity / source / client event id columns. Business events stop riding the best-effort telemetry bus: they are written inside the transaction of the action that causes them. `POST /events` stores what only the browser sees. Builds on [[Customer metrics M0 - tracked events on the telemetry bus (Bug 25636)]].
 
 ## Azure / docs
+- US 25637 **Closed 2026-10-29** (user: merged to dev = closed; comment links [#2458](https://github.com/taller-projects/echo-backend/pull/2458), merged to dev 2026-10-27).
 - [US 25637](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25637): In revision 2026-10-22, PR linked (GitHub Pull Request link), decisions comment posted. Parent [Feature 25635](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25635); business contract [CR 25592](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25592).
 - Tech PRD: [Customer Metrics Event History — Technical PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj), section 6 Milestone 1, updated to rev 65 with every decision below.
 - Follow-up: [US 25649](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25649), user_events growth (partition monthly vs cut page_viewed). Backlog, assigned to me.

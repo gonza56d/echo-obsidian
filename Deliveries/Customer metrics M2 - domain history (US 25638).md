@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-28
 tags: [feature, adoption, customer-metrics, migration, rls]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2479"
@@ -21,6 +21,7 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 Customer metrics M2. The domain tables start recording what the metrics need: talent status history, role close date and reason, application origin and first score/rank, score and rank at every stage change, the notification a touchpoint or bulk email answers, deal origin. Six durable events join the catalog. Builds on [[Customer metrics M1 - user_events v2 and durable write path (US 25637)]] and is STACKED on its branch.
 
 ## Azure / docs
+- US 25638 **Closed 2026-10-29** (user: merged to dev = closed; comment links [#2469](https://github.com/taller-projects/echo-backend/pull/2469), merged to dev 2026-10-28).
 - [US 25638](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25638) (New, 4-6 days). Parent [Feature 25635](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25635); business contract [CR 25592](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25592).
 - Tech PRD: [Customer Metrics Event History](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj), section 6 Milestone 2; rev 71 (2026-10-26) carries the five M2 changelog rows and the checklist wording below.
 - Nico's SQL for this milestone: `docs/customer_metrics_m2_domain_history.sql` (8 per-tenant/per-month queries; `docs/` is gitignored, added with `-f`).
