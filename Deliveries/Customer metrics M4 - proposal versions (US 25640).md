@@ -25,6 +25,8 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 
 ## PRs
 - [#2480](https://github.com/taller-projects/echo-backend/pull/2480) → dev, OPEN 2026-10-29 (`ec90cd59`, branch `25640/proposal-entity`, worktree `.claude/worktrees/25640-proposal-entity`).
+- Self-review 2026-10-29 (pr-review skill, full mode): **READY WITH NITS**, 0 blockers. Arch 16 PASS, PRD 19/20 (the extra `(tenant_id, project_id, version)` index is correctly omitted — the unique key serves it), tests 14 PASS. Confirmed: `projects.view` gate via router mount, DI auto-bind (no registry entry, `ai_suggestion` precedent), RLS `FOR ALL USING` covers INSERT/RETURNING, atomic rollback, header-merge order safe.
+- Nits fixed + pushed `6892e27c` 2026-10-29 (branch `25640/proposal-entity-nits` → `origin/25640/proposal-entity`): 2 edge-case tests (empty GET list, empty-team `roles_count=0`) + comments on `next_version`/lock `project_id`-only scoping and why the list skips the `response_model=` planner. ruff clean; both new tests green locally.
 
 ## How
 - `app/modules/project/proposal/` (models, schemas, repository, service). Migration `p9sz72wa88h5` (parent `bmyaawpi69zn`): composite FK `(project_id, tenant_id)` CASCADE, `UNIQUE (project_id, version)`, tenant RLS `FOR ALL` like `ai_suggestion`, `exported_by_id` SET NULL, TimestampMixin (`created_at` = API `exported_at`).
@@ -46,12 +48,13 @@ Customer metrics M4 (metric 6, "Solutioning"). Every proposal export (`POST /pro
 - `ProposalResponse` already exists (Team Builder content, `role/solution_service.py`) → the API schema is `ProposalExportResponse`.
 
 ## Evidence
-- 17 new tests (versions, event, RFQ, rate card, failed render, rollback-together, list, 404, real two-session lock, lock order; rls_probe; multitenancy + policy pin). Mutations caught: lock, GET project check, tenant filter, commit.
+- 19 new tests (versions, event, RFQ, rate card, failed render, rollback-together, list, empty list, 404, empty-team `roles_count=0`, real two-session lock, lock order; rls_probe; multitenancy + policy pin). Mutations caught: lock, GET project check, tenant filter, commit.
 - Migration smoke (throwaway Postgres): upgrade / downgrade / upgrade, create_all names == migration names, re-run over existing objects. Metric 6 SQL runs on a create_all schema.
 - `tests/unit/export` with `-o addopts=""`: 365 passed. Full unit + multitenancy run was in progress at PR time.
 
 ## Pending
-- [ ] Full local run result + CI on `ec90cd59`; reviews (Leo / Pedro / Gise); merge.
+- [x] Self-review done (READY WITH NITS, nits fixed in `6892e27c`).
+- [ ] CI on `6892e27c`; reviews (Leo / Pedro / Gise); merge.
 - [ ] US 25640 description rev 2 (`roles_count`, rate card definition).
 - [ ] Tell Nico: the SQL, series start at the M4 deploy date.
 - [ ] qa / main promotion after merge.
