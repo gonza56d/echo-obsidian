@@ -54,7 +54,7 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - The kforce-dev timings (worst statement 3.5 s, slices 66 s from a laptop, names 3.8 s) are in the PR body.
 
 ## Pending
-- The full local unit + multitenancy suite was still running when the PR was opened; confirm it and CI.
+- Full local suite GREEN on `a01d2687` (7135 passed, 1 skipped, 1 xfailed; PR body updated). Pending: CI.
 - Tests predate the team testing practice CLAUDE.md section added 2026-10-30 (names `test_<entry>_<outcome>_when_<condition>`, Given/When/Then, entry points rather than direct service calls). Align them if reviewers ask.
 - Review + squash-merge; then close US 25729.
 - Worker must run with `ENHANCEMENT_WORKER_ENABLED` per env (check prod / kforce-prod).
