@@ -20,7 +20,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 
 ## Azure / docs
 - [US 25644](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25644): In revision 2026-10-30, PR linked as GitHub Pull Request, comment 29225193 lists the contract differences.
-- [Tech PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) rev 84: not yet updated; the contract differences below go in after review.
+- [Tech PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) rev 90 (2026-10-30): M7 checklist and API contract as built, plus a changelog row (period params, caller's tenant, metric 7, no page views, user-requested AI only, newest first).
 
 ## PRs
 - [#2487](https://github.com/taller-projects/echo-backend/pull/2487) → dev, OPEN 2026-10-30 (`7f6b2095`, branch `25644/metrics-read-endpoints`, worktree `.claude/worktrees/25644-metrics-read`).
@@ -56,7 +56,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 
 ## Pending
 - [ ] CI on `7f6b2095`, review (Leo / Pedro / Gise), merge.
-- [ ] PRD: M7 checklist and API contract (period params, newest first, no page views, user-requested AI only, active_users = metric 7) + changelog rows.
+- [x] PRD: M7 checklist, API contract, changelog row (rev 90, 2026-10-30).
 - [ ] US 25644 description/AC to the same wording. Close it on merge to dev.
 - [ ] qa / main promotion.
 
