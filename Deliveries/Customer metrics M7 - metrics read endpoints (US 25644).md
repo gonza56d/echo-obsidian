@@ -24,6 +24,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 
 ## PRs
 - [#2487](https://github.com/taller-projects/echo-backend/pull/2487) → dev, OPEN 2026-10-30 (`7f6b2095`, branch `25644/metrics-read-endpoints`, worktree `.claude/worktrees/25644-metrics-read`).
+- Self-review r1 (pr-review skill, scoped, 3 agents) on `7f6b2095`: READY WITH NITS, 0 blockers, not posted. Nits 1-4 fixed in `7270f541`, pushed 2026-10-30 from worktree `.claude/worktrees/25644-metrics-nits` (branch `25644/metrics-read-nits`) with `HEAD:25644/metrics-read-endpoints`, without a local test run (user asked); PR body updated.
 
 ## Decisions (user, 2026-10-30)
 - `active_users` = metric 7 "honest adoption": distinct users with at least one action, page views excluded (SQL 7c). It is not the `/echo-usage` session count.
@@ -43,6 +44,18 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - The AI outcome rules are the same as SQL 3a. `role` / `project_case_study` are referenced with lightweight `table()` constructs; neither table has RLS.
 - No migration: each `user_events` query carries `event_type <> 'page_viewed'`, so the planner uses the partial `ix_user_events_tenant_type_created`.
 
+## Review r1 (2026-10-30)
+- Fixed in `7270f541`:
+  - The role / case-study existence check moved out of `AiSuggestionRepository` (string-literal `table()` reads with no tenant filter) into `CustomerMetricsService`, which calls `RoleService` / `ProjectCaseStudyService.filter_existing_ids`. `AiSuggestionService` cannot inject them: both inject it (DI cycle). New flow: `get_open_applied_entity_ids` → owners' `filter_existing_ids` → `count_user_outcomes(..., deleted_entity_ids)`.
+  - `count_user_outcomes` filters `kind IN AiSuggestionKind`: an unknown kind (varchar, no CHECK) made the summary a 500.
+  - Fixture rows: an open case study with an existing card (accepted), an open manual matching_instructions (ignored), the start edge (1 Mar 00:00), and an `entity_type`-only case.
+- Left open (nits 5-7):
+  - p95 evidence is per-query EXPLAIN only. No plan for `?user_id=` (could pick `ix_user_events_user_date`, page views included) or for a 730-day window. Measure on kforce-dev after merge.
+  - `active_users` population (7c) includes support accounts and deactivated users, unlike `/echo-usage`. The route docstring still says `/echo-usage` "counts sessions".
+  - Minor: adoption ↔ ai_suggestion/proposal module coupling, two `period_invalid` envelopes, `_actions` naming, whole-row load in `get_actions_page`, past-period `ai_outcomes` not final.
+- Out of scope: PRD RLS line (the M1 `user_events` SELECT policy has no tenant check); system/platform admins without `adoption.view` see only their own events (same as `/echo-usage`).
+- `/metrics` has no infra collision: the prod ingress is prefix `/` with no `/metrics` rule, and the PodMonitors scrape the worker / dispatcher ports only.
+
 ## Gotchas
 - The `adoption.view` SELECT policy on `user_events` is `authorize(...)` with no tenant check, so every read needs an explicit `tenant_id` filter. The multitenancy test pins it: the mutation without the filter fails.
 - `act_as` permission tests on `mocked_tenant` need a `TenantModule(module="adoption")` row. Without it the log says "permissions not available in tenant modules: []" and the route answers 404.
@@ -55,7 +68,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - kforce-dev read-only `EXPLAIN ANALYZE`, 90-day window (202,879 rows, 1,809 actions): every query 0.1-4.2 ms. Script: `<worktree>/.claude/worktrees/tmp/m7_explain_kforce_dev.sql`.
 
 ## Pending
-- [ ] CI on `7f6b2095`, review (Leo / Pedro / Gise), merge.
+- [ ] CI on `7270f541` (review nits pushed without a local run), review (Leo / Pedro / Gise), merge.
 - [x] PRD: M7 checklist, API contract, changelog row (rev 90, 2026-10-30).
 - [ ] US 25644 description/AC to the same wording. Close it on merge to dev.
 - [ ] qa / main promotion.
