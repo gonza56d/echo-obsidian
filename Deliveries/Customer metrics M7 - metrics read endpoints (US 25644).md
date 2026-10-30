@@ -56,6 +56,22 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - Out of scope: PRD RLS line (the M1 `user_events` SELECT policy has no tenant check); system/platform admins without `adoption.view` see only their own events (same as `/echo-usage`).
 - `/metrics` has no infra collision: the prod ingress is prefix `/` with no `/metrics` rule, and the PodMonitors scrape the worker / dispatcher ports only.
 
+## Pedro's review (2026-10-30)
+- [Review 5714640787](https://github.com/taller-projects/echo-backend/pull/2487#pullrequestreview-5714640787) on `7270f541`: APPROVED, READY WITH NITS, 0 blockers. CI on `7270f541` passed.
+- Fixed in `80b5dbe5` (pushed without a local run, user asked):
+  - nit 2: unknown-kind seed row;
+  - nit 3: period rules parametrized across both routes;
+  - nit 4: positive `user_id` case;
+  - nit 5: `adoption_module` fixture removes the TenantModule row it created;
+  - nit 7: `PAGE_VIEWED` comment.
+- Kept as-is:
+  - nit 6: importing `AiSuggestionEntityType` from `ai_suggestion.models` matches project / assessment / role / case_study services. The `str` keys are deliberate: `entity_type` is a varchar, so an enum conversion could 500 like the unknown kind did.
+  - nit 1: the endpoint p95 can only be measured once dev deploys to kforce-dev.
+- Questions:
+  - `/metrics` prefix: no collision (prod ingress is prefix `/`, PodMonitors only on the worker / dispatcher ports); kept as the PRD/US name.
+  - `event_data` exposure, `user_id` with no `data_scope`: same as `/echo-usage`; state it in the PRD.
+  - US wording before closing.
+
 ## Gotchas
 - The `adoption.view` SELECT policy on `user_events` is `authorize(...)` with no tenant check, so every read needs an explicit `tenant_id` filter. The multitenancy test pins it: the mutation without the filter fails.
 - `act_as` permission tests on `mocked_tenant` need a `TenantModule(module="adoption")` row. Without it the log says "permissions not available in tenant modules: []" and the route answers 404.
@@ -68,7 +84,10 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - kforce-dev read-only `EXPLAIN ANALYZE`, 90-day window (202,879 rows, 1,809 actions): every query 0.1-4.2 ms. Script: `<worktree>/.claude/worktrees/tmp/m7_explain_kforce_dev.sql`.
 
 ## Pending
-- [ ] CI on `7270f541` (review nits pushed without a local run), review (Leo / Pedro / Gise), merge.
+- [x] Review: Pedro APPROVED (5714640787).
+- [ ] CI on `80b5dbe5`, then squash-merge to dev (user asked: merge once green).
+- [ ] Endpoint p95 on kforce-dev after deploy (Pedro nit 1).
+- [ ] PRD: `event_data` / `user_id` exposure note (Pedro question).
 - [x] PRD: M7 checklist, API contract, changelog row (rev 90, 2026-10-30).
 - [ ] US 25644 description/AC to the same wording. Close it on merge to dev.
 - [ ] qa / main promotion.
