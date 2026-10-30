@@ -42,13 +42,14 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 - Coverage: shown on every run, **no minimum**, aim 100%; `# pragma: no cover` only for app/process wiring, reason on the line.
 
 ## Gotchas
+- Coverage baseline (CI on #2490, 2026-10-30): **92%** of `app/` (3,432 / 40,502 lines missed, 301 files < 100%); no measurable cost (24:31 vs 21:26 / 24:55 on dev). Flattered by mocked unit tests; lowest = `export/service.py` 32% (export suite ignored), `outbox/repository.py` 55% (real-DB tests only in tests/system). Recorded in PRD Targets + Feature 25717.
 - `exclude_lines` in `[tool.coverage.report]` had replaced coverage's default → `# pragma: no cover` was silently ignored; fixed with `exclude_also`.
 - `tests/system`: 71/480 fail locally (51 in `test_candidate_email.py`) — rot from never running in CI.
 - No router test in echo-backend mocks our own Service; the real layered example is interview cancel (repo test twice with MagicMock session, service test on call shapes, real endpoint test only in `tests/system`).
 - Azure `$User Story` must be URL-encoded; GitHub PR ArtifactLink needs repo id `db75e3ff-226f-4014-86ae-37f4bcf56c43`.
 
 ## Pending
-- #2490: CI baseline coverage % + runtime overhead → record in PRD Targets + Feature 25717; review + merge; close Task 25735.
+- #2490: review + merge; close Task 25735.
 - Team to assign owners for M2, M3, M4, M7.
 - M1 + M2 can start; M2 replaces the interim rules with the final ones.
 - Optional: feed coverage to Sonar (needs coverage.xml + reorder the second checkout in `test.yml`).
