@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-30
 tags: [feature, customer-metrics, external-links, migration, trackerrms, jazzhr]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2488"
@@ -19,22 +19,23 @@ prd: "https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj"
 Customer metrics M6. `entity_external_links` gains `source_created_at` / `source_updated_at`: when a record was created or updated in the ATS (TrackerRMS for Navitec, JazzHR for Taller). The metrics definition of a new candidate is `coalesce(source_created_at, talent.created_at) >= role.open_at`. The backend half only: the dates arrive once the inbound pipeline sends them, and who owns that is PRD open question 7. Related: [[Customer metrics M7 - metrics read endpoints (US 25644)]], [[Map - TrackerRMS integration]], [[Map - JazzHR integration]].
 
 ## Azure / docs
-- [US 25643](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25643): In revision 2026-10-30, PR linked as GitHub Pull Request, comment 29225311 lists the scope changes.
+- [US 25643](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25643): CLOSED 2026-10-30 on merge to dev (comment 29226297; earlier comment 29225311 lists the scope changes).
 - [Tech PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) rev 90 (2026-10-30), updated for both M6 and M7:
   - M6 checklist, M6 SQL block, Migration plan (resync + revision ids), Idempotency, Risks cell, open question 7, Backfill strategy;
   - M7 checklist and API contract;
   - 2 changelog rows.
 
 ## PRs
-- [#2488](https://github.com/taller-projects/echo-backend/pull/2488) → dev, OPEN 2026-10-30 (`5eb4b12f`, branch `25643/external_link_source_dates`, worktree `.claude/worktrees/25643-source-dates`). Migration `nwo4dn95fdjw`, parent `5ehxknwwrxn8`.
-  - Self-review r1 2026-10-30 (`/pr-review` full, 3 agents, not posted): READY WITH NITS, 0 blockers. All 6 nits fixed in `892de2e3`, pushed 2026-10-30 from worktree `.claude/worktrees/25643-source-dates-review` (branch `25643/external_link_source_dates-review`, pushed as `HEAD:25643/external_link_source_dates`; the original worktree is owned by another session). Pushed without the local suite (user asked); PR body refreshed.
+- [#2488](https://github.com/taller-projects/echo-backend/pull/2488) → dev, SQUASH-MERGED 2026-10-30 16:10Z as `74c17bc2` (head `fd2a2328`, CI green 24 min). Started at `5eb4b12f` ( branch `25643/external_link_source_dates`, worktree `.claude/worktrees/25643-source-dates`). Migration `nwo4dn95fdjw`, parent `5ehxknwwrxn8`.
+  - Self-review r1 2026-10-30 (`/pr-review` full, 3 agents, not posted): READY WITH NITS, 0 blockers. All 6 nits fixed in `892de2e3`, pushed 2026-10-30 from worktree `.claude/worktrees/25643-source-dates-review` (branch `25643/external_link_source_dates-review`, pushed as `HEAD:25643/external_link_source_dates`; the original worktree is owned by another session). Pushed without the local suite (user asked); PR body refreshed. CI green on `892de2e3`.
+  - Pedro's review 5714641271 on `892de2e3`: APPROVED, READY WITH NITS. Fixed in `fd2a2328` (pushed without the local suite, user asked): `SourceDates` moved to `external_link/schemas.py`, error text "one day from now (UTC)", `if source_dates is None`, tests (DB-level `POST /internal/organizations` stores the date + naive 422, explicit-null re-push keeps, 1900-01-01 accepted). PR body: outbound raw-SQL writers send no dates, existing orgs resync via external-links, merge collision delete can't drop dates (uq forbids it), no `ExternalLinkFilter` on purpose. PRD rev 92: accepted range in the M6 checklist + changelog row. Not answered on the PR: numeric epochs (`AwareDatetime` accepts `0` → 1970-01-01, inside the range).
 
 ## Decisions (user, 2026-10-30)
 - Endpoint only, no backfill code. The one-time resync is the pipeline re-pushing links with their dates through `POST /internal/external-links`. A CSV loader script gets written only if open question 7 comes back as "export file", once that file's columns are known.
 - No `now()` default. The user asked about it; the answer was that `created_at` already holds Echo's import time, which is exactly the value the metric must not use.
 
 ## How
-- `SourceDates` (`external_link/external_platforms.py`) holds two optional `SourceDate` fields (`AwareDatetime` + range validator). No offset, or outside 1900-01-01 to tomorrow, is a 422.
+- `SourceDates` (`external_link/schemas.py`) holds two optional `SourceDate` fields (`AwareDatetime` + range validator). No offset, or outside 1900-01-01 to tomorrow, is a 422.
   - `ExternalLinkUpsertRequest` extends it. The org create's `external_integration` is `OrganizationExternalIntegration` (`organization/schemas.py`, `ExternalIntegration` + `SourceDates`); `ExternalIntegration` stays an id pair.
   - Route + field descriptions: offset required, omitted or `null` keeps the stored date, DELETE + POST clears it.
   - `ExternalLinkResponse` returns both dates.
@@ -62,9 +63,8 @@ Customer metrics M6. `entity_external_links` gains `source_created_at` / `source
 - Migration smoke (`<worktree>/.claude/worktrees/tmp/migration_smoke_m6.py`): `create_all` + stamp, downgrade/upgrade twice, a re-run over existing columns, and `create_all` types matching the migration's.
 
 ## Pending
-- [ ] CI on `892de2e3`, review, merge; close US 25643 on merge to dev.
 - [ ] US 25643 description/AC still describe the old scope (4 upsert families + bulk, background job, NULL-only, "per (entity, platform)").
-- [ ] PRD wording: Idempotency "changes nothing" -> "changes no stored date"; M6 item 3 "roles and talents need jazz_hr links"; org dates resync via external-links (create 409s); response fields in the API contract; new-candidate query needs a platform filter + `min(source_created_at)` per talent, a UTC session, and an owning milestone.
+- [ ] PRD wording (range already in rev 92): Idempotency "changes nothing" -> "changes no stored date"; Backfill paragraph "fills only NULLs" vs a re-push replacing; M6 item 3 "roles and talents need jazz_hr links"; org dates resync via external-links (create 409s); response fields in the API contract; new-candidate query needs a platform filter + `min(source_created_at)` per talent, a UTC session, and an owning milestone.
 - [ ] Before the resync, on prod: links per tenant/entity/platform, entities with more than one link per platform, `tenant_integrations` flags (queries in the r1 review).
 - [ ] Open question 7: name the pipeline owner and have them send the dates (+ bind Taller role `jazz_hr` links); then the Navitec / Taller re-push run, ≥ 95% counts per entity on the ticket, `ANALYZE entity_external_links`.
 - [ ] Tell Nico: the `coalesce(source_created_at, talent.created_at)` definition is live once dates arrive.
