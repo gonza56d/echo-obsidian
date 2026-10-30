@@ -44,7 +44,7 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 ## Gotchas
 - `exclude_lines` in `[tool.coverage.report]` had replaced coverage's default → `# pragma: no cover` was silently ignored; fixed with `exclude_also`.
 - `tests/system`: 71/480 fail locally (51 in `test_candidate_email.py`) — rot from never running in CI.
-- No interior test in echo-backend mocks our own Service from a router; the real layered example is interview cancel (repo test twice with MagicMock session, service test on call shapes, real endpoint test only in `tests/system`).
+- No router test in echo-backend mocks our own Service; the real layered example is interview cancel (repo test twice with MagicMock session, service test on call shapes, real endpoint test only in `tests/system`).
 - Azure `$User Story` must be URL-encoded; GitHub PR ArtifactLink needs repo id `db75e3ff-226f-4014-86ae-37f4bcf56c43`.
 
 ## Pending
