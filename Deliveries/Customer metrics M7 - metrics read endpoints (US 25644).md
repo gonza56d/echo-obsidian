@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-10-30
 tags: [feature, customer-metrics, adoption, read-endpoints]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2487"
@@ -23,7 +23,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - [Tech PRD](https://claude.ai/artifact/3MtNDQyKXG1K6egnELoAQj) rev 90 (2026-10-30): M7 checklist and API contract as built, plus a changelog row (period params, caller's tenant, metric 7, no page views, user-requested AI only, newest first).
 
 ## PRs
-- [#2487](https://github.com/taller-projects/echo-backend/pull/2487) → dev, OPEN 2026-10-30 (`7f6b2095`, branch `25644/metrics-read-endpoints`, worktree `.claude/worktrees/25644-metrics-read`).
+- [#2487](https://github.com/taller-projects/echo-backend/pull/2487) → dev, **squash-MERGED 2026-10-30 16:15Z as `83a8895a`** (head `80b5dbe5`, CI green, Pedro approved). Opened 2026-10-30 (`7f6b2095`, branch `25644/metrics-read-endpoints`, worktree `.claude/worktrees/25644-metrics-read`).
 - Self-review r1 (pr-review skill, scoped, 3 agents) on `7f6b2095`: READY WITH NITS, 0 blockers, not posted. Nits 1-4 fixed in `7270f541`, pushed 2026-10-30 from worktree `.claude/worktrees/25644-metrics-nits` (branch `25644/metrics-read-nits`) with `HEAD:25644/metrics-read-endpoints`, without a local test run (user asked); PR body updated.
 
 ## Decisions (user, 2026-10-30)
@@ -85,11 +85,11 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 
 ## Pending
 - [x] Review: Pedro APPROVED (5714640787).
-- [ ] CI on `80b5dbe5`, then squash-merge to dev (user asked: merge once green).
+- [x] CI on `80b5dbe5` green; squash-merged to dev `83a8895a`.
 - [ ] Endpoint p95 on kforce-dev after deploy (Pedro nit 1).
 - [ ] PRD: `event_data` / `user_id` exposure note (Pedro question).
 - [x] PRD: M7 checklist, API contract, changelog row (rev 90, 2026-10-30).
-- [ ] US 25644 description/AC to the same wording. Close it on merge to dev.
+- [x] US 25644 description updated to the as-built contract and Closed (rev 6, comment 29226999).
 - [ ] qa / main promotion.
 
 ## Related
