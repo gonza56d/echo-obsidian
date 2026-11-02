@@ -53,6 +53,7 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 - ~4 s module-setup pauses on CI and in full local runs, also on dev; same modules ~0.2 s alone. Not GC (probe: gen2 43 s/run total, worst 0.79 s), not CI Supabase env. Unexplained → lead for M5. Per-test rollback impossible: request session (TestClient portal thread), EventBus handler sessions and `create_entity` all commit on separate connections.
 - M1 full local run: origin/dev 7,127 passed (21m06s under contention) vs branch 7,127 passed (18m05s under contention); 6 schema builds = 1 + 5 rebuilds after modules that leave the schema altered: `tests/unit/modules/public_api/test_user_bound_keys.py`, `test_add_source_id_to_application_migration.py`, `test_change_kind_added_job_retired.py`, `test_group_hierarchy_migration.py`, `test_role_note_migration.py` (real diffs: role_note columns/policy, application FK/index names); 281 module resets (the rest never touch the DB).
 - 4–7 s "setup" spikes in `--durations` were CPU contention from two suites at once; alone a module's first setup is ≈0.1 s.
+- CI on `ebda93eb` (2026-10-30 23:45Z → 00:25Z, 39:04) failed 1/7,127: `test_customer_metrics.py::test_an_invalid_custom_period_is_rejected[future-end]` (200 ≠ 400). Not the harness: the param row computes `date.today() + 1 day` at **collection**; the request ran after midnight UTC, so "tomorrow" was today. Same latent flake on dev (from #2487). Fixed in-PR (user chose this PR over a separate dev PR) by widening to +7 days, commit `bd9edc9b` pushed 2026-11-02 from my own worktree `.claude/worktrees/25718-fix-flake` (branch `25718/fix_future_end_flake`, pushed `HEAD:25718/test_harness_schema_once`; the original worktree belongs to session 2f450da8).
 - Dev CI "Run tests and linter", last 5 green runs before M1: 20m52s / 21m49s / 25m16s / 25m43s / 29m27s.
 - Shared main `.venv` lacked `nh3` (#2489); synced with `UV_PROJECT_ENVIRONMENT=<main>/.venv uv sync --frozen` (also removed python-jose).
 - Coverage baseline (CI on #2490, 2026-10-30): **92%** of `app/` (3,432 / 40,502 lines missed, 301 files < 100%); no measurable cost (24:31 vs 21:26 / 24:55 on dev). Flattered by mocked unit tests; lowest = `export/service.py` 32% (export suite ignored), `outbox/repository.py` 55% (real-DB tests only in tests/system). Recorded in PRD Targets + Feature 25717.
@@ -62,7 +63,7 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 - Azure `$User Story` must be URL-encoded; GitHub PR ArtifactLink needs repo id `db75e3ff-226f-4014-86ae-37f4bcf56c43`.
 
 ## Pending
-- #2492 (M1): CI on `ebda93eb` (DELETE, final); decide sort-bug fix scope (this PR vs separate Bug); fix 'see the PR conversation' line in PR body; review + merge; close US 25718. AC met by the same-batch A/B (−9.5 min vs dev).
+- #2492 (M1): CI on `bd9edc9b` (DELETE wipe + midnight flake fix); decide sort-bug fix scope (this PR vs separate Bug); fix 'see the PR conversation' line in PR body; review + merge; close US 25718. AC met by the same-batch A/B (−9.5 min vs dev).
 - M1 follow-ups: per-test reset on top of `reset_database` once M2/M3 Given builders exist; the 5 schema-altering migration-test modules (M6 waves).
 - Team to assign owners for M2, M3, M4, M7.
 - M1 + M2 can start; M2 replaces the interim rules with the final ones.
