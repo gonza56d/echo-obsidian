@@ -68,6 +68,12 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - Interactions (M4, US 25732): no free since/until; they want the no-param response cut to the snapshot window with effective since/until, or everything with `period` and they filter `period = recent` — we must tell them which.
 - Answers posted on the PR: https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6580767694 ; body refreshed (totals, backoff, merge order).
 
+## `ee15227b` — source_updated_at (user: "en este PR", 2026-11-02)
+- Snapshot keeps `content_hash` (sha256 of its rows; column added to the unmerged `65o0viylh9b3`). Rows differ from the previous snapshot → `source_updated_at = computed_at`; same rows → `max(updated_at)` never moving back; first snapshot → plain max.
+- Why a hash: `organization_insight` has no updated_at and industry edits don't touch `organization.updated_at` (joined inheritance), so industry can't be tracked by timestamp; deletions leave no timestamp either.
+- Caveats in docs: the yearly window shift changes the rows → on KForce it moves on most refreshes; org renames are not covered (names resolved at read time).
+- Mutation-checked: dropping the bump fails both "moves" cases.
+
 ## Pending
 - r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel POSTED 2026-11-02 (https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6578455910); PR body refreshed (Tests section rewritten, Review round 1 section).
 - Open questions for Juani (Leo's 5: buyer-title fallback, undated, recent_since policy, client_visit source, source_updated_at coverage) and Gisel's 2 (kforce-prod EXPLAIN of one slice — user runs it via `!`; backoff for a refresh that keeps failing).
