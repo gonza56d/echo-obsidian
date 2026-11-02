@@ -61,7 +61,7 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - Not changed (reasons drafted for the PR reply): REPEATABLE READ in `get_activities` (isolation can't change after the API-key lookup opened the transaction; untestable without concurrency), per-tenant enqueue commit (savepoint already isolates the unique race), scheduler disabled/rollback tests (need mocking our code), failing-tenant test (job isolation = worker property).
 
 ## Pending
-- r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel not posted yet; PR body may mention old test names / SignalPeriod.
+- r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel POSTED 2026-11-02 (https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6578455910); PR body refreshed (Tests section rewritten, Review round 1 section).
 - Open questions for Juani (Leo's 5: buyer-title fallback, undated, recent_since policy, client_visit source, source_updated_at coverage) and Gisel's 2 (kforce-prod EXPLAIN of one slice — user runs it via `!`; backoff for a refresh that keeps failing).
 - Update US 25729 to the real design (hourly tick + unique index, relationship scope, two tables, M2-M4 add their own columns/metrics, per-tenant recent_since not done, limit = per kind × period).
 - Review + squash-merge; then close US 25729.
