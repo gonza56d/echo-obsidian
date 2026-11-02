@@ -1,11 +1,12 @@
 ---
 type: delivery
-status: merged
+status: in-review
 env: both
 delivered: 2026-11-02
 tags: [feature, internal-api, kforce, data-team, background-job]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2491"
+  - "https://github.com/taller-projects/echo-backend/pull/2496"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25729"
@@ -27,6 +28,8 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - [#2491](https://github.com/taller-projects/echo-backend/pull/2491) → dev — **MERGED** 2026-11-02 (squash `e985f5e8`, Gisel APPROVED on `ee15227b`; opened 2026-10-30 at `a01d2687`), branch `25729/commercial_signals_activities`
   - Review r1 (2026-10-30): Leo CHANGES REQUESTED (2 blockers: no test for 2nd refresh / stale-by-age / missing tenant; tests bypass entry points) + 5 contract questions for Juani + nits; Gisel agreed + 2 questions (kforce-prod EXPLAIN, hourly retry of a failing refresh) + nits.
   - r1 fixes pushed 2026-11-02: dev merged `cc299a71` + `0be83afd` (worktree `.claude/worktrees/25729-commercial-signals-r1`, branch `25729/commercial_signals_review_r1`, pushed to `HEAD:25729/commercial_signals_activities`). Pushed on the user's request before the full local suite finished; targeted tests 22/22 green, commercial_signals module 100% covered.
+- [#2496](https://github.com/taller-projects/echo-backend/pull/2496) → dev — **OPEN** 2026-11-02, commit `92ba9e90`, branch `25729/commercial_signals_totals_dates` (worktree `.claude/worktrees/25729-totals-dates`): `totals` rows carry `first_start_date` / `last_start_date` (min/max over every group of the kind × period, honor `exclude_org_ids`, null for undated). No migration (rollup already has first/last per row). Juan asked for it; his client already reads them. Linked to US 25729 (Closed, not reopened, user's choice). Local: commercial-signals unit + multitenancy 28/28.
+- Consumer side (tenant_commercial_profile_api, Juan): [PR 13402](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/tenant_commercial_profile_api/pullrequest/13402) (stop sending recent_since/since + totals) — my review thread 33679 + APPROVED; [PR 13410](https://dev.azure.com/TallerInternTools/Echo%20Core/_git/tenant_commercial_profile_api/pullrequest/13410) (exclude_org_ids repeated keys + omitted when empty, totals only, engagement drops period≠recent, RECENT_WINDOW_MONTHS 24→12, fixtures) — thread 33691 + APPROVED 2026-11-02; still open (master = 13402 merge), on their dev.
 
 ## How
 - Module `app/modules/commercial_signals/`, mounted at `/internal/commercial-signals`. Tenant comes from `X-Echo-Api-Key`; no module or feature gate.
@@ -77,10 +80,12 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 ## Pending
 - Deploy: Azure run 32370 (dev + kforce-dev) for `e985f5e8`. Risk: the Azure "Lint and tests" job has no `timeoutInMinutes` (agent default 60) and since #2490 `scripts/test.sh` runs with `--cov` → job went 31–37 min → 54 min (32319) → canceled at 60.2 min (32356, #2493 never deployed).
 - Migration re-verified on `ee15227b` before merge (throwaway pg16: create_all minus the 2 tables + stamp `w3kq8vd2mhtp` → upgrade / downgrade -1 / upgrade OK; `alembic check` fails only on Supabase `handle_new_user` (schema `echo`), env-only).
-- `exclude_org_ids`: consumer sends CSV, endpoint takes repeated keys → 422 with 0 or 2 ids. Decide which side fixes before prod (consumer PR 13402 thread 33679).
+- ~~`exclude_org_ids` CSV vs list~~ → fixed on the consumer side (PR 13410, repeated keys, omitted when empty); backend keeps `list[UUID]`.
 - After deploy: first refresh runs on the worker (`ENHANCEMENT_WORKER_ENABLED` per env), read/write seconds in `commercial_signals_refreshed`.
 - Task 25734: one internal API key per tenant and env; consumer smoke on kforce-dev with Juani.
-- Tell Juani the M4 interactions shape (US 25732); M2-M5 (US 25730-25733); qa/main promotion.
+- M4 interactions shape TOLD (13410 thread 33691, 2026-11-02): all history, every row labelled by `period` against the snapshot's `recent_since`, no since/until (same contract as the other endpoints; US 25732's since/until params are dropped). Update US 25732 accordingly when M4 starts.
+- [#2496](https://github.com/taller-projects/echo-backend/pull/2496): review + merge; consumer nit `row.get("period", "recent")` drops explicit null (we never send null).
+- M2-M5 (US 25730-25733); qa/main promotion (consumer master must have 13402 before activities reaches main).
 
 ## Related
 - [[Map - Kforce]]
