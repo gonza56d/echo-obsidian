@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-02
 tags: [feature, internal-api, kforce, data-team, background-job]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2491"
@@ -19,12 +19,12 @@ prd: "https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C"
 Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggregates instead of rows. M1 adds `GET /internal/commercial-signals/activities`, which serves job orders, send-outs, placements and client visits grouped by kind × line of business × job function × assignment type × industry × period, plus buyer titles and the complete organizations list. A daily snapshot refreshed on the worker backs it, because a live aggregate over KForce's ~1.5M activities outlives the 20 s statement timeout. No FE involvement (internal surface).
 
 ## Azure / docs
-- [Feature 25728](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728) → [US 25729](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25729) (M1, **In revision**, PR linked) · M2-M5 = US 25730-25733 · [Task 25734](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25734) API keys per tenant
+- [Feature 25728](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728) → [US 25729](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25729) (M1, **Closed** 2026-11-02 on merge, PR linked; merge comment 29240911) · M2-M5 = US 25730-25733 · [Task 25734](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25734) API keys per tenant
 - Request doc (the contract): [echo-backend: endpoints commercial-signals](https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C) (Juani, 2026-10-29, forwarded by Pedro)
 - Repo note: `docs/commercial-signals.md`
 
 ## PRs
-- [#2491](https://github.com/taller-projects/echo-backend/pull/2491) → dev — **OPEN** 2026-10-30, commit `a01d2687`, branch `25729/commercial_signals_activities`
+- [#2491](https://github.com/taller-projects/echo-backend/pull/2491) → dev — **MERGED** 2026-11-02 (squash `e985f5e8`, Gisel APPROVED on `ee15227b`; opened 2026-10-30 at `a01d2687`), branch `25729/commercial_signals_activities`
   - Review r1 (2026-10-30): Leo CHANGES REQUESTED (2 blockers: no test for 2nd refresh / stale-by-age / missing tenant; tests bypass entry points) + 5 contract questions for Juani + nits; Gisel agreed + 2 questions (kforce-prod EXPLAIN, hourly retry of a failing refresh) + nits.
   - r1 fixes pushed 2026-11-02: dev merged `cc299a71` + `0be83afd` (worktree `.claude/worktrees/25729-commercial-signals-r1`, branch `25729/commercial_signals_review_r1`, pushed to `HEAD:25729/commercial_signals_activities`). Pushed on the user's request before the full local suite finished; targeted tests 22/22 green, commercial_signals module 100% covered.
 
@@ -75,14 +75,12 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - Mutation-checked: dropping the bump fails both "moves" cases.
 
 ## Pending
-- r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel POSTED 2026-11-02 (https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6578455910); PR body refreshed (Tests section rewritten, Review round 1 section).
-- Open questions for Juani (Leo's 5: buyer-title fallback, undated, recent_since policy, client_visit source, source_updated_at coverage) and Gisel's 2 (kforce-prod EXPLAIN of one slice — user runs it via `!`; backoff for a refresh that keeps failing).
-- Update US 25729 to the real design (hourly tick + unique index, relationship scope, two tables, M2-M4 add their own columns/metrics, per-tenant recent_since not done, limit = per kind × period).
-- Review + squash-merge; then close US 25729.
-- Worker must run with `ENHANCEMENT_WORKER_ENABLED` per env (check prod / kforce-prod).
-- Task 25734: issue one internal API key per tenant and env; consumer smoke on kforce-dev with Juani.
-- Answer Juani's checklist in the doc (owner/ETA, rollup mechanism, org list decision); stage mapping is M3.
-- M2-M5 (US 25730-25733).
+- Deploy: Azure run 32370 (dev + kforce-dev) for `e985f5e8`. Risk: the Azure "Lint and tests" job has no `timeoutInMinutes` (agent default 60) and since #2490 `scripts/test.sh` runs with `--cov` → job went 31–37 min → 54 min (32319) → canceled at 60.2 min (32356, #2493 never deployed).
+- Migration re-verified on `ee15227b` before merge (throwaway pg16: create_all minus the 2 tables + stamp `w3kq8vd2mhtp` → upgrade / downgrade -1 / upgrade OK; `alembic check` fails only on Supabase `handle_new_user` (schema `echo`), env-only).
+- `exclude_org_ids`: consumer sends CSV, endpoint takes repeated keys → 422 with 0 or 2 ids. Decide which side fixes before prod (consumer PR 13402 thread 33679).
+- After deploy: first refresh runs on the worker (`ENHANCEMENT_WORKER_ENABLED` per env), read/write seconds in `commercial_signals_refreshed`.
+- Task 25734: one internal API key per tenant and env; consumer smoke on kforce-dev with Juani.
+- Tell Juani the M4 interactions shape (US 25732); M2-M5 (US 25730-25733); qa/main promotion.
 
 ## Related
 - [[Map - Kforce]]
