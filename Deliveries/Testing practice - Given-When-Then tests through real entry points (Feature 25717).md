@@ -63,7 +63,7 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 - Azure `$User Story` must be URL-encoded; GitHub PR ArtifactLink needs repo id `db75e3ff-226f-4014-86ae-37f4bcf56c43`.
 
 ## Pending
-- #2492 (M1): CI on `bd9edc9b` (DELETE wipe + midnight flake fix); decide sort-bug fix scope (this PR vs separate Bug); fix 'see the PR conversation' line in PR body; review + merge; close US 25718. AC met by the same-batch A/B (−9.5 min vs dev).
+- #2492 (M1): CI **green** on `bd9edc9b` 2026-11-02 (pytest 28:49 — runner noise, harness self only 9.1 s; dev range 20–29 min); decide sort-bug fix scope (this PR vs separate Bug); fix 'see the PR conversation' line in PR body; review + merge; close US 25718. AC met by the same-batch A/B (−9.5 min vs dev).
 - M1 follow-ups: per-test reset on top of `reset_database` once M2/M3 Given builders exist; the 5 schema-altering migration-test modules (M6 waves).
 - Team to assign owners for M2, M3, M4, M7.
 - M1 + M2 can start; M2 replaces the interim rules with the final ones.
