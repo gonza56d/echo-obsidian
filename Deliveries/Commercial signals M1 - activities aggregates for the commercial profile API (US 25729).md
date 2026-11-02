@@ -60,6 +60,14 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - `ActivityPeriod` (activity schemas) is the single period enum; `SignalPeriod` removed. Handler rejects `entity_id != tenant_id` (NonRetryable). Script sets tenant + is_internal. `repo.commit()` instead of raw commits. Refresh returns/logs `read_seconds` / `write_seconds`. `tenant_has_activities` uses relationship.tenant_id. `exclude_org_ids` max 100 (query-string length).
 - Not changed (reasons drafted for the PR reply): REPEATABLE READ in `get_activities` (isolation can't change after the API-key lookup opened the transaction; untestable without concurrency), per-tenant enqueue commit (savepoint already isolates the unique race), scheduler disabled/rollback tests (need mocking our code), failing-tenant test (job isolation = worker property).
 
+## Juani's answers (2026-11-02) + `91c0f16b`
+- `recent_since`: fixed 365-day window confirmed; consumer omits it (their branch `fix/signals-backend-window`) and reads the echoed one. **Merge their branch before #2491 reaches dev** (they sent today − 24 months → 422). No per-tenant / multi-window / free date. relationships + deals: same rule.
+- Buyer title as-is (no null bucket); undated OK (no created_at); client_visit not consumed; exclude_org_ids ≤ 100 fine; source_updated_at proposal OK but low priority (they only store it).
+- `limit` affected them (they summed by_group) → added `totals` per kind × period (count, distinct orgs), uncut by limit, honoring exclude_org_ids.
+- Gisel Q2 done: the tick skips a tenant whose refresh job ended failed/dead within 23 h (`failed_job_entity_ids` in background_job writer).
+- Interactions (M4, US 25732): no free since/until; they want the no-param response cut to the snapshot window with effective since/until, or everything with `period` and they filter `period = recent` — we must tell them which.
+- Answers posted on the PR: https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6580767694 ; body refreshed (totals, backoff, merge order).
+
 ## Pending
 - r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel POSTED 2026-11-02 (https://github.com/taller-projects/echo-backend/pull/2491#issuecomment-6578455910); PR body refreshed (Tests section rewritten, Review round 1 section).
 - Open questions for Juani (Leo's 5: buyer-title fallback, undated, recent_since policy, client_visit source, source_updated_at coverage) and Gisel's 2 (kforce-prod EXPLAIN of one slice — user runs it via `!`; backoff for a refresh that keeps failing).
