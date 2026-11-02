@@ -25,6 +25,8 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 
 ## PRs
 - [#2491](https://github.com/taller-projects/echo-backend/pull/2491) → dev — **OPEN** 2026-10-30, commit `a01d2687`, branch `25729/commercial_signals_activities`
+  - Review r1 (2026-10-30): Leo CHANGES REQUESTED (2 blockers: no test for 2nd refresh / stale-by-age / missing tenant; tests bypass entry points) + 5 contract questions for Juani + nits; Gisel agreed + 2 questions (kforce-prod EXPLAIN, hourly retry of a failing refresh) + nits.
+  - r1 fixes pushed 2026-11-02: dev merged `cc299a71` + `0be83afd` (worktree `.claude/worktrees/25729-commercial-signals-r1`, branch `25729/commercial_signals_review_r1`, pushed to `HEAD:25729/commercial_signals_activities`). Pushed on the user's request before the full local suite finished; targeted tests 22/22 green, commercial_signals module 100% covered.
 
 ## How
 - Module `app/modules/commercial_signals/`, mounted at `/internal/commercial-signals`. Tenant comes from `X-Echo-Api-Key`; no module or feature gate.
@@ -47,15 +49,21 @@ Juani's (data team) `tenant_commercial_profile_api` v1.1 needs per-tenant aggreg
 - `limit` = top N per kind × period, default 100, max 5000.
 
 ## Gotchas
-- `Row.count` is the tuple method: read aggregate rows through `row._mapping["count"]`.
+- `Row.count` is the tuple method. Since r1 the cross-module aggregates return NamedTuples (`ActivityCompanyAggregate`, `ActivityTitleAggregate`, `OrganizationNameAndIndustry`), so no `_mapping` lookups remain in the service.
 - ORM bulk `insert(Model)` drops None keys and splits the batch, so the rollup uses `insert(Model.__table__)`.
 - The main `.venv` lacked `nh3` (from #2489), so I ran `uv sync --frozen` to build a worktree-local venv.
 - Throwaway alembic check needs `DB_ADMIN_ROLE=<db user>` (env.py does `SET LOCAL ROLE`); full-chain `alembic check` fails on Supabase auth functions, unrelated.
 - The kforce-dev timings (worst statement 3.5 s, slices 66 s from a laptop, names 3.8 s) are in the PR body.
 
+## Review r1 — what changed (`0be83afd`)
+- Tests through entry points: refresh via `build_handlers(...)[COMMERCIAL_SIGNALS_REFRESH]`, enqueue via `CommercialSignalsRefreshSchedulerService._enqueue_stale`, other tenants over HTTP with their own API key. New cases: replacement after max age, missing tenant, malformed / entity≠tenant job, recent_since midnight boundary, 401/422 edges, limit on by_group, exclusion lowering the org count.
+- `ActivityPeriod` (activity schemas) is the single period enum; `SignalPeriod` removed. Handler rejects `entity_id != tenant_id` (NonRetryable). Script sets tenant + is_internal. `repo.commit()` instead of raw commits. Refresh returns/logs `read_seconds` / `write_seconds`. `tenant_has_activities` uses relationship.tenant_id. `exclude_org_ids` max 100 (query-string length).
+- Not changed (reasons drafted for the PR reply): REPEATABLE READ in `get_activities` (isolation can't change after the API-key lookup opened the transaction; untestable without concurrency), per-tenant enqueue commit (savepoint already isolates the unique race), scheduler disabled/rollback tests (need mocking our code), failing-tenant test (job isolation = worker property).
+
 ## Pending
-- Full local suite GREEN on `a01d2687` (7135 passed, 1 skipped, 1 xfailed; PR body updated). Pending: CI.
-- Tests predate the team testing practice CLAUDE.md section added 2026-10-30 (names `test_<entry>_<outcome>_when_<condition>`, Given/When/Then, entry points rather than direct service calls). Align them if reviewers ask.
+- r1: full local suite on `0be83afd` was still running at push time; CI on the push pending. Reply to Leo + Gisel not posted yet; PR body may mention old test names / SignalPeriod.
+- Open questions for Juani (Leo's 5: buyer-title fallback, undated, recent_since policy, client_visit source, source_updated_at coverage) and Gisel's 2 (kforce-prod EXPLAIN of one slice — user runs it via `!`; backoff for a refresh that keeps failing).
+- Update US 25729 to the real design (hourly tick + unique index, relationship scope, two tables, M2-M4 add their own columns/metrics, per-tenant recent_since not done, limit = per kind × period).
 - Review + squash-merge; then close US 25729.
 - Worker must run with `ENHANCEMENT_WORKER_ENABLED` per env (check prod / kforce-prod).
 - Task 25734: issue one internal API key per tenant and env; consumer smoke on kforce-dev with Juani.
