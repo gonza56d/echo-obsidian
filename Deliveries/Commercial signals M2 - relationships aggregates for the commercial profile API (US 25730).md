@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged-dev
 env: both
-delivered:
+delivered: 2026-11-03
 tags: [feature, internal-api, kforce, navitec, data-team, background-job]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2500"
@@ -22,7 +22,7 @@ Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /in
 - Request doc (the contract): [echo-backend: endpoints commercial-signals](https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C). Repo note: `docs/commercial-signals.md` ("Decisions (M2, relationships)").
 
 ## PRs
-- [#2500](https://github.com/taller-projects/echo-backend/pull/2500) → dev — **OPEN** 2026-11-03, commit `d44ba99a`, branch `25730/commercial_signals_relationships` (worktree `.claude/worktrees/25730-cs-relationships`). Migration `h4tq9mxe2kcs` after `for6a8gqwfav`. Local: commercial-signals unit + multitenancy 41 green, relationship-state regression files 85 green; full unit + multitenancy 2425 passed / 1 failed (`test_custom_fields` manual-sync test: local `.env` `TRACKER_RMS_ENABLED_TENANT_IDS` allow-list rejects the test tenant; passes with `null`; PR comment posted). US 25730 In revision (rev 2) + PR linked + decisions comment 29248156.
+- [#2500](https://github.com/taller-projects/echo-backend/pull/2500) → dev — **MERGED** 2026-11-03 18:25Z, squash `3b9deac39` (opened on `d44ba99a`), branch `25730/commercial_signals_relationships` (worktree `.claude/worktrees/25730-cs-relationships`). Migration `h4tq9mxe2kcs` after `for6a8gqwfav`. Local: commercial-signals unit + multitenancy 41 green, relationship-state regression files 85 green; full unit + multitenancy 2425 passed / 1 failed (`test_custom_fields` manual-sync test: local `.env` `TRACKER_RMS_ENABLED_TENANT_IDS` allow-list rejects the test tenant; passes with `null`; PR comment posted). US 25730 In revision (rev 2) + PR linked + decisions comment 29248156.
 - Review r1 2026-11-03: Pedro **APPROVED** (READY WITH NITS, 0 blockers, review 5754259828; CI green on `d44ba99a`). 8 nits all fixed in `5a788b9c5` (pushed; reply comment 6611531562): `refresh_all` isolates a failing signal (per-signal try → rollback + log + re-raise at the end; tenant resolved once, `_refresh_activities` / `_refresh_relationships` take the Tenant), each slice binds only its range's pre-fetched ids (`_within`), `COMMERCIAL_SIGNALS_INTERACTION_WINDOWS` (16), `relationship_is_active_expr` public, `_unnest_contact_ids`, prod counts out of docstrings, 401/422 rows + Alumni row + partial-failure test at the engine seam (`before_cursor_execute` raises on the statement binding `contact_ids`). 3 **questions open for the `main` promotion**: per-window counts of the pre-fetch on kforce-prod (equal time windows, recent weeks cluster), `EXPLAIN (ANALYZE, BUFFERS)` of one slice with the real 63k array (hashed SubPlan?), end-to-end `scripts/refresh_commercial_signals.py` on kforce-dev (`read_seconds`, Python gaps < 30 s idle-in-transaction).
 
 ## How
@@ -48,7 +48,7 @@ Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /in
 - `gh pr merge` is refused by the auto-mode classifier ("merge without review") → the user merges.
 
 ## Pending
-- CI on `5a788b9c5` → squash-merge #2500 → close US 25730 (US comment + link PR done at open).
+- ~~CI on `5a788b9c5` → squash-merge #2500 → close US 25730~~ done 2026-11-03: merged `3b9deac39`, US 25730 Closed + merge comment 29251879.
 - Pedro's 3 questions before `main`: kforce-prod per-window counts + EXPLAIN of one slice (user runs, read-only), kforce-dev end-to-end refresh run after the dev deploy; post on the PR.
 - Tell Juani: KForce relationships are all `undated` (no start dates), Prospect never Active, `contacts` approximation, `by_industry` null-heavy on KForce.
 - M3 deals (US 25731): stage mapping won/lost/open/deferred still undecided; M4 interactions shape already told (period-labelled history).
