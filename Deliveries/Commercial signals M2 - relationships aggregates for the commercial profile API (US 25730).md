@@ -22,7 +22,7 @@ Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /in
 - Request doc (the contract): [echo-backend: endpoints commercial-signals](https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C). Repo note: `docs/commercial-signals.md` ("Decisions (M2, relationships)").
 
 ## PRs
-- [#2500](https://github.com/taller-projects/echo-backend/pull/2500) → dev — **OPEN** 2026-11-03, commit `d44ba99a`, branch `25730/commercial_signals_relationships` (worktree `.claude/worktrees/25730-cs-relationships`). Migration `h4tq9mxe2kcs` after `for6a8gqwfav`. Local: commercial-signals unit + multitenancy 41 green, relationship-state regression files 85 green; full unit + multitenancy run pending at PR time.
+- [#2500](https://github.com/taller-projects/echo-backend/pull/2500) → dev — **OPEN** 2026-11-03, commit `d44ba99a`, branch `25730/commercial_signals_relationships` (worktree `.claude/worktrees/25730-cs-relationships`). Migration `h4tq9mxe2kcs` after `for6a8gqwfav`. Local: commercial-signals unit + multitenancy 41 green, relationship-state regression files 85 green; full unit + multitenancy 2425 passed / 1 failed (`test_custom_fields` manual-sync test: local `.env` `TRACKER_RMS_ENABLED_TENANT_IDS` allow-list rejects the test tenant; passes with `null`; PR comment posted). US 25730 In revision (rev 2) + PR linked + decisions comment 29248156.
 
 ## How
 - Endpoint: same params as activities (`recent_since`, `limit`, `exclude_org_ids`), response `recent_since` / `source_updated_at` / `computed_at` / `totals` / `by_industry` / `by_title` / `organizations`. Rollup rows at (type, company, period) and (type, title, company, period) grain with new nullable columns `type`, `contacts`, `active_count`.
@@ -49,7 +49,6 @@ Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /in
 ## Pending
 - CI + review + merge of #2500; close US 25730 on merge (US comment + link PR done at open).
 - Tell Juani: KForce relationships are all `undated` (no start dates), Prospect never Active, `contacts` approximation, `by_industry` null-heavy on KForce.
-- Post the full local suite result on the PR.
 - M3 deals (US 25731): stage mapping won/lost/open/deferred still undecided; M4 interactions shape already told (period-labelled history).
 - Task 25734 API keys per tenant/env + consumer smoke on kforce-dev.
 
