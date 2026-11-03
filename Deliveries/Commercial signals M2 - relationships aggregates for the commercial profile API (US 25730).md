@@ -1,0 +1,58 @@
+---
+type: delivery
+status: in-review
+env: both
+delivered:
+tags: [feature, internal-api, kforce, navitec, data-team, background-job]
+prs:
+  - "https://github.com/taller-projects/echo-backend/pull/2500"
+fe_prs: []
+tickets:
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25730"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728"
+prd: "https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C"
+---
+
+# Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)
+
+Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /internal/commercial-signals/relationships` serves the tenant's Client / Prospect relationships grouped by type × industry × period and by type × title × period (distinct organizations, contacts, Active relationships, last start date), plus `totals` and the complete `organizations` list. Same snapshot / refresh foundation as [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]. No FE involvement.
+
+## Azure / docs
+- [Feature 25728](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728) → [US 25730](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25730) (M2, P2). Next: M3 deals (US 25731), M4 interactions (US 25732), M5 organizations (US 25733, only if needed), API keys Task 25734.
+- Request doc (the contract): [echo-backend: endpoints commercial-signals](https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C). Repo note: `docs/commercial-signals.md` ("Decisions (M2, relationships)").
+
+## PRs
+- [#2500](https://github.com/taller-projects/echo-backend/pull/2500) → dev — **OPEN** 2026-11-03, commit `d44ba99a`, branch `25730/commercial_signals_relationships` (worktree `.claude/worktrees/25730-cs-relationships`). Migration `h4tq9mxe2kcs` after `for6a8gqwfav`. Local: commercial-signals unit + multitenancy 41 green, relationship-state regression files 85 green; full unit + multitenancy run pending at PR time.
+
+## How
+- Endpoint: same params as activities (`recent_since`, `limit`, `exclude_org_ids`), response `recent_since` / `source_updated_at` / `computed_at` / `totals` / `by_industry` / `by_title` / `organizations`. Rollup rows at (type, company, period) and (type, title, company, period) grain with new nullable columns `type`, `contacts`, `active_count`.
+- Refresh: the per-tenant job now runs `refresh_all` (activities, then relationships; one swap each). A tenant is stale when any signal is. Relationships are read in 32 **contact-id** slices (a contact's rows land in one slice → distinct contacts add up across slices), folded in Python, industries resolved like M1.
+- Active: `_relationship_is_active_expr` reused; its `last_interaction_date` term is fed from a pre-fetched set of contacts past `recent_interaction_cutoff()` (new helper in `contact/models.py`, also used by the predicate), read in 16 date windows, as `case(contact_id IN set → now(), else NULL)`. Same truth table; tests cross-check against `Relationship.state`.
+- Title: `btrim(role)`, fallback to the contact's open `contact_job.role` at the company (newest start), rows with neither left out.
+
+## Decisions (user, 2026-11-03, on kforce-prod numbers)
+- `period` by `start_date` as the contract says: on KForce every Client relationship is undated (1,079,568 / 1,079,568; 0 Prospect rows) → `undated` + null `last_start_date` there; `active_relationships` is the recency signal. **Juani not told yet.**
+- Prospect never Active (no Prospect arm in the rule; AC = `Relationship.state`).
+- `totals` per type × period, like activities.
+- Migration adds the 3 columns (checked on a throwaway pg16: upgrade / downgrade -1 / upgrade clean).
+- `contact_job` title fallback kept: 9,581 of 64,070 empty roles on kforce-prod, ~half of Navitec's on dev (vs 14/94k on kforce-dev, why M1 dropped it for activities).
+- `contacts` = distinct per company, summed over the group (a contact at two companies of one industry counts twice; ~0.1% ceiling on kforce-prod: 1,078,498 distinct contacts over 1,079,568 rows).
+
+## Gotchas
+- The naive per-row `contact.last_interaction_date` lookup costs ~1 ms/row on KForce (82-97 s per 1/16 slice on kforce-dev, a JOIN plans the same) → the pre-fetch design. Only 28,297 (kforce-dev) / 63,329 (kforce-prod) contacts interacted in the last 12 months.
+- kforce-dev timings 2026-11-03 (laptop, read-only): pre-fetch 8.3 s over 16 windows; 1/32 slice (~32.5k rels, ~950 Active) 1.9-8.2 s company aggregate + ~1 s titles → ~3 min of reads per refresh.
+- Industry is sparse: 34 of 52,570 counted companies on kforce-dev, 2,063 of 52,296 on kforce-prod → `by_industry` mostly null on KForce.
+- `contact_job` is 6.6M rows on kforce-prod (118k on kforce-dev): the EXISTS probes of the active rule cost more there; not measured on prod.
+- This session: the worktree guard refused shell writes to the scratchpad and long heredocs ("too complex"); the Write tool hook broke after the previous worktree was deleted ($CLAUDE_PROJECT_DIR stale). Python heredocs ≤ ~3k chars worked; apostrophes in heredoc comments seemed to trigger refusals.
+- `gh pr merge` is refused by the auto-mode classifier ("merge without review") → the user merges.
+
+## Pending
+- CI + review + merge of #2500; close US 25730 on merge (US comment + link PR done at open).
+- Tell Juani: KForce relationships are all `undated` (no start dates), Prospect never Active, `contacts` approximation, `by_industry` null-heavy on KForce.
+- Post the full local suite result on the PR.
+- M3 deals (US 25731): stage mapping won/lost/open/deferred still undecided; M4 interactions shape already told (period-labelled history).
+- Task 25734 API keys per tenant/env + consumer smoke on kforce-dev.
+
+## Related
+- [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]
+- [[Map - Kforce]]

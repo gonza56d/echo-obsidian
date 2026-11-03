@@ -94,8 +94,9 @@ Measured on kforce-dev from a laptop (cold cache, session pooler), before any co
 - Task 25734: one internal API key per tenant and env; consumer smoke on kforce-dev with Juani.
 - M4 interactions shape TOLD (13410 thread 33691, 2026-11-02): all history, every row labelled by `period` against the snapshot's `recent_since`, no since/until (same contract as the other endpoints; US 25732's since/until params are dropped). Update US 25732 accordingly when M4 starts.
 - ~~#2496 merge~~ done 2026-11-03 (`48edd22e`; scope-note comment 29247471 on US 25729 covers Leo's nit 3; a duplicate comment from a second session was deleted). Consumer nit `row.get("period", "recent")` drops explicit null (we never send null).
-- M2 relationships (US 25730): researched 2026-11-03 (section below); plan presented; the user runs the kforce-prod queries (period source / Prospect-active / industry coverage / title fallback / contact recency) in the Supabase SQL editor and pastes the results before we decide and open the PR.
+- M2 relationships (US 25730): decided + opened as [#2500](https://github.com/taller-projects/echo-backend/pull/2500) 2026-11-03 → [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]].
 - M2-M5 (US 25730-25733); qa/main promotion (consumer master must have 13402 before activities reaches main).
 
 ## Related
+- [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]]
 - [[Map - Kforce]]
