@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
 delivered:
 tags: [feature, internal-api, navitec, data-team, background-job]
@@ -18,7 +18,7 @@ prd: "https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C"
 Third signal of the data team contract: `GET /internal/commercial-signals/deals` serves the tenant deals as `totals` (type x stage_category x period) and `by_group` (+ industry), plus the complete `organizations` list. Same snapshot / refresh as [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]]. No FE involvement.
 
 ## PRs
-- [#2509](https://github.com/taller-projects/echo-backend/pull/2509) -> dev, **OPEN** 2026-11-03, commit `362364341`, branch `25731/commercial_signals_deals` (worktree `.claude/worktrees/25731-cs-deals`). Migration `ga7mqtjixquc` after `h4tq9mxe2kcs`. US 25731 In revision + PR linked + comments 29252287 (decisions) and 29252784 (PR).
+- [#2509](https://github.com/taller-projects/echo-backend/pull/2509) -> dev, **MERGED dev** `b369c82fc` 2026-11-04 (squash; Gise APPROVED `593fc1eaa` 14:32Z after r1, Leo APPROVED twice; CI test and lint 24 min green), US 25731 Closed + merge comment. Opened 2026-11-03, commit `362364341`, branch `25731/commercial_signals_deals` (worktree `.claude/worktrees/25731-cs-deals`). Migration `ga7mqtjixquc` after `h4tq9mxe2kcs`. US 25731 In revision + PR linked + comments 29252287 (decisions) and 29252784 (PR).
 - Review r1 (2026-11-03): Gise CHANGES REQUESTED (blockers: no `Contract Sent` row in the stage test; none of the /deals 422 / 401 / failing-read tests relationships has) + Leo APPROVED, READY WITH NITS (prefix matching vs the exact list Juan confirmed, one-time content-hash bump at the deploy, `ActivityPeriod` in contact.activity, timing split). Both blockers verified real and fixed with the nits in `49fc2791c` (2026-11-04, pushed from worktree `.claude/worktrees/25731-cs-deals-r1`, branch `25731/commercial_signals_deals_r1`): exact stage match (no prefixes; `Closed Won-Expired` test row reads open + logged), `_rollup_row` without a `stage_category` default (activities / relationships hash unchanged, no `source_updated_at` bump), `Contract Sent` row, 4 error-path tests + midnight boundary + null type + 3-way tie under limit + no-warning test (101 passed, 84 before); docs: exact table, global mapping on purpose, how to add a rollup column. Inline replies + review reply posted on [#2509](https://github.com/taller-projects/echo-backend/pull/2509), Gise re-requested, PR body got a "Review round 1" section. Deferred: `ActivityPeriod` move (with M4), timing split, `refreshed` fixture (no leak). Azure comment 29258297 on US 25731: `totals` scope note (Leo's out-of-scope item).
 - Review r2 (2026-11-04): Leo APPROVED `49fc2791c` (5 mutation probes caught, matrix 17/17) but flagged two alembic heads: #2505 (US 25740) landed on dev with `z2a48jp2jg9g`, also revising `h4tq9mxe2kcs`. Fixed in `593fc1eaa`: merged origin/dev (merge commit, no rebase: branch already pushed, PR squashes) and `ga7mqtjixquc` now revises `z2a48jp2jg9g`; `alembic heads` = 1. Reply posted. Leo's r2 nits -> M4 PR: docstrings still say "rule" (service.py:436, :702), per-row assertion that a mapped open stage is absent from the unmapped warning, `_recent_since()` test helper hardcodes 365 (use settings.COMMERCIAL_SIGNALS_RECENT_DAYS), midnight flake in the boundary tests, hash-invariant test (two refreshes with unchanged data keep source_updated_at); `before_cursor_execute` fault seam -> `db_faults` once tests/boundaries lands (#2504).
 - Local: full unit + multitenancy 7,272 passed / 1 skipped (worktree .env TRACKER_RMS_ENABLED_TENANT_IDS=null); commercial-signals suites 84 passed, module at 100%; mutation check (no html unescape, no own-org exclusion) fails 3 tests; migration up / down / up on throwaway pg16 stamped at h4tq9mxe2kcs (full chain needs Supabase auth.users).
@@ -47,7 +47,7 @@ Third signal of the data team contract: `GET /internal/commercial-signals/deals`
 - After deploy every tenant reads stale (no deals snapshot) -> one full refresh per tenant within the hour (KForce ~4 min reads).
 
 ## Pending
-- CI on `593fc1eaa` green + Gise re-review -> squash-merge #2509 -> close US 25731 (+ merge comment).
+- Dev deploy: first hourly tick runs one full refresh per tenant (KForce ~4 min); then qa / main promotion with M2.
 - Leo's r2 follow-up nits (PRs section) with the `ActivityPeriod` move in the M4 PR.
 - Move `ActivityPeriod` out of contact.activity.schemas (deal, relationship and the M4 interactions import it) in the M4 PR.
 - Watch the unmapped-stages warning in Loki after the dev deploy; add stages to the mapping.
