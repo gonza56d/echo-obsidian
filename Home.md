@@ -132,6 +132,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-05 — Testing practice **M6 wave 1**: self-review of [#2532](https://github.com/taller-projects/echo-backend/pull/2532) (CHANGES REQUESTED, 4 blockers: purge vs uptime, two tenant predicates unpinned, U62/U81 droppable only on paper, `run()` test margin + unasserted backoff) → fixed and pushed `485d33d9`, PR body mapping updated → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-05 — [[Commercial signals M4 - interactions aggregates for the commercial profile API (US 25732)]]: #2520 **MERGED dev** `fe126e39b`, US 25732 Closed, Feature 25728 progress comment.
 - 2026-11-05 — [[Commercial signals M4 - interactions aggregates for the commercial profile API (US 25732)]]: review round 1 fixed + pushed `830ba7da`, prod measurements (echo-prod read-only psql, kforce-prod via the user), replies posted, US 25732 rewritten (rev 4). #2519 merged `c731b673`.
 - 2026-11-04 — opened [#2520](https://github.com/taller-projects/echo-backend/pull/2520) (commercial signals M4: interactions, US 25732 In revision + linked + decisions comment 29264126); full suite 7,398 green → [[Commercial signals M4 - interactions aggregates for the commercial profile API (US 25732)]]
