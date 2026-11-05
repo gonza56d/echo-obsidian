@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-05
 tags: [feature, internal-api, navitec, data-team, background-job]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2520"
@@ -19,8 +19,8 @@ prd: "https://claude.ai/artifact/S6sUfQRS4KdYvbWKvzmq7C"
 Fourth signal of the data team contract: `GET /internal/commercial-signals/interactions` serves the tenant's interactions as `totals` (interaction type x period) and `by_group` (industry x interaction type x period: interactions, contacts, organizations), plus the complete `organizations` list. Navitec is the consumer; KForce is opted out. Same snapshot / refresh as [[Commercial signals M3 - deals aggregates for the commercial profile API (US 25731)]]. No FE involvement.
 
 ## PRs
-- [#2520](https://github.com/taller-projects/echo-backend/pull/2520) -> dev, **OPEN**, opened 2026-11-04 at `de296910e` (branch `25732/commercial_signals_interactions`, worktree `.claude/worktrees/25732-cs-interactions`). Migration `l4rpbl15ac7b` after `1yw2kc2or920`. US 25732 In revision.
-- **Review round 1** (Gise, review 5775341261, 2026-11-04, COMMENTED, no blockers, 6 nits + 3 questions): fixed in `830ba7da` 2026-11-05 from a second worktree `.claude/worktrees/25732-cs-interactions-r1` (branch `25732/commercial_signals_interactions_r1`, off the PR branch, pushed `HEAD:25732/commercial_signals_interactions` over HTTPS askpass). `origin/dev` merged first (merge commit `65f10883`, heads = 1). Replies: inline 4481443964 / 4481444486 + [comment 6660080959](https://github.com/taller-projects/echo-backend/pull/2520#issuecomment-6660080959); PR body refreshed (prod measurements, "Review round 1" section, the kforce-dev "almost never" claim corrected). US 25732 rev 4 (description + AC rewritten to the as-built contract) + comment 29270884.
+- [#2520](https://github.com/taller-projects/echo-backend/pull/2520) -> dev **MERGED** 2026-11-05, squash `fe126e39b` (CI test and lint 46 min green on `830ba7da`). Opened 2026-11-04 at `de296910e` (branch `25732/commercial_signals_interactions`, worktree `.claude/worktrees/25732-cs-interactions`). Migration `l4rpbl15ac7b` after `1yw2kc2or920`. US 25732 **Closed** (rev 7, merge comment 29271522); Feature 25728 progress comment 29271523.
+- **Review round 1** (Gise, review 5775341261, 2026-11-04, COMMENTED, no blockers, 6 nits + 3 questions): fixed in `830ba7da` 2026-11-05 from a second worktree `.claude/worktrees/25732-cs-interactions-r1` (branch `25732/commercial_signals_interactions_r1`, off the PR branch, pushed `HEAD:25732/commercial_signals_interactions` over HTTPS askpass). `origin/dev` merged first (merge commit `65f10883`, heads = 1). Replies: inline 4481443964 / 4481444486 + [comment 6660080959](https://github.com/taller-projects/echo-backend/pull/2520#issuecomment-6660080959); PR body refreshed (prod measurements, "Review round 1" section, the kforce-dev "almost never" claim corrected). US 25732 rev 4 (description + AC rewritten to the as-built contract) + comment 29270884. Merged without a formal re-review: the user decided "merge once CI is green".
 - Hotfix [#2519](https://github.com/taller-projects/echo-backend/pull/2519) -> dev **MERGED** `c731b673` 2026-11-05 (alembic merge revision `1yw2kc2or920` for the #2509 / #2514 heads).
 - Local: full unit + multitenancy 7,398 passed on `de296910e`; commercial-signals suites 125 passed on `830ba7da`; 7 mutation probes caught; migration up / down / up on throwaway pg16.
 
@@ -51,16 +51,16 @@ Fourth signal of the data team contract: `GET /internal/commercial-signals/inter
 - polyfactory can't build under a frozen `clock` (FakeDatetime -> "Unsupported type datetime"): build rows first, then `clock.set(...)`.
 - `Row.count` is the tuple method: `row._mapping["count"]`; sum() over bigint comes back Decimal -> int().
 - `db_faults.fail_next(statement_containing=...)` is a plain substring: "per_contact" (interactions), "FROM organization_deal" (deals), "%(contact_ids)s" (relationships aggregate).
-- Worktree guard refuses `source`, `export X=$(...)`, computed paths in sed/find and heredocs that mention the VCS; put gh / curl batches in a dotfile script inside the worktree and run it by path. The original worktree belongs to the opening session: continue a PR from a NEW worktree off the PR branch.
+- Worktree guard refuses `source`, `export X=$(...)`, computed paths in sed/find and heredocs that mention the VCS; put gh / curl batches in a dotfile script inside the worktree and run it by path. The original worktree belongs to the opening session: continue a PR from a NEW worktree off the PR branch. `GIT_ASKPASS` must be absolute when pushing with `-C <other repo>`.
 - `docs/` is gitignored: `git add -f docs/commercial-signals.md` or the docs change silently stays out of the commit.
 - After deploy every tenant reads stale once (no interactions snapshot) -> one full refresh per tenant on the first tick.
 
 ## Pending
-- Gise re-review of `830ba7da` -> squash-merge -> close US 25732.
-- kforce-prod Q5: confirm the `kforce` row in `tenant_integrations` is enabled, else the migration will not flag KForce (user to run; Q0 there showed `opted_out = false`, expected pre-migration).
+- Watch the dev + kforce-dev deploy of `fe126e39b` (Apply migrations: `l4rpbl15ac7b`) and the first hourly tick (`commercial_signals_refreshed` with `interactions`, `commercial_signals_interactions_disabled` on kforce-dev).
+- kforce-prod Q5: confirm the `kforce` row in `tenant_integrations` is enabled before the prod release, else the migration will not flag KForce (user to run; Q0 there showed `opted_out = false`, expected pre-migration).
 - Tell Juani: raw `interaction_type` (Navitec's `[[namingevent]]`, KForce's client-visit kinds) and deal `type` vs Feature 25728's "no free text"; Navitec 1.3% unresolved, Taller 59%; KForce opted out.
 - Ticket for the two echo-prod-only contact_relationship indexes.
-- Feature-level: Task 25734 API keys, M5 only if needed, qa/main promotion of M2-M4.
+- Feature-level: Task 25734 API keys, M5 only if needed, qa/main promotion of M1-M4.
 
 ## Related
 - [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]
