@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: both
 delivered: 2026-11-10
 tags: [bugfix, internal-api, kforce, data-team, background-job, memory]
@@ -74,6 +74,13 @@ His third question (694k vs 747k job orders) was a difference between environmen
   - **Verification on the qa base:** full suite 8,408 passed; one head `vtfza44v14jl`.
   - Worktree `.claude/worktrees/25822-cherry-pick-qa`. Both PRs linked on Bug 25822.
 
+- **SHIPPED PROD 2026-11-10.**
+  - **Merges and deploy:** the user merged #2562 (qa) and #2563 (main). Build 32869 Test passed; Azure refused my approval with 401 (the PAT is read-only for approvals as well), so the user approved `echo-backend-prod` + `echo-backend-kforce-prod`. Deployed 17:26-17:27Z.
+  - **qa build 32868 FAILED in Test:** agent `selfagentsdevops-001` out of memory ("Free memory is lower than 5%"). Not the code; the user re-runs it.
+  - **kforce-prod refresh:** new worker `575d774678` up at 17:30:40Z. The user enqueued job `bfb649af` via `!` (VPN needed: the pooler has an IP allow-list, `EADDRNOTALLOWED` off the VPN). **It completed on attempt 1 in 8m21s.**
+  - **Results:** relationships 892,109 rows (52,349 by_industry + 839,760 by_title), the first ever; activities 327,522 (333,275 before); deals 0; interactions 0 (opted out); no placeholders.
+  - Bug 25822 comment 29308248 (prod verification).
+
 ## Diagnosis (2026-11-10)
 - **kforce-dev:** every daily `commercial_signals_refresh` job since 2026-11-03 (the M2 merge) ended with `lease expired after max attempts` (4 tries). There was never a relationships snapshot. Activities rewrote itself on each attempt; deals and interactions were last written 11-07 with 0 rows.
 - **Failure mode 1 (11-05 to 11-07):** a 1/32 contact slice of `aggregate_by_company` timed out at 20 s. The slow statements are the `contact_job` EXISTS legs of the active predicate (18-19 s cold). The error was caught, so deals and interactions still refreshed.
@@ -111,7 +118,7 @@ His third question (694k vs 747k job orders) was a difference between environmen
 ## Pending
 - [x] Pedro's re-review + CI → squash-merged `f579dd8e3` → Bug 25822 Closed.
 - [x] kforce-dev refresh verified (834,778 relationships rows). [ ] The user sends Juan the message (rerun the KForce extract; source_updated_at moves once; kforce-prod empty until main).
-- [x] kforce-prod confirmed empty (read-only). [ ] #2562 (qa) + #2563 (main) merged by the user (main needs the Azure prod approvals) → check the first nightly kforce-prod refresh (~01:50-02:30Z) writes all four snapshots. [ ] Migration `7zmdcppifnwm` reaches qa/main with the next dev release (after `fd6hehbo4zn7`); then confirm kforce-prod roles are cleaned.
+- [x] kforce-prod confirmed empty (read-only). [x] #2562 + #2563 merged, prod deployed, kforce-prod refresh verified (892,109 relationships rows). [ ] Re-run qa build 32868 (agent OOM). [ ] Send Juan the prod message. [ ] Migration `7zmdcppifnwm` reaches qa/main with the next dev release (after `fd6hehbo4zn7`); then confirm kforce-prod roles are cleaned.
 - [ ] Tell Juani: source_updated_at moves once; NULL/NaN gone from the signals after the next refresh (he keeps filtering, no coordination needed).
 - [ ] Juani's two new questions, answered in chat 2026-11-10, user to relay:
   - industry coverage on kforce-dev is 4.7% earlier / 11.6% recent / 6.6% undated (dev copy) vs ~50% on prod (same measure; per-period query handed over);
