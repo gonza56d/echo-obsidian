@@ -132,6 +132,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-10 — Testing practice **Pedro r2**: #2547 nits `41485513`; #2550 hook bypass + Feature text fixed `4d36601e` (coverage 93.81% → 93.82%); #2499 approved, awaiting the user's merge. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-10 — [[Customer metrics M2 follow-up - close_reason required on the user role PATCH (US 25744)]]: Gisel r1 addressed `d43e64f7` (clock fake, nothing-written 422s, internal rows, helpers); product to confirm sync-side `filled`.
 - 2026-11-10 — Testing practice **bugs ticketed**: 25829 (notifications read/unread IDOR, High), 25830 (CHANGED_TIME lost), 25831 (job-change role race); Task 25780 + agent 005 Pango; PRD rev 117 bug table. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-10 — Testing practice **#2547 Pedro r1 addressed** `62c19600` (race wait tied to the holder via pg_locks, cap fixture, filter/detail asserts) + **#2550 dev merge** `b42c21d5`; Azure agent 005 lacks libpango (3 red dev builds). → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
