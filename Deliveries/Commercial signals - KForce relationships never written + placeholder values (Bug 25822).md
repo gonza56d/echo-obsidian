@@ -6,6 +6,8 @@ delivered: 2026-11-10
 tags: [bugfix, internal-api, kforce, data-team, background-job, memory]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2560"
+  - "https://github.com/taller-projects/echo-backend/pull/2562"
+  - "https://github.com/taller-projects/echo-backend/pull/2563"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25822"
@@ -66,6 +68,12 @@ His third question (694k vs 747k job orders) was a difference between environmen
   - relationships, deals and interactions were never written; the refresh has failed every night since 11-05;
   - the interactions opt-out flag is set (closes M4's Q5).
 
+- **Promotion (2026-11-10, user: "we need in prod asap... cherry picks")**, even though Juan said the KForce brief works without relationships and their prod DAG hasn't run since October.
+  - **Commit:** cherry-pick `889ea6be` of `f579dd8e3` **without migration `7zmdcppifnwm`**. Its dev parent `fd6hehbo4zn7` is Leo's #2554 (US 25779), which is on neither qa nor main (both end at `vtfza44v14jl`). The roles it clears are already read as missing, and it rides the next dev release after `fd6hehbo4zn7`, so the chain stays identical to dev.
+  - **PRs:** [#2562](https://github.com/taller-projects/echo-backend/pull/2562) → qa (branch `cherry_pick/25822_cs_kforce_relationships_qa`) and [#2563](https://github.com/taller-projects/echo-backend/pull/2563) → main (branch `deploy/prod_2026-11-10_25822_cs_relationships`). Same commit on both, since qa == main; merge with merge commits.
+  - **Verification on the qa base:** full suite 8,408 passed; one head `vtfza44v14jl`.
+  - Worktree `.claude/worktrees/25822-cherry-pick-qa`. Both PRs linked on Bug 25822.
+
 ## Diagnosis (2026-11-10)
 - **kforce-dev:** every daily `commercial_signals_refresh` job since 2026-11-03 (the M2 merge) ended with `lease expired after max attempts` (4 tries). There was never a relationships snapshot. Activities rewrote itself on each attempt; deals and interactions were last written 11-07 with 0 rows.
 - **Failure mode 1 (11-05 to 11-07):** a 1/32 contact slice of `aggregate_by_company` timed out at 20 s. The slow statements are the `contact_job` EXISTS legs of the active predicate (18-19 s cold). The error was caught, so deals and interactions still refreshed.
@@ -103,7 +111,7 @@ His third question (694k vs 747k job orders) was a difference between environmen
 ## Pending
 - [x] Pedro's re-review + CI → squash-merged `f579dd8e3` → Bug 25822 Closed.
 - [x] kforce-dev refresh verified (834,778 relationships rows). [ ] The user sends Juan the message (rerun the KForce extract; source_updated_at moves once; kforce-prod empty until main).
-- [x] kforce-prod confirmed empty (read-only). [ ] Next qa/main release carries it → check the first nightly kforce-prod refresh writes all four snapshots.
+- [x] kforce-prod confirmed empty (read-only). [ ] #2562 (qa) + #2563 (main) merged by the user (main needs the Azure prod approvals) → check the first nightly kforce-prod refresh (~01:50-02:30Z) writes all four snapshots. [ ] Migration `7zmdcppifnwm` reaches qa/main with the next dev release (after `fd6hehbo4zn7`); then confirm kforce-prod roles are cleaned.
 - [ ] Tell Juani: source_updated_at moves once; NULL/NaN gone from the signals after the next refresh (he keeps filtering, no coordination needed).
 - [ ] Juani's two new questions, answered in chat 2026-11-10, user to relay:
   - industry coverage on kforce-dev is 4.7% earlier / 11.6% recent / 6.6% undated (dev copy) vs ~50% on prod (same measure; per-period query handed over);
