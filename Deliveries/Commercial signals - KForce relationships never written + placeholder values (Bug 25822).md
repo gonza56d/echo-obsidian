@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-10
 tags: [bugfix, internal-api, kforce, data-team, background-job, memory]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2560"
@@ -22,7 +22,7 @@ Juani's dev smoke test on 2026-11-10 (all three tenants: no 422s, totals and dat
 His third question (694k vs 747k job orders) was a difference between environments, not a bug. Follow-up of [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]] and [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]. No FE involvement.
 
 ## Azure
-- [Bug 25822](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25822): created 2026-11-10, assigned to Gonzalo, child of [Feature 25728](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728), Sprint 45. State **In revision**, PR linked.
+- [Bug 25822](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25822): created 2026-11-10, assigned to Gonzalo, child of [Feature 25728](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25728), Sprint 45. **Closed** 2026-11-10 (merge comment 29305536, kforce-dev verification comment 29306134).
 
 ## PRs
 - [#2560](https://github.com/taller-projects/echo-backend/pull/2560) -> dev, **OPEN** 2026-11-10 at `c93103ef`.
@@ -49,6 +49,22 @@ His third question (694k vs 747k job orders) was a difference between environmen
     - PR body "Review round 1" section;
     - Bug 25822 Fix section rewritten to as-built, plus decisions comment 29304805 (the 4 out-of-scope items Pedro listed);
     - Pedro re-requested.
+
+- **MERGED dev** 2026-11-10 15:14Z, squash `f579dd8e3`, after Pedro APPROVED `9387db85` and CI was green (dev unchanged since the merge, single head re-checked). A hotfix to main was decided against:
+  - no data-team key on kforce-prod;
+  - collateral was 4 retried jobs, all completed;
+  - a cherry-pick would drag `fd6hehbo4zn7` (#2554), which is not on main.
+- **Deploy:** Azure build 32845 green. ReleaseDev 15:32Z, ReleaseKforceDev 15:34Z. Its tests ran on agent 002. The previous build 32833 failed on 19 PDF-export tests on agent `selfagentsdevops-006`: `libpango-1.0-0` missing, an agent problem, not ours.
+- **Verified on kforce-dev:**
+  - migration applied: 3,617 placeholder roles → 0;
+  - new worker `69c9f94cf7` up at 15:37Z;
+  - refresh job `5b27f205` (enqueued by the user via `!`: the auto-mode classifier denied my INSERT) **completed on attempt 1 in 7 min 12 s**;
+  - relationships 834,778 rows (53,446 by_industry + 781,332 by_title); activities 288,738 (294,018 before, NULL groups merged); deals 0; interactions 0 (opted out);
+  - no NULL/NaN in the snapshot; no restart of the job's pod.
+- **kforce-prod (read-only via the session pooler** `postgres.hslptkvpsrawnrouwkhc@aws-0-us-east-1.pooler.supabase.com:5432`; the direct `db.` host times out):
+  - only activities exists (333,275 rows);
+  - relationships, deals and interactions were never written; the refresh has failed every night since 11-05;
+  - the interactions opt-out flag is set (closes M4's Q5).
 
 ## Diagnosis (2026-11-10)
 - **kforce-dev:** every daily `commercial_signals_refresh` job since 2026-11-03 (the M2 merge) ended with `lease expired after max attempts` (4 tries). There was never a relationships snapshot. Activities rewrote itself on each attempt; deals and interactions were last written 11-07 with 0 rows.
@@ -85,9 +101,9 @@ His third question (694k vs 747k job orders) was a difference between environmen
 - Worktree session: the Bash checker refuses Python heredocs with lambdas or braces inside parentheses, and anything that names git in a compound command. Edit/Write work; scripts go under `vault/tmp/` and run by path.
 
 ## Pending
-- [ ] Pedro's re-review + CI on `9387db85` → squash-merge → close Bug 25822 (merged to dev = Closed).
-- [ ] After the dev deploy: confirm the kforce-dev refresh job `completed` and the relationships snapshot has rows (hourly tick). Then tell Juani to rerun the KForce extract (he asked to be told).
-- [ ] kforce-prod: confirm relationships is empty today (user runs the query in the SQL editor), then promote to main.
+- [x] Pedro's re-review + CI → squash-merged `f579dd8e3` → Bug 25822 Closed.
+- [x] kforce-dev refresh verified (834,778 relationships rows). [ ] The user sends Juan the message (rerun the KForce extract; source_updated_at moves once; kforce-prod empty until main).
+- [x] kforce-prod confirmed empty (read-only). [ ] Next qa/main release carries it → check the first nightly kforce-prod refresh writes all four snapshots.
 - [ ] Tell Juani: source_updated_at moves once; NULL/NaN gone from the signals after the next refresh (he keeps filtering, no coordination needed).
 - [ ] Juani's two new questions, answered in chat 2026-11-10, user to relay:
   - industry coverage on kforce-dev is 4.7% earlier / 11.6% recent / 6.6% undated (dev copy) vs ~50% on prod (same measure; per-period query handed over);
