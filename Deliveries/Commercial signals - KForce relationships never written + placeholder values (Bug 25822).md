@@ -118,7 +118,7 @@ His third question (694k vs 747k job orders) was a difference between environmen
 ## Pending
 - [x] Pedro's re-review + CI → squash-merged `f579dd8e3` → Bug 25822 Closed.
 - [x] kforce-dev refresh verified (834,778 relationships rows). [ ] The user sends Juan the message (rerun the KForce extract; source_updated_at moves once; kforce-prod empty until main).
-- [x] kforce-prod confirmed empty (read-only). [x] #2562 + #2563 merged, prod deployed, kforce-prod refresh verified (892,109 relationships rows). [ ] Re-run qa build 32868 (agent OOM). [ ] Send Juan the prod message. [ ] Migration `7zmdcppifnwm` reaches qa/main with the next dev release (after `fd6hehbo4zn7`); then confirm kforce-prod roles are cleaned.
+- [x] kforce-prod confirmed empty (read-only). [x] #2562 + #2563 merged, prod deployed, kforce-prod refresh verified (892,109 relationships rows). [x] qa build 32868 re-run by the user: Test + ReleaseDev succeeded, qa deployed 18:12Z. [ ] Send Juan the prod message. [ ] Migration `7zmdcppifnwm` reaches qa/main with the next dev release (after `fd6hehbo4zn7`); then confirm kforce-prod roles are cleaned.
 - [ ] Tell Juani: source_updated_at moves once; NULL/NaN gone from the signals after the next refresh (he keeps filtering, no coordination needed).
 - [ ] Juani's two new questions, answered in chat 2026-11-10, user to relay:
   - industry coverage on kforce-dev is 4.7% earlier / 11.6% recent / 6.6% undated (dev copy) vs ~50% on prod (same measure; per-period query handed over);

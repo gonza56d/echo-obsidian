@@ -620,6 +620,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 Browse `Deliveries/` (40 notes, 2026-06-17 → 2026-07-24), or start from a Map above.
 
 ## Recent activity
+- 2026-11-10 — Bug 25822: qa build 32868 re-run by the user succeeded (qa deployed 18:12Z); the fix is now on dev, qa, prod and kforce-prod → [[Commercial signals - KForce relationships never written + placeholder values (Bug 25822)]]
 - 2026-11-10 — Bug 25822 **SHIPPED PROD**: #2562/#2563 merged, build 32869 deployed (user approved; my approval 401), kforce-prod refresh completed in 8m21s, relationships 892,109 rows (first ever); qa build 32868 failed on agent OOM (re-run); migration `7zmdcppifnwm` rides the next dev release → [[Commercial signals - KForce relationships never written + placeholder values (Bug 25822)]]
 - 2026-11-10 — opened promotion PRs [#2562](https://github.com/taller-projects/echo-backend/pull/2562) (qa) + [#2563](https://github.com/taller-projects/echo-backend/pull/2563) (main) for #2560 without the migration (parent `fd6hehbo4zn7` from #2554 not on qa/main) → [[Commercial signals - KForce relationships never written + placeholder values (Bug 25822)]]
 - 2026-11-10 — [#2560](https://github.com/taller-projects/echo-backend/pull/2560) **MERGED dev** `f579dd8e3` (Pedro approved), Bug 25822 Closed; build 32845 deployed; kforce-dev refresh completed in 7 min (relationships 834,778 rows, first ever); kforce-prod confirmed empty → next main release → [[Commercial signals - KForce relationships never written + placeholder values (Bug 25822)]]
