@@ -34,6 +34,22 @@ His third question (694k vs 747k job orders) was a difference between environmen
   - 6 mutation probes, all caught;
   - migration stamp / upgrade / downgrade -1 / upgrade on a throwaway pg16, roles verified.
 
+- **Review round 1 (Pedro, CHANGES REQUESTED, review 5843126072, 2026-11-10)**:
+  - **Blocker:** two alembic heads. `fd6hehbo4zn7` (#2554) also revises `vtfza44v14jl`; GitHub showed no conflict.
+  - **Fixed in `9387db85`** (pushed), after merging `origin/dev` with merge commit `e6f13f7c` (no rebase):
+    - `7zmdcppifnwm` now revises `fd6hehbo4zn7`; `alembic heads` = 1;
+    - `PLACEHOLDER_PADDING` (space/tab/CR/LF), the same in Python `strip` and SQL `btrim`;
+    - `_id_slice` typed;
+    - setting `COMMERCIAL_SIGNALS_WRITE_BATCH` plus a test with batch + 1 titles at `limit=5000` (no monkeypatch allowed, so rows instead of a smaller batch);
+    - timeout reset to 25 s after the migration UPDATE, plus a frozen-list comment;
+    - PR body: 160 ms is from psql; responses return null too; no filter reads those columns.
+  - **Results:** full suite 8,535 passed (dev merged); 9 mutation probes caught; migration re-checked on the new parent.
+  - **Posted:**
+    - reply [issuecomment-6770108249](https://github.com/taller-projects/echo-backend/pull/2560#issuecomment-6770108249);
+    - PR body "Review round 1" section;
+    - Bug 25822 Fix section rewritten to as-built, plus decisions comment 29304805 (the 4 out-of-scope items Pedro listed);
+    - Pedro re-requested.
+
 ## Diagnosis (2026-11-10)
 - **kforce-dev:** every daily `commercial_signals_refresh` job since 2026-11-03 (the M2 merge) ended with `lease expired after max attempts` (4 tries). There was never a relationships snapshot. Activities rewrote itself on each attempt; deals and interactions were last written 11-07 with 0 rows.
 - **Failure mode 1 (11-05 to 11-07):** a 1/32 contact slice of `aggregate_by_company` timed out at 20 s. The slow statements are the `contact_job` EXISTS legs of the active predicate (18-19 s cold). The error was caught, so deals and interactions still refreshed.
@@ -69,7 +85,7 @@ His third question (694k vs 747k job orders) was a difference between environmen
 - Worktree session: the Bash checker refuses Python heredocs with lambdas or braces inside parentheses, and anything that names git in a compound command. Edit/Write work; scripts go under `vault/tmp/` and run by path.
 
 ## Pending
-- [ ] Review + CI on #2560 → squash-merge → close Bug 25822.
+- [ ] Pedro's re-review + CI on `9387db85` → squash-merge → close Bug 25822 (merged to dev = Closed).
 - [ ] After the dev deploy: confirm the kforce-dev refresh job `completed` and the relationships snapshot has rows (hourly tick). Then tell Juani to rerun the KForce extract (he asked to be told).
 - [ ] kforce-prod: confirm relationships is empty today (user runs the query in the SQL editor), then promote to main.
 - [ ] Tell Juani: source_updated_at moves once; NULL/NaN gone from the signals after the next refresh (he keeps filtering, no coordination needed).
