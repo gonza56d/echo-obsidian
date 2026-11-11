@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: both
 delivered:
 tags: [feature, internal-api, navitec, data-team, background-job]
@@ -55,8 +55,10 @@ Third signal of the data team contract: `GET /internal/commercial-signals/deals`
 - Watch the unmapped-stages warning in Loki after the dev deploy; add stages to the mapping.
 - Feature-level: Task 25734 API keys, M4 interactions (US 25732), M5 organizations only if needed, Pedro M2 questions before main.
 - Juan: industry coverage answer sent? (kforce-prod: 7% of companies, about half of activities carry industry.)
+- **2026-11-11**: on prod + kforce-prod since 2026-11-05 ([#2530](https://github.com/taller-projects/echo-backend/pull/2530) / [#2531](https://github.com/taller-projects/echo-backend/pull/2531), build 32641). Task 25734 closed without new keys → [[Commercial signals - consumer API keys per tenant (Task 25734)]]. echo-prod refresh verified (67 tenants daily since 11-05, no failures). What is still open lives in [[Map - Commercial signals]]. First tick done; echo-prod deals rollup: Taller 359, Navitec 72 rows.
 
 ## Related
 - [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]
 - [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]]
 - [[Map - Kforce]]
+- [[Map - Commercial signals]]

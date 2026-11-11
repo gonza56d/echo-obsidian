@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: both
 delivered: 2026-11-05
 tags: [feature, internal-api, navitec, data-team, background-job]
@@ -61,8 +61,10 @@ Fourth signal of the data team contract: `GET /internal/commercial-signals/inter
 - Tell Juani: raw `interaction_type` (Navitec's `[[namingevent]]`, KForce's client-visit kinds) and deal `type` vs Feature 25728's "no free text"; Navitec 1.3% unresolved, Taller 59%; KForce opted out.
 - Ticket for the two echo-prod-only contact_relationship indexes.
 - Feature-level: Task 25734 API keys, M5 only if needed, qa/main promotion of M1-M4.
+- **2026-11-11**: on prod + kforce-prod since 2026-11-05 ([#2530](https://github.com/taller-projects/echo-backend/pull/2530) / [#2531](https://github.com/taller-projects/echo-backend/pull/2531), build 32641). Task 25734 closed without new keys → [[Commercial signals - consumer API keys per tenant (Task 25734)]]. echo-prod refresh verified (67 tenants daily since 11-05, no failures). What is still open lives in [[Map - Commercial signals]]. kforce-prod Q5 closed 2026-11-10: the interactions opt-out flag is set on both KForce DBs. echo-prod interactions rollup: Navitec 9,964, Taller 6,514, Battle Tested 67 rows.
 
 ## Related
 - [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]
 - [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]]
 - [[Commercial signals M3 - deals aggregates for the commercial profile API (US 25731)]]
+- [[Map - Commercial signals]]

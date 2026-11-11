@@ -124,6 +124,9 @@ His third question (694k vs 747k job orders) was a difference between environmen
   - industry coverage on kforce-dev is 4.7% earlier / 11.6% recent / 6.6% undated (dev copy) vs ~50% on prod (same measure; per-period query handed over);
   - Taller deals have no service-line field (`type` = HubSpot deal type; Navitec loads its service line into `type`).
 - [ ] Optional: off-pipeline cleanup of the stored activity placeholders, if the KForce screens show them.
+- [ ] First unattended kforce-prod nightly refresh (2026-11-11, ~01:50-02:30Z): not checked yet (Supabase SQL editor).
+- [x] echo-prod unaffected: every tenant refreshed daily since 11-05, no failed jobs (verified 2026-11-11).
 
 ## Related
 [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]] · [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]] · [[Commercial signals M4 - interactions aggregates for the commercial profile API (US 25732)]] · [[Map - Kforce]]
+- [[Map - Commercial signals]]

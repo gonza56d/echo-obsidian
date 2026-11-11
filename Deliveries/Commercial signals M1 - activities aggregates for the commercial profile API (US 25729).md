@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: in-review
+status: shipped-prod
 env: both
 delivered: 2026-11-02
 tags: [feature, internal-api, kforce, data-team, background-job]
@@ -97,7 +97,9 @@ Measured on kforce-dev from a laptop (cold cache, session pooler), before any co
 - ~~#2496 merge~~ done 2026-11-03 (`48edd22e`; scope-note comment 29247471 on US 25729 covers Leo's nit 3; a duplicate comment from a second session was deleted). Consumer nit `row.get("period", "recent")` drops explicit null (we never send null).
 - M2 relationships (US 25730): decided + opened as [#2500](https://github.com/taller-projects/echo-backend/pull/2500) 2026-11-03 → [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]].
 - M2-M5 (US 25730-25733); qa/main promotion (consumer master must have 13402 before activities reaches main).
+- **2026-11-11**: on prod + kforce-prod since 2026-11-05 ([#2530](https://github.com/taller-projects/echo-backend/pull/2530) / [#2531](https://github.com/taller-projects/echo-backend/pull/2531), build 32641). Task 25734 closed without new keys → [[Commercial signals - consumer API keys per tenant (Task 25734)]]. echo-prod refresh verified (67 tenants daily since 11-05, no failures). What is still open lives in [[Map - Commercial signals]].
 
 ## Related
 - [[Commercial signals M2 - relationships aggregates for the commercial profile API (US 25730)]]
 - [[Map - Kforce]]
+- [[Map - Commercial signals]]

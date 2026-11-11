@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged-dev
+status: shipped-prod
 env: both
 delivered: 2026-11-03
 tags: [feature, internal-api, kforce, navitec, data-team, background-job]
@@ -53,7 +53,9 @@ Second signal of Juani's `tenant_commercial_profile_api` v1.1 contract: `GET /in
 - Tell Juani: KForce relationships are all `undated` (no start dates), Prospect never Active, `contacts` approximation, `by_industry` null-heavy on KForce.
 - M3 deals (US 25731): stage mapping won/lost/open/deferred still undecided; M4 interactions shape already told (period-labelled history).
 - Task 25734 API keys per tenant/env + consumer smoke on kforce-dev.
+- **2026-11-11**: on prod + kforce-prod since 2026-11-05 ([#2530](https://github.com/taller-projects/echo-backend/pull/2530) / [#2531](https://github.com/taller-projects/echo-backend/pull/2531), build 32641). Task 25734 closed without new keys → [[Commercial signals - consumer API keys per tenant (Task 25734)]]. echo-prod refresh verified (67 tenants daily since 11-05, no failures). What is still open lives in [[Map - Commercial signals]].
 
 ## Related
 - [[Commercial signals M1 - activities aggregates for the commercial profile API (US 25729)]]
 - [[Map - Kforce]]
+- [[Map - Commercial signals]]
