@@ -67,6 +67,7 @@ Customer metrics M3 (metric 3, "AI leverage"). Every AI generation for the five 
 - The 5 SQL queries run on seeded data with the expected counts.
 
 ## Pending
+- [x] **2026-11-11 payload size on dev**: 108 rows since 2026-11-03, 424 kB table; avg 1.7 kB, p95 5.4 kB, max 11 kB (assessment avg 5.9 kB / max 11 kB; role_jd 1.4 kB; matching_instructions 1.3 kB). No risk.
 - [x] Merged to dev 2026-10-28 (`1a1f281c`), on main via release #2479 the same day (prod deploy approval unverified). Was: CI on `72492bae` (in progress 2026-10-28); Leo + Gise re-review (replies posted); Pedro review; merge after Nico's OK.
 - [ ] Nico's sign-off on the PRD section "Metric 3 definition: AI leverage" (rev 78) + the SQL; both reviewers asked for it before merge.
 - [ ] Answer Leo's out-of-scope: screening questions not in "assessments"? (confirm); ticket for missing `Protected(...)` on `team_composition_v3` / `role_v3` / `regenerate/job_description` (pre-existing; Leo + Gise).

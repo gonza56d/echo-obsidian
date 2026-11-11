@@ -38,6 +38,7 @@ Customer metrics M5, backend half. The story asks for the six frontend event typ
 - 103 passed locally (64 new). Mutations (filter optional, deal finder taking a role, `reengage_viewed` not client-emittable, `chat_id` as str) → 12 failures, all four caught; schemas restored before the commit.
 
 ## Pending
+- [x] **2026-11-11 AC 4 (FE event in user_events within 5 s)**, created_at − event_data.occurred_at: dev active_time 459 (p50 0.45 s, p95 5.4 s, 65% ≤ 5 s), match_results_viewed 14 (p50 5.2 s); kforce-dev active_time 385 (p50 4.4 s, p95 5.5 s), reengage_viewed 25 (p50 5.0 s). The FE flushes every 5 s (`USER_EVENTS_FLUSH_INTERVAL_MS`), so ~5 s is the design; no warm_lead_acted / reengage_contact_acted rows yet on either env.
 - [ ] CI, review, squash-merge → close US 25641.
 - [ ] AC 4 (FE event visible on dev within 5 s) waits for the FE client, US 25642.
 - [ ] Tell Flor: contract frozen; filters = API param names; `occurred_at` with offset; fetch keepalive, not sendBeacon; `role_id` on cv-versions; close-reason picker; `source_notification_id` must be the caller's own notification (404 `notification_not_found`).

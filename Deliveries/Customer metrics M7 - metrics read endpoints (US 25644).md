@@ -84,6 +84,7 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - kforce-dev read-only `EXPLAIN ANALYZE`, 90-day window (202,879 rows, 1,809 actions): every query 0.1-4.2 ms. Script: `<worktree>/.claude/worktrees/tmp/m7_explain_kforce_dev.sql`.
 
 ## Pending
+- [x] **2026-11-11 p95 on kforce-dev**: no `/metrics/*` traffic on any env in Loki (FE does not call them), so the six queries were timed on kforce-dev for a 90-day window (KForce tenant, 198k rows / 2,268 actions): server-side ~2 ms each on `ix_user_events_tenant_type_created`; ~180 ms wall per query from a laptop is pooler RTT.
 - [x] Review: Pedro APPROVED (5714640787).
 - [x] CI on `80b5dbe5` green; squash-merged to dev `83a8895a`.
 - [ ] Endpoint p95 on kforce-dev after deploy (Pedro nit 1).
