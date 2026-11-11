@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-11
 tags: [feature, customer-metrics, roles, follow-up]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2499"
@@ -26,6 +26,7 @@ The follow-up the PRD promised since rev 50: once the FE close-reason picker (M5
 
 ## PRs
 - [#2499](https://github.com/taller-projects/echo-backend/pull/2499) → dev, **OPEN 2026-11-03** (`ac0c857e`, branch `25744/close-reason-required`, worktree `.claude/worktrees/25744-close-reason`). Assignee gonza-taller. **Merge gate: #3604 on dev first**, otherwise today's FE close flow gets the 422.
+- **SQUASH-MERGED dev 2026-11-11 `91a0cc8e`** (Gisel APPROVED r2 on `d43e64f7`, CI green; "Do NOT merge" label removed at merge). US 25744 **Closed** 2026-11-11 with a comment. Not on qa/main yet.
 
 ## How
 - `app/modules/role/exceptions.py`: `RoleCloseReasonRequiredError(BusinessRuleError)`, group 1, 422, `error_code = close_reason_required`, detail "A close reason is required to close or archive a role."
@@ -49,10 +50,13 @@ The follow-up the PRD promised since rev 50: once the FE close-reason picker (M5
 
 ## Pending
 - **2026-11-10 — Gisel r1 (CHANGES REQUESTED) addressed, pushed `d43e64f7`** (dev merge `c2b7a063`, refactor `0dfeafc1`): blocker = test_role_close.py patched `naive_utc_now` → `clock` fixture, unittest.mock gone, exemption line removed; `_is_new_close` / `_server_set_close_reason` helpers next to `CLOSED_STAGES` (alias dropped); 422 rows send `name="Renamed"` and assert nothing written (step, name, closed_at, no RoleChangeHistory); internal `/roles/{id}` + `/projects/{id}/roles/{id}` rows (Open no reason → 202, Filled → `filled`); 10 mutants. Gotcha: under `clock.set` the first request into a not-yet-built router 500s (FastAPI builds included routes lazily; pydantic's `obj is datetime.date` fails under freezegun) → module autouse `_routes_built` warms the PATCH routes on the real clock; shared-fixture fix (build all routes in the session app) not done. **Open: product to confirm** that sync-side closes of Filled roles read `filled` (Gisel's question; replied that it was a tech decision, product decided only the public case 2026-11-02); Gisel re-requested; FE #3604 merged 2026-11-05 so the merge-order banner is lifted. Reviewers Leo + Pedro + Gisel requested 2026-11-10.
-- [ ] Full local unit + multitenancy result (background run) and CI on `ac0c857e`.
-- [ ] Review (Pedro / Leo), then merge **after** echo-frontend #3604 is on dev.
-- [ ] On merge: US 25744 Closed, PRD changelog row + tick M2 checklist item 2 (rev 94).
-- [ ] Tell Flor: 422 `close_reason_required` is live on dev once merged; the picker must send the reason on Closed and Archived, never on Filled.
+- [x] CI green on `d43e64f7`; Gisel APPROVED r2 2026-11-10; merged 2026-11-11 (`91a0cc8e`) after #3604 (on dev 2026-11-05, on FE main too).
+- [x] US 25744 Closed 2026-11-11 (comment with the merge).
+- [x] FE check at merge: `RoleStatusInput` is the only FE path that changes a role's step; it opens the picker for Closed/Archived unless the saved stage is Filled, and sends `close_reason: "filled"` itself for Filled → Closed/Archived (stored as sent). `ROLE_CLOSE_STAGES` = Closed + Archived on both sides. Only the public role PATCH uses `RoleChangeSource.USER`.
+- [ ] PRD (rev 93 → 94): changelog row + M2 checklist item 2 reworded from "becomes required in a follow-up" to as-built (#2499).
+- [ ] Product (Paloma) to confirm ATS-sync closes of Filled roles store `filled` (tech decision, Gisel's question).
+- [ ] Follow-up ticket (Gisel, optional): move the `_routes_built` warm-up into the shared `clock` / app fixture.
+- [ ] Follow-up (Gisel, out of scope): `RoleService._resolve_step_for_step_id` reads `RoleWorkflowStep` via `db_session.get` instead of `RoleWorkflowService`.
 - [ ] qa / main promotion with the next release.
 
 ## Related
