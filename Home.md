@@ -131,6 +131,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 
 ## 📌 Recent activity
 - 2026-11-12 — Testing practice **10 approved PRs merged to dev** after Pedro's nits: #2607, #2610, #2573, #2605, #2604, #2606 (`fix(outbox)` title, Bug 25859), #2608, #2602, #2603, #2609 (last `26ae79ba7`). Open: #2598 / #2581 re-review, #2575 / #2576 no review; 9 app bugs to file in ADO. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
+- 2026-11-12 — **#2614 APPROVED with nits** (Gisel): regenerate keys renamed to `{code_challenge, interviewer_guide}` (`5cc847fe`), three review tests (`1f20725e`); on hold until FE #3646 (draft, NEEDS BE). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — **US 25868 created** (take-home challenge, PR 4 of the assessment creator v4 backend) after Meli confirmed it belongs to code challenge v2 (FE 25801). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — **#2614 review r1**: BLOCKED ON CLARIFICATION (FE #3646 expects other keys and `role.code_challenge` storage); 5 nits fixed and pushed `ce7e1e97` (null guide keeps the brief, NamedTuple, Text column, test rows + split). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — **Assessment creator v4 backend** taken over from Pedro: US 25863 / 25864 / 25865 created, PR 1 (interviewer guide) open as #2614 → dev. → [[Assessment creator v4 backend (US 25863)]]
