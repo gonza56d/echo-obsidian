@@ -130,6 +130,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-12 — Testing practice: **#2598 + #2581 merged to dev** (`955610975`, `cc654bf31`; frozen-clock/lifespan fix `3d38c7b5`); Leo + Pedro r1 on **#2575 / #2576** answered (`82da1c4b`, `72d1370c`, dev merged), re-review pending. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-12 — Testing practice **10 approved PRs merged to dev** after Pedro's nits: #2607, #2610, #2573, #2605, #2604, #2606 (`fix(outbox)` title, Bug 25859), #2608, #2602, #2603, #2609 (last `26ae79ba7`). Open: #2598 / #2581 re-review, #2575 / #2576 no review; 9 app bugs to file in ADO. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-12 — **#2618 OPEN** → dev: PR 2 of the assessment creator v4 backend (US 25864, role context on the edits + `max_questions`). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — **#2614 APPROVED with nits** (Gisel): regenerate keys renamed to `{code_challenge, interviewer_guide}` (`5cc847fe`), three review tests (`1f20725e`); on hold until FE #3646 (draft, NEEDS BE). → [[Assessment creator v4 backend (US 25863)]]
