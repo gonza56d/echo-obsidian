@@ -260,3 +260,13 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 
 ## Related
 - [[Map - Observability & Reliability]] · [[Flaky placement notification tests - poll instead of fixed sleep (PR 2405)]]
+
+## 2026-11-12 — Pedro's r1 on the group PRs, merges
+
+- Pedro reviewed 22 group PRs on 2026-11-11 (20 APPROVED with nits, #2581 and #2598 CHANGES REQUESTED). One agent per PR fixed the local nits; `coverage:` lines skipped by decision (wave PRs skip local coverage); a reply comment on each PR.
+- Fix commits: #2577 `1f088fbe`, #2580 `50719ac3`, #2581 `22f27ac9`, #2582 `92343fc2`, #2583 `0532c25a`, #2584 `4d8b67c1`, #2585 `4687f589`, #2586 `f9792738`, #2587 `7a6b0516`, #2588 `683d9c7c`, #2589 `b1492361`, #2590 `2e06280a`, #2591 `8d674989`, #2592 `64b6b61e`, #2593 `5b46c8db`, #2594 `9513aff0`, #2595 `00577620`, #2596 `fc7502d7`, #2597 `97281d25`, #2598 `892012d4`.
+- MERGED dev (squash): #2578 `ca76633d3`, #2580 `940de87f3`, #2584 `76c858e72`, #2585 `43b0313d1`, #2586 `b6bc26321`, #2593 `0dee3bb9c`, #2595 `9577477b7`, #2596 `cc5720090`.
+- Gotcha: once sibling PRs merge, every open group PR fails CI's "Check test mocks" step until it merges `dev` (its `tests/mock_exemptions.txt` still lists files dev removed: "the list only shrinks").
+- Gotcha: every group PR edits `tests/mock_exemptions.txt`, and 8-10 share `CLAUDE.md`, `SKILL.md`, `tests/conftest.py`, `tests/boundaries/http.py`. A local `git merge-tree` simulation of the squash chain found the order that merges cleanly; the rest are stacked (each branch merges the previous one) so CI runs on the combined tree in parallel.
+- Found, not fixed (app bug): `OutboxRepository.claim_batch` (`app/modules/outbox/repository.py:107-118`) can claim more than `batch_size`: `UPDATE ... WHERE id IN (SELECT ... LIMIT n FOR UPDATE SKIP LOCKED)` re-runs the sub-select per outer row under a Nested Loop Semi Join (seen with stale stats: 51 claimed with LIMIT 50). It is the `[True, False, False]` mode of the flaky `test_poll_claims_at_most_a_batch_and_says_whether_it_found_work`. Fix idea: `WITH due AS MATERIALIZED (...)`. Ticket pending.
+- Other follow-ups surfaced: signup alert / welcome email log "sent" when SendGrid is down (#2585); `"application_id": "None"` sent to the summarizer (#2588, confirm with Data); orphan S3 object on a refused talent document upload (#2591, no ticket); FK-violation 400 leaks the raw Postgres message (#2590); `test_relationship_service_tenant_guard.py` to the Task 25727 leftovers (#2594).
