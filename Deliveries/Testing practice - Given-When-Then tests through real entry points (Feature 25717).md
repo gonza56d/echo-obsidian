@@ -293,3 +293,35 @@ All 12 open group PRs conflicted with `dev` after the 20 merges, so GitHub ran n
 - #2608 `986010ee`: its fakes were already on dev; diff is only its test files.
 
 Gotcha: `git checkout --theirs <path>` is refused by the worktree-owner hook (read as a branch switch); `git restore --theirs <path>` works.
+
+## 2026-11-12 (later) — Pedro's approvals on 10 PRs: nits fixed, all 10 squash-merged to dev
+
+Pedro approved [#2573](https://github.com/taller-projects/echo-backend/pull/2573), [#2602](https://github.com/taller-projects/echo-backend/pull/2602), [#2603](https://github.com/taller-projects/echo-backend/pull/2603), [#2604](https://github.com/taller-projects/echo-backend/pull/2604), [#2605](https://github.com/taller-projects/echo-backend/pull/2605), [#2606](https://github.com/taller-projects/echo-backend/pull/2606), [#2607](https://github.com/taller-projects/echo-backend/pull/2607), [#2608](https://github.com/taller-projects/echo-backend/pull/2608), [#2609](https://github.com/taller-projects/echo-backend/pull/2609), [#2610](https://github.com/taller-projects/echo-backend/pull/2610) (13:15-13:29Z), each with nits. Nits fixed, replies posted on every PR, then merged:
+
+| PR | Nit fix | Squash on dev |
+|---|---|---|
+| [#2607](https://github.com/taller-projects/echo-backend/pull/2607) group 22 | none (reply only) | `952cd9d3e` |
+| [#2610](https://github.com/taller-projects/echo-backend/pull/2610) Pango | `bb2326c2` comment keeps the lasting reason | `1966c2005` |
+| [#2573](https://github.com/taller-projects/echo-backend/pull/2573) group 1 | `1d97bf57` N+1 test filtered by `assessment_id` + totals, tz row comment | `e53749586` |
+| [#2605](https://github.com/taller-projects/echo-backend/pull/2605) group 20 | `4413e8d3` stray-bullet assert | `2b1d80d8a` |
+| [#2604](https://github.com/taller-projects/echo-backend/pull/2604) group 25 | `b25f0018` `keeps_attribution` required (fallback deleted), pragma reason, fixture pairs unified, rename | `2eaa3b87b` |
+| [#2606](https://github.com/taller-projects/echo-backend/pull/2606) group 29 | `82c04860` no `AS MATERIALIZED`, SKILL.md fixtures, root logger INFO check after `main()` | `1601057e7`, titled `fix(outbox): claim_batch … (Bug 25859) + M6 wave 2, group 29` |
+| [#2608](https://github.com/taller-projects/echo-backend/pull/2608) group 30 | `c1a418b2` similar-role axis, default `-created_at` order test | `ce693d7ec` |
+| [#2602](https://github.com/taller-projects/echo-backend/pull/2602) group 31 (stacked on #2573) | `f5a625d5` exact-list assert | `37dfafb1e` |
+| [#2603](https://github.com/taller-projects/echo-backend/pull/2603) group 32 (stacked on #2608) | `823dfb6a` 400 + `error.code` instead of `>= 400`, `user_enabled` rows, midnight bracket, Given markers | `fd429327b` |
+| [#2609](https://github.com/taller-projects/echo-backend/pull/2609) group 24 | `8b8bddb3` + `6197184a` gate retry wait moved out of `fake_vectorizer` | `26ae79ba7` |
+
+Gotchas
+- `dev` has no stale-review dismissal: pushing nit fixes keeps the approval.
+- The worktree-owner hook makes other sessions' worktrees read-only and pins each worktree to its branch: one own worktree per PR branch (`pr<N>-dm2`, `pr<N>-*-nits`), push with `HEAD:<pr branch>`.
+- "Check test mocks" refuses `monkeypatch.setattr` in a test file even for a script constant: #2609's first fixture failed CI; save / set / restore of the attribute passes.
+- Stacked #2603 after #2608's squash: `git merge -X ours origin/dev` still took one dev hunk in `test_roles.py` (`project.id` in a test whose fixture is `mocked_project`). Caught by diffing against the CI-tested head; file restored from it. Always run that diff.
+- `tests/mock_exemptions.txt` conflict on a plain dev merge: the result is the intersection of both lists.
+
+Still open after this round: [#2598](https://github.com/taller-projects/echo-backend/pull/2598) and [#2581](https://github.com/taller-projects/echo-backend/pull/2581) (Pedro's r1 answered, re-review pending; #2581 conflicts with dev), [#2575](https://github.com/taller-projects/echo-backend/pull/2575), [#2576](https://github.com/taller-projects/echo-backend/pull/2576) (no review). All four need dev merged in before CI can pass again.
+
+Bugs promised in the PR replies, **not filed yet** (ADO):
+- #2609: `POST /matches?talent_id=…` 500 (`Role.workflow_step_id` renamed to `role_workflow_step_id`); `POST /talents` without `core_skills` 500 (`skills=None` into `vectorize_talent`).
+- #2608: `PATCH /workflows/{id}/steps/reorder` unreachable (declared after `/{step_id}`); step routes ignore the path's `workflow_id`.
+- #2604: `/sync` re-upload skips the public-update guards (referrer cleared without `edit_source`, no history row); reference PATCH with `null` on NOT NULL fields 500; two 422 shapes for "email or phone"; `PATCH /vendors/{id}` with only `name` drops source links; apply always calls entity resolution with `jazz_hr` off.
+- Task 25780 stays open: record the first dev build on agent 005 / 006 with `tests/unit/export` green; packages + fonts into the agent image.

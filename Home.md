@@ -130,6 +130,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-12 — Testing practice **10 approved PRs merged to dev** after Pedro's nits: #2607, #2610, #2573, #2605, #2604, #2606 (`fix(outbox)` title, Bug 25859), #2608, #2602, #2603, #2609 (last `26ae79ba7`). Open: #2598 / #2581 re-review, #2575 / #2576 no review; 9 app bugs to file in ADO. → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-12 — **#2614 review r1**: BLOCKED ON CLARIFICATION (FE #3646 expects other keys and `role.code_challenge` storage); 5 nits fixed and pushed `ce7e1e97` (null guide keeps the brief, NamedTuple, Text column, test rows + split). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — **Assessment creator v4 backend** taken over from Pedro: US 25863 / 25864 / 25865 created, PR 1 (interviewer guide) open as #2614 → dev. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-12 — Testing practice **dev merged into the 12 open group PRs** (they conflicted after the 20 merges, so no CI ran; #2573 / #2602 red = stale outbox flake). → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
