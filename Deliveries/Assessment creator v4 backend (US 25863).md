@@ -12,6 +12,7 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25863"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25864"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25865"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25868"
 prd: "https://claude.ai/artifact/24CoNLwWdHHVVf45UdfFdk"
 ---
 
@@ -23,6 +24,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - [US 25863](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25863) (PR 1, interviewer guide, under Feature 25748) — In revision
 - [US 25864](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25864) (PR 2, role context on edits + `max_questions`, under Feature 25750) — New
 - [US 25865](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25865) (PR 3, duration, guidelines, v4 response, under Feature 25750) — New
+- [US 25868](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25868) (PR 4, take-home challenge: `challenge_type`, `take_home_time_limit_minutes`, stored take-home brief + guide, per-challenge regenerate with `other_code_challenge`; under Feature 25748) — New, created 2026-11-12
 - FE: [US 25801](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25801) and [US 25802](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25802) (Meli). Predecessor: [US 25736](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25736) (Gisel, [#2516](https://github.com/taller-projects/echo-backend/pull/2516): seniority and skills).
 - PRD: [Assessment creator v4: handoff a Gonza](https://claude.ai/artifact/24CoNLwWdHHVVf45UdfFdk) (Pedro); creator contract: [doc de Rodri](https://claude.ai/artifact/VCZfM8MGSBuAf4WABdUNqN)
 - The three backend US were created 2026-11-12: none existed, the FE stories only said "needs the echo-backend side (Pedro)".
@@ -41,7 +43,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - `CodeChallengeResponse` is also the shape stored in `role.code_challenge`, so the creator's new field went to a subclass instead of changing it.
 - The guide is not copied to `interview` (open with FE + product) and is not in the AI suggestion snapshot (still `live_challenge` only).
 - `not_covered.reason` will be an enum of three values: `"time"`, `"no question"` (with a space), `"guideline"` (user, 2026-11-12).
-- Take-home: the handoff leaves it out, FE US 25801 includes it. The user chose to start live-only and add or leave it out once Meli settles it.
+- Take-home: the handoff leaves it out, FE US 25801 includes it. The user chose to start live-only and add or leave it out once Meli settles it. Meli (Slack, 2026-11-12): it belongs to code challenge v2 (25801), not to assessment v4 (25802), and the backend is needed for it. Rodri's contract lists it as conditional ("si Echo empieza a usar el take-home"). The user had US 25868 created as a fourth PR on the roadmap, after #2614; scope still to confirm with Pedro / Nico.
 
 ## Gotchas
 - The first `./scripts/coverage.sh` run failed on the dev base (`03fdf8ab`): `tests/unit/test_contact_job_writeback_guard.py::TestWritebackGuard::test_inserts_when_contact_has_linkedin` failed once under xdist, passes alone (4/4) and passed on the rerun. Intermittent.
@@ -52,7 +54,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Review r1 out-of-scope: `GET /assessments*` are open reads ("Reads stay open") and `/internal/assessments*` return `AssessmentResponse`, so any tenant user (KForce talent SSO users included) and API-key callers can read the guide; raise with product under G. Record "guide not in the AI snapshot" in the PRD/US; PRD C2 should name `GeneratedCodeChallenges`.
 - #2614: review, and **not to be merged before the FE consumes the regenerate object**.
 - Answer Meli in the Slack thread: `not_covered.reason` is the three-value enum.
-- PR 2 (US 25864) and PR 3 (US 25865).
+- PR 2 (US 25864), PR 3 (US 25865) and PR 4 (US 25868, take-home; depends on #2614 and on 25865 for the live time limit).
 - Open with others: take-home scope (Meli), rule B (subtract the challenge minutes; product), G (where the guide is shown, copy to `interview`), W (weight rebalancing; Flor), the creator's prod date (Rodri): the backend must not reach prod before the creator.
 
 ## Related
