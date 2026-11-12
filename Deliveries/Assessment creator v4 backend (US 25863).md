@@ -14,6 +14,7 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25864"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25865"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25868"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25869"
 prd: "https://claude.ai/artifact/24CoNLwWdHHVVf45UdfFdk"
 ---
 
@@ -26,6 +27,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - [US 25864](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25864) (PR 2, role context on edits + `max_questions`, under Feature 25750) — New
 - [US 25865](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25865) (PR 3, duration, guidelines, v4 response, under Feature 25750) — New
 - [US 25868](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25868) (PR 4, take-home challenge: `challenge_type`, `take_home_time_limit_minutes`, stored take-home brief + guide, per-challenge regenerate with `other_code_challenge`; under Feature 25748) — New, created 2026-11-12
+- [US 25869](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25869) (PR 5, guide on the interview: `live_challenge_guide` copied to the interview with the brief + `GET /assessments/interviews/{id}/challenge_guide`, authenticated and permission-gated; under Feature 25748) — New, created 2026-11-12
 - FE: [US 25801](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25801) and [US 25802](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25802) (Meli). Predecessor: [US 25736](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25736) (Gisel, [#2516](https://github.com/taller-projects/echo-backend/pull/2516): seniority and skills).
 - PRD: [Assessment creator v4: handoff a Gonza](https://claude.ai/artifact/24CoNLwWdHHVVf45UdfFdk) (Pedro); creator contract: [doc de Rodri](https://claude.ai/artifact/VCZfM8MGSBuAf4WABdUNqN)
 - The three backend US were created 2026-11-12: none existed, the FE stories only said "needs the echo-backend side (Pedro)".
@@ -61,7 +63,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Review r1 out-of-scope: `GET /assessments*` are open reads ("Reads stay open") and `/internal/assessments*` return `AssessmentResponse`, so any tenant user (KForce talent SSO users included) and API-key callers can read the guide; raise with product under G. Record "guide not in the AI snapshot" in the PRD/US; PRD C2 should name `GeneratedCodeChallenges`.
 - #2614: review, and **not to be merged before the FE consumes the regenerate object**.
 - Answer Meli in the Slack thread: `not_covered.reason` is the three-value enum.
-- Guide on the interviewer's interview page (Meli, 2026-11-12; PRD item G): not on `InterviewResponse`, which about 12 routes share (the ungated `GET /assessments/interviews/{id}`, `/slots` under DisableRLS, `/internal`). Needs product: who counts as the interviewer, and current guide vs a copy taken when the interview is created. No US yet.
+- Guide on the interviewer's interview page (Meli, 2026-11-12; PRD item G): not on `InterviewResponse`, which about 12 routes share (the ungated `GET /assessments/interviews/{id}`, `/slots` under DisableRLS, `/internal`). Meli (2026-11-12): a copy that travels with the brief (new column, part of the interview sync); audience = whoever sees the brief on the evaluation screen, no new permission (assigned-interviewer-only would be product's call); own authenticated endpoint, never public. US 25869 created. To confirm with Meli: which existing interviews permission gates the evaluation screen (a talent-role user must not read the guide).
 - PR 3 (US 25865) and PR 4 (US 25868, take-home; depends on #2614 and on 25865 for the live time limit).
 - Open with others: take-home scope (Meli), rule B (subtract the challenge minutes; product), G (where the guide is shown, copy to `interview`), W (weight rebalancing; Flor), the creator's prod date (Rodri): the backend must not reach prod before the creator.
 
