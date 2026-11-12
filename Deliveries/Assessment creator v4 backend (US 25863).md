@@ -6,6 +6,7 @@ delivered:
 tags: [feature, assessment, assessment-creator, code-challenge]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2614"
+  - "https://github.com/taller-projects/echo-backend/pull/2618"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/3646"
 tickets:
@@ -35,6 +36,8 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Review r2 (Gisel, 2026-11-12, on `5cc847fe`): **APPROVED with nits**, merge only with or after FE #3646. Addressed in `1f20725e`: POST without a guide stores NULL, PATCH with null clears the guide, and `GET /assessments/interviews/{id}/challenge` (the candidate's page; it had no test) answers the brief only. Not taken: moving `RegeneratedCodeChallenge` out of `assessment_service.py`, dropping `Text` from the column. Her questions: a brief edited without its guide keeps the old guide (left as is: clearing would lose the solution silently); no consumer of `/internal/assessments` in `profiles_api`.
 - FE #3646 state 2026-11-12: still a draft titled NEEDS BE, one commit from 2026-11-06, typecheck red, no approval. It also needs the time limit (US 25865) and the take-home (US 25868), and reads `assessment.live_interviewer_guide` (the backend returns `live_challenge_guide`): #2614 stays on hold.
 
+- [#2618](https://github.com/taller-projects/echo-backend/pull/2618) → dev — **OPEN 2026-11-12** (`092bd1da`, branch `25864/role-context-on-edits`, worktree `25864-role-context-on-edits`, off origin/dev, not stacked on #2614: the two merge clean). PR 2, US 25864 In revision: the three edit routes send `job_title` + seniority + skills to the creator; `skill_generation` accepts optional `max_questions` (1 to 10). FE contract additive only. Coverage 94.39% → 94.40%.
+
 ## How
 - Migration `8zvgynrm4wa8`: `assessment.live_challenge_guide TEXT NULL`.
 - `GeneratedCodeChallenges` (subclass of `CodeChallengeResponse`) reads `live_interviewer_guide`; `generate_assessment_content` returns skills, challenge and guide.
@@ -58,7 +61,8 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Review r1 out-of-scope: `GET /assessments*` are open reads ("Reads stay open") and `/internal/assessments*` return `AssessmentResponse`, so any tenant user (KForce talent SSO users included) and API-key callers can read the guide; raise with product under G. Record "guide not in the AI snapshot" in the PRD/US; PRD C2 should name `GeneratedCodeChallenges`.
 - #2614: review, and **not to be merged before the FE consumes the regenerate object**.
 - Answer Meli in the Slack thread: `not_covered.reason` is the three-value enum.
-- PR 2 (US 25864), PR 3 (US 25865) and PR 4 (US 25868, take-home; depends on #2614 and on 25865 for the live time limit).
+- Guide on the interviewer's interview page (Meli, 2026-11-12; PRD item G): not on `InterviewResponse`, which about 12 routes share (the ungated `GET /assessments/interviews/{id}`, `/slots` under DisableRLS, `/internal`). Needs product: who counts as the interviewer, and current guide vs a copy taken when the interview is created. No US yet.
+- PR 3 (US 25865) and PR 4 (US 25868, take-home; depends on #2614 and on 25865 for the live time limit).
 - Open with others: take-home scope (Meli), rule B (subtract the challenge minutes; product), G (where the guide is shown, copy to `interview`), W (weight rebalancing; Flor), the creator's prod date (Rodri): the backend must not reach prod before the creator.
 
 ## Related
