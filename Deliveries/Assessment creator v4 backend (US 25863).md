@@ -6,7 +6,8 @@ delivered:
 tags: [feature, assessment, assessment-creator, code-challenge]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2614"
-fe_prs: []
+fe_prs:
+  - "https://github.com/taller-projects/echo-frontend/pull/3646"
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25863"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25864"
@@ -27,7 +28,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - The three backend US were created 2026-11-12: none existed, the FE stories only said "needs the echo-backend side (Pedro)".
 
 ## PRs
-- [#2614](https://github.com/taller-projects/echo-backend/pull/2614) → dev — **OPEN 2026-11-12** (`cbeabe2d`, branch `25863/interviewer-guide`, worktree `25863-interviewer-guide`). FE contract: `live_challenge_guide` on the generation preview and on assessment POST / PATCH / GET; `POST /projects/{id}/roles/{id}/regenerate_challenge` accepts `interviewer_guide` and **answers an object** `{live_challenge, live_challenge_guide}` instead of a string (breaking: `echo-frontend/src/services/roles.ts` types it as `string`).
+- [#2614](https://github.com/taller-projects/echo-backend/pull/2614) → dev — **OPEN 2026-11-12** (`cbeabe2d`, then review nits `ce7e1e97`; branch `25863/interviewer-guide`, worktree `25863-interviewer-guide`, nits pushed from worktree `25863-interviewer-guide-nits` with `git push origin HEAD:25863/interviewer-guide`). FE contract: `live_challenge_guide` on the generation preview and on assessment POST / PATCH / GET; `POST /projects/{id}/roles/{id}/regenerate_challenge` accepts `interviewer_guide` and **answers an object** `{live_challenge, live_challenge_guide}` instead of a string (breaking: `echo-frontend/src/services/roles.ts` types it as `string`).
 
 ## How
 - Migration `8zvgynrm4wa8`: `assessment.live_challenge_guide TEXT NULL`.
@@ -36,6 +37,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Tests in `tests/unit/test_assessments.py` on `fake_assessment_creator`.
 
 ## Decisions
+- Review r1 of #2614 (2026-11-12, /pr-review on `cbeabe2d`): BLOCKED ON CLARIFICATION, no code blockers. Nits fixed in `ce7e1e97`: `GeneratedCodeChallenges.live_interviewer_guide` is `str | None` (a creator `null` failed `validate_return` and the challenge task's broad `except` dropped the brief too); `generate_assessment_content` returns the `GeneratedAssessmentContent` NamedTuple (brief and guide cannot be swapped); model `mapped_column(Text)` to match the migration's TEXT; tests: missing / empty / null guide rows on generation and regenerate, the save and the edit split into a POST and a PATCH test.
 - `CodeChallengeResponse` is also the shape stored in `role.code_challenge`, so the creator's new field went to a subclass instead of changing it.
 - The guide is not copied to `interview` (open with FE + product) and is not in the AI suggestion snapshot (still `live_challenge` only).
 - `not_covered.reason` will be an enum of three values: `"time"`, `"no question"` (with a space), `"guideline"` (user, 2026-11-12).
@@ -46,6 +48,8 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Inside a worktree session the isolation check refuses any Bash command whose text contains "git", "github" URLs included: put such payloads in a file and pass it (`curl -d @file`).
 
 ## Pending
+- **FE contract (review r1 question)**: FE #3646 (Meli, last updated 2026-11-09, before PRD decision #3) expects the guide in `role.code_challenge.live_interviewer_guide`, reads the preview's `live_interviewer_guide` and expects regenerate to answer `{code_challenge, interviewer_guide}`; its type guard returns null on #2614's `{live_challenge, live_challenge_guide}`, so regenerate would silently stop updating the brief. Agree one shape with Flor/Meli (FE moves to decision #3, or #2614 renames its keys) and link the FE PR in #2614's body.
+- Review r1 out-of-scope: `GET /assessments*` are open reads ("Reads stay open") and `/internal/assessments*` return `AssessmentResponse`, so any tenant user (KForce talent SSO users included) and API-key callers can read the guide; raise with product under G. Record "guide not in the AI snapshot" in the PRD/US; PRD C2 should name `GeneratedCodeChallenges`.
 - #2614: review, and **not to be merged before the FE consumes the regenerate object**.
 - Answer Meli in the Slack thread: `not_covered.reason` is the three-value enum.
 - PR 2 (US 25864) and PR 3 (US 25865).
