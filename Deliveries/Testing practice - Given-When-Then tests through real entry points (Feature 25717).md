@@ -276,3 +276,20 @@ Backend testing overhaul from my `tests.MD` seed: one Given/When/Then test per u
 - Gotcha (stacked squash merges): after PR i is squashed into dev, a plain `git merge origin/dev` into PR i+1 re-adds what PR i+1 had removed from PR i (seen: #2577's duplicate `fake_team_builder` came back into #2582). Safe step: merge, then `git restore --source=<CI-tested head> --staged --worktree -- .`, take only the files dev has that the branch lacks, amend the unpushed merge, and check `git diff <tested head> HEAD` is exactly those files. Script: scratchpad `mergechain2.sh` of the session.
 - `test_poll_claims_at_most_a_batch...` made deterministic for its first failure mode (`available_at` per event, #2587 `4285e7a3`); the `claim_batch` over-claim still flakes it.
 - **Bug 25859** (https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25859, In revision): `claim_batch` over-claim fixed on #2606 `a0a528d9` (branch `25726/outbox_group29`, worktree `pr2606-claim-batch`, dev merged `baef451c`): due rows picked once in a CTE the UPDATE joins, same shape as `background_job`'s claim; regression row `nested_loops` on the batch test (a `begin` listener on the test engine turns hashjoin/mergejoin/material/hashagg/sort off, deterministic, no stats games). #2606 is still unreviewed.
+
+## 2026-11-12 — dev merged into the 12 open group PRs
+
+All 12 open group PRs conflicted with `dev` after the 20 merges, so GitHub ran no CI on them (#2573 / #2602 showed a stale red run of the outbox batch flake). `origin/dev` merged into each (merge commit, plain push):
+
+- #2573 `73a2ccc2`, #2602 `b6e4c906`: only `tests/mock_exemptions.txt`.
+- #2575 `d324634a`: dev's #2580 files kept verbatim, the PR's bulk / author sections appended; `_stored` → dev's `_interactions_of`. Similar helpers left side by side (`_contact` / `_new_contact`, `BULK_PATH` / `INTERNAL_BULK`).
+- #2576 `7a326388`: dev's fakes + `fake_vault`, supabase `on_next_call`.
+- #2581 `bbbbb8de`: dev's `db_faults` + `session_liveness_db_faults`.
+- #2598 `297c407a`: `test_organizations.py` = dev's 35 tests + the PR's 30; the PR's `_entry` renamed `_track_entry`.
+- #2603 `e9b752ad`: `test_role_placements.py` = the PR's 18 rewritten tests + the 44 #2597 added.
+- #2604 `214054f7`: `test_talents.py` 132 test functions; the PR's "source and referral attribution" block overlaps #2587's block on dev (not deduplicated).
+- #2605 `2fcdce32`, #2609 `cc4ea938` (were stacked on #2577 / #2583): parent's files taken from dev; add/add test files re-merged three-way with the parent's tip as base.
+- #2607 `2714e687`: dev's `fake_sendgrid` + `fake_sendgrid_domains`; `tests/system/test_candidate_email.py` keeps only the template classes (its docstring still says group 27 deletes it; #2592 did not).
+- #2608 `986010ee`: its fakes were already on dev; diff is only its test files.
+
+Gotcha: `git checkout --theirs <path>` is refused by the worktree-owner hook (read as a branch switch); `git restore --theirs <path>` works.
