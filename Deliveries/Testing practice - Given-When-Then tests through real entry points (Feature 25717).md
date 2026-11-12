@@ -338,3 +338,9 @@ Pending from this round
 - Wave groups tab: owner rows for `tests/multitenancy/test_contact_isolation.py`, `tests/unit/test_residence_countries.py`, `tests/unit/test_kforce_tenant_seed.py`.
 - ADO not filed: task for a teardown on `DependencyInjector.apply_bindings`; bug candidate `ActivityService.bulk_update` answers `http_400` where interactions use `duplicate_item`; plus the nine bugs listed in the previous section.
 - Follow-ups from approvals: one conftest fixture for `multi_external_ids_on` / `tenant_features` / `touchpoints_enabled`; second `harness:` line of #2581.
+
+## 2026-11-12 (night) — #2575 and #2576 merged; flake fix #2620 open
+
+- Leo approved [#2575](https://github.com/taller-projects/echo-backend/pull/2575) and [#2576](https://github.com/taller-projects/echo-backend/pull/2576) on the second round (18:24Z). Squash-merged: #2575 `e0c6719bc`, #2576 `e092864f0`. Every M6 group PR opened so far is merged; none is open.
+- `dev` CI failed on `cc654bf3` (#2581's squash): `test_user_bound_keys.py::test_get_talents_answers_429_past_the_keys_limit_with_the_headers_on_every_response`, the same freeze-then-open-client failure fixed for one sibling in #2581. [#2620](https://github.com/taller-projects/echo-backend/pull/2620) (`fix/user_bound_keys_frozen_clock_lifespan`) moves `clock.set` inside the client block in the four remaining tests; file alone 66 passed. **OPEN**, reviewers Leo, Pedro, Gisel. Until it merges, dev can go red on that file depending on worker order.
+- Leo's open items (non-blocking): record on Feature 25717 that wave PRs skip the `coverage:` line (its 11-nov comment still requires it); create the `apply_bindings` teardown task; owner rows in the Wave groups tab for `test_residence_countries.py`, `test_kforce_tenant_seed.py`, `tests/multitenancy/test_contact_isolation.py`.
