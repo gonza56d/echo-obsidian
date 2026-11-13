@@ -130,6 +130,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-13 — **#2614 MERGED dev as DEV ONLY** (`c5f6094fa`, US 25863 Closed; do not release before echo-frontend#3646 + the creator in prod); **#2637** Leo r1 addressed + dev merged (`9640a9f8`). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-13 — **#2645 OPEN** → dev: restores `_commit_a_change` in `tests/unit/test_check_coverage.py` (dev red since #2642). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-13 — **#2637 rule B** (`853b949b`): questions sized to the interview minus the challenge's time limit (default 30), 422 under 30 minutes left, estimate counts the challenge. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-13 — Testing practice **group 46 [#2643](https://github.com/taller-projects/echo-backend/pull/2643) OPEN** (PSA intake: 4 files → test_psa_intake.py through the routes, the reconcile job and the backfill script + isolation file on fake_psa; 77/79 mutants; exemptions 82 → 79; repeated link-conflict Sentry report pinned as xfail, not ticketed) → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
