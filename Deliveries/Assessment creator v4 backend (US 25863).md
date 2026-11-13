@@ -69,6 +69,8 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Inside a worktree session the isolation check refuses any Bash command whose text contains "git", "github" URLs included: put such payloads in a file and pass it (`curl -d @file`).
 
 ## Pending
+- 2026-11-13: #2637's CI (`853b949b`) red only on dev's own break: Leo's #2642 (coverage gate removed) deleted `_commit_a_change` but `test_report_line_names_the_base_and_the_head_it_measured` still calls it. Fix PR [#2645](https://github.com/taller-projects/echo-backend/pull/2645) (test-only helper back, no gate). Rerun #2637's CI after it merges.
+- US 25869 depends on #2614 (blocked by FE #3646 through its regenerate response) and #2637: decide A (stack) or B (move #2614's regenerate response change out so #2614 merges without the FE).
 - Answer Meli (rule B in #2637): FE minimum = 30 + time limit; 422 code `interview_too_short_for_challenge`; preview shows limit 30 by default and the estimate includes the challenge.
 - 2026-11-13: **#2614 has two alembic heads again**: dev gained `xpxt4ljjeste` (#2498) after the `1c39599f` re-chain onto `gyihbi3w1agy`, and #2637 adds `mp53hhpl0zvo`. Re-chain `8zvgynrm4wa8` onto dev's head right before it merges.
 - Tell Meli (FE #3655 / #3646): the contract #2637 ships (time limit stored on the assessment, item 5 → US 25869, item 4 = minutes the skill adds, guidelines stored as written, not split).
