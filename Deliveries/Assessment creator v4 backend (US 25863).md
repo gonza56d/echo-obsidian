@@ -12,6 +12,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2658"
   - "https://github.com/taller-projects/echo-backend/pull/2651"
   - "https://github.com/taller-projects/echo-backend/pull/2657"
+  - "https://github.com/taller-projects/echo-backend/pull/2659"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/3646"
 tickets:
@@ -82,6 +83,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Inside a worktree session the isolation check refuses any Bash command whose text contains "git", "github" URLs included: put such payloads in a file and pass it (`curl -d @file`).
 
 ## Pending
+- 2026-11-16: user asked to add #2617 (matching expand by 30, CR 25766) and #2628 (contract types, CR 25741) to release [#2657](https://github.com/taller-projects/echo-backend/pull/2657). Another session had already added #2656 (`0f19179b`, PR body updated 20:16Z), so the release = all of dev. **#2656 (`yn991dz3lqeq`) and #2628 (`y1u9gqarus0d`) both revise `p3ig9t1pf2mg`: dev has two alembic heads** (neither ran: dev + kforce-dev still at `p3ig9t1pf2mg`). User chose a merge migration: [#2659](https://github.com/taller-projects/echo-backend/pull/2659) → dev OPEN (`gwmlolm5b3pr`, no DDL, branch `fix/alembic_merge_take_home_contract_types`, worktree `fix-merge-heads`). #2628 + #2617 are picked and rebased onto the release branch locally (worktree `deploy-qa-2026-11-16`, tree = dev), **not pushed**. **Next: merge #2659, cherry-pick its squash into #2657, push, update #2657's body (8 → 10 migrations, single head `gwmlolm5b3pr`).**
 - 2026-11-16: blocker before merge = Flor's 🔴 on echo-frontend#3646 (CHANGES REQUESTED): a type change kept the dropped challenge, saved next to the new type, counted in the estimate, copied to interviews. BE defense `8bc249d2`: a POST / PATCH /assessments with a known `challenge_type` clears the excluded challenge's brief/guide/limit (PATCH without type checked against stored); no type = saved as sent. FE fix still owed in #3646. Note on #2656: 6927915529.
 - 2026-11-16: **#2656 MERGED dev `2899aa35`** (user: merge without waiting for the last CI run; 492 local passed), US 25868 Closed. **Cherry-picked to the qa release `deploy/qa_2026-11-16` (#2657) as `0f19179b`**, single head `yn991dz3lqeq`; #2657 body updated (#2656 included, 8 migrations, needs #3646 with the take-home + storage on the assessment). #2658 (US 25910) not in the release; still based on `25868/take-home-challenge` → retarget to dev and merge dev.
 - Still open: ticket for ungated GET /assessments* exposing both guides (Leo asked to open it; user hasn't answered).
