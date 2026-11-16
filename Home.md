@@ -134,6 +134,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-16 — Testing practice blockers sweep: dev merged into 7 group PRs, all 8 open (#2626 #2646 #2648 #2649 #2650 #2652 #2653 #2654) CLEAN + CI green, 0 approved; #2626 Leo follow-ups done (`8a2a6b85`); #2649 Leo r1 done (visibility folded, isolation rewritten, Bug 25912) → [[Testing practice - Given-When-Then tests through real entry points (Feature 25717)]]
 - 2026-11-16 — #2657 merged to qa; opened prod release [#2660](https://github.com/taller-projects/echo-backend/pull/2660) (qa → main). FE #3646/#3655 not yet on FE qa/main. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — [#2659](https://github.com/taller-projects/echo-backend/pull/2659) merged dev; release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) now = all of dev (`7033c2b5`, head `76c4d279`) incl. #2656, #2628, #2617, #2659; alembic head `gwmlolm5b3pr`. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — dev double head (#2656 `yn991dz3lqeq` + #2628 `y1u9gqarus0d` on `p3ig9t1pf2mg`) → opened [#2659](https://github.com/taller-projects/echo-backend/pull/2659) merge migration `gwmlolm5b3pr`; release #2657 to take #2628 + #2617 + #2659. → [[Assessment creator v4 backend (US 25863)]]
