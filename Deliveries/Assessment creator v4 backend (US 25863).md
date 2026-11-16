@@ -8,6 +8,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2614"
   - "https://github.com/taller-projects/echo-backend/pull/2618"
   - "https://github.com/taller-projects/echo-backend/pull/2637"
+  - "https://github.com/taller-projects/echo-backend/pull/2656"
   - "https://github.com/taller-projects/echo-backend/pull/2651"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/3646"
@@ -78,6 +79,8 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Inside a worktree session the isolation check refuses any Bash command whose text contains "git", "github" URLs included: put such payloads in a file and pass it (`curl -d @file`).
 
 ## Pending
+- 2026-11-16: **#2637 MERGED dev `7a839628d`** (13:41Z), US 25865 Closed.
+- 2026-11-16: **#2656 OPEN** → dev (US 25868 take-home, In revision, Azure comment 29349432; branch `25868/take-home-challenge`, worktree `25868-take-home-challenge`, head `2c69a6b0`). Meli asked; user gave the scope go-ahead (ticket said confirm with Pedro/Nico). Decisions (user): stored on the assessment mirroring the live names (`challenge_type`, `take_home_challenge`, `take_home_challenge_guide`, `take_home_challenge_time_limit_minutes`; migration `yn991dz3lqeq` after `p3ig9t1pf2mg`), not in `role.code_challenge` where FE #3646 kept it (FE moves + renames). Generate: `challenge_type` (default live) + `take_home_time_limit_minutes` 10-240 forwarded; rule B subtracts only the live limit; take-home limit = body, else live, else 30 (creator's own fallback). Regenerate: `challenge_type` live|take_home (both → 422), `other_code_challenge`, take-home limit from body or saved (never the live one); AI suggestion only for live. Creator OpenAPI now says `role_title` is also accepted. Not for qa/prod before #3646 + creator in prod. Take-home on the interview → US 25869. FE #3646 out of draft 2026-11-16 (SUPPORTED_CHALLENGE_TYPES still ['live']).
 - From Gisel's #2651 review, outside the PR: `GET /assessments` and `GET /assessments/{id}` have no Protected gate and answer `live_challenge_guide` (since #2614): follow-up ticket to gate the guide on AssessmentResponse (ask the user before filing). Tell Meli: `/snapshots/{id}/public` serves FE-built content without auth, so `/evaluate` must never put the guide in a snapshot.
 - US 25868 (take-home) plan given 2026-11-16, awaiting decisions: rule B subtracts only the live limit; store `challenge_type`; snapshot target `take_home_challenge`; assessment only (interview copy = follow-up if Meli needs it); go ahead without Pedro/Nico. Branch fresh off dev (after #2651, no second head).
 - 2026-11-16: tell Meli #2651's route: `/evaluate` reads guide + `interview_guidelines` from `GET /assessments/interviews/{id}/challenge_guide` (interviews.view), not from `/challenge` (#3655's draft mocks it there). Merge #2651 to dev when reviewed (it is DEV-ONLY by dependency: rides with #2614 + #2637).
