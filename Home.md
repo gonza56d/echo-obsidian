@@ -12,7 +12,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 ---
 
 ## 🚧 In flight (open PRs / gated work)
-- [[Assessment creator v4 backend (US 25863)]] — **prod release [#2660](https://github.com/taller-projects/echo-backend/pull/2660) OPEN 2026-11-16** (qa → main, frozen `deploy/prod_2026-11-16`): hold prod approvals until FE #3646 + #3655 are on FE main and qa is at `gwmlolm5b3pr`.
+- [[Assessment creator v4 backend (US 25863)]] — **prod release [#2660](https://github.com/taller-projects/echo-backend/pull/2660) OPEN 2026-11-16** (qa → main, frozen `deploy/prod_2026-11-16`): merge when ready; the prod deploy has its own manual check (FE #3646 + #3655 not yet on FE main).
 - [[Assessment creator v4 backend (US 25863)]] — [#2659](https://github.com/taller-projects/echo-backend/pull/2659) MERGED dev 2026-11-16; release #2657 carries it with #2628 + #2617 (head `gwmlolm5b3pr`).
 - [[Assessment creator v4 backend (US 25863)]] — **release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) → qa OPEN 2026-11-16**: whole dev (64 picks), without #2656; ships with FE #3655 + #3646 (live only). qa → main next, only with both FE PRs on FE main.
 - [[Proposal export team order flake (PR 2647)]] — [#2647](https://github.com/taller-projects/echo-backend/pull/2647) → dev **OPEN 2026-11-13**: the proposal payload sends the team in role creation order (`sorted(project.roles, key=(created_at, id))`); fixes the RFQ cover flake on dev build 33290.
