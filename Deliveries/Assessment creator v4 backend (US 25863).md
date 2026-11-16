@@ -9,6 +9,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2618"
   - "https://github.com/taller-projects/echo-backend/pull/2637"
   - "https://github.com/taller-projects/echo-backend/pull/2656"
+  - "https://github.com/taller-projects/echo-backend/pull/2658"
   - "https://github.com/taller-projects/echo-backend/pull/2651"
   - "https://github.com/taller-projects/echo-backend/pull/2657"
 fe_prs:
@@ -19,6 +20,7 @@ tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25865"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25868"
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25869"
+  - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25910"
 prd: "https://claude.ai/artifact/24CoNLwWdHHVVf45UdfFdk"
 ---
 
@@ -80,6 +82,9 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 - Inside a worktree session the isolation check refuses any Bash command whose text contains "git", "github" URLs included: put such payloads in a file and pass it (`curl -d @file`).
 
 ## Pending
+- 2026-11-16: US 25869 was already done by another session: **#2651 MERGED dev `6d913d99a` [DEV ONLY]** (live guide copied to the interview, `GET /assessments/interviews/{id}/challenge_guide` → `{live_challenge_guide, interview_guidelines}`, `interviews.view`), US 25869 Closed.
+- 2026-11-16: user chose a **new US 25910** (created, Feature 25748, Sprint 45) for the take-home on the interview → **#2658 OPEN, stacked on #2656** (base `25868/take-home-challenge`, branch `25910/take-home-on-interview`, `6bd5bef8`): `assessment_interview.take_home_challenge` / `take_home_challenge_guide` (deferred, migration `mglu2f30q92i` after `yn991dz3lqeq`), copied on step entry + bulk, never by sync; `challenge_guide` answers them. Retarget to dev after #2656 squash-merges (stacked squash chain).
+- 2026-11-16: **#2656 Leo r1 (COMMENTED, CHANGES REQUESTED verdict)** addressed in `621f5052`: 4 unpinned rules pinned (his 4 mutants all killed), take-home guide tied to its brief, bounds 10/240, docstring; titles `[DEV ONLY]` on #2656 + #2658; body fixed; reply 6927286899; US 25868 comment 29349840. No Meli contract change. **Open (not in any ticket): GET /assessments and GET /assessments/{id} are ungated and return both guides (live since #2614) → a talent-role user with a session could read the solutions; needs its own ticket + FE check (user to decide).** Candidate-facing take-home brief delivery: no ticket.
 - 2026-11-16: **release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) OPEN → qa** (`deploy/qa_2026-11-16`, "Release dev -> qa 2026-11-16"): the whole of dev (64 first-parent picks with `-x` since #2599 + #2621, plus one commit restoring dev's `tests/unit/test_users.py`, the only conflict); tree = dev `cdad11a2` except the six July migrations' chain text. Carries #2614, #2618, #2637, #2651; **#2656 not included** (not on dev). Why: Meli (Slack, 2026-11-16) ships FE #3655 (merged FE dev 19:15Z) and #3646 'así como está, sin el 2656' (live only, `SUPPORTED_CHALLENGE_TYPES = [LIVE]`). Checked: assessment v4 cannot be cherry-picked without code challenge v2 (#2637 alone = 36 conflict hunks, migration on #2614's; FE #3655 calls #2651's `/challenge_guide`), and #2614's regenerate object breaks FE main without #3646. #3646's take-home fields are ignored by the BE (no `extra="forbid"` on assessment/role schemas). Creator prod OpenAPI = dev's (v4 + code challenge v2 fields), so 'creator in prod first' holds. Migrations: qa `gyihbi3w1agy` → single head `p3ig9t1pf2mg` (7: #2498 x2, #2636, #2614, #2637, #2651, #2615); dev and kforce-dev already at `p3ig9t1pf2mg`. Reviewers Leo, Pedro, Gisel; mergeable, BLOCKED on review/CI. **Next: merge with a merge commit, deploy qa, then qa → main only together with FE #3646 + #3655 on FE main.**
 - 2026-11-16: **#2637 MERGED dev `7a839628d`** (13:41Z), US 25865 Closed.
 - 2026-11-16: **#2656 OPEN** → dev (US 25868 take-home, In revision, Azure comment 29349432; branch `25868/take-home-challenge`, worktree `25868-take-home-challenge`, head `2c69a6b0`). Meli asked; user gave the scope go-ahead (ticket said confirm with Pedro/Nico). Decisions (user): stored on the assessment mirroring the live names (`challenge_type`, `take_home_challenge`, `take_home_challenge_guide`, `take_home_challenge_time_limit_minutes`; migration `yn991dz3lqeq` after `p3ig9t1pf2mg`), not in `role.code_challenge` where FE #3646 kept it (FE moves + renames). Generate: `challenge_type` (default live) + `take_home_time_limit_minutes` 10-240 forwarded; rule B subtracts only the live limit; take-home limit = body, else live, else 30 (creator's own fallback). Regenerate: `challenge_type` live|take_home (both → 422), `other_code_challenge`, take-home limit from body or saved (never the live one); AI suggestion only for live. Creator OpenAPI now says `role_title` is also accepted. Not for qa/prod before #3646 + creator in prod. Take-home on the interview → US 25869. FE #3646 out of draft 2026-11-16 (SUPPORTED_CHALLENGE_TYPES still ['live']).
