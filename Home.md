@@ -132,6 +132,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-16 — **#2656 MERGED** (`2899aa35`, US 25868 Closed) and added to the qa release #2657 (`0f19179b`); challenge_type now decides which challenges an assessment keeps (`8bc249d2`). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — **#2658 OPEN** (US 25910, take-home on the interview, stacked on #2656); **#2656** Leo r1 addressed (`621f5052`). → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — opened release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) dev → qa (`deploy/qa_2026-11-16`, 64 picks, tree = dev except the July chain text, single head `p3ig9t1pf2mg`); assessment v4 + code challenge v2 go together, #2656 out. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — **#2656 OPEN** → dev: take-home challenge (US 25868) on the assessment; **#2637 MERGED** (`7a839628d`, US 25865 Closed). → [[Assessment creator v4 backend (US 25863)]]
