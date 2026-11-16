@@ -12,6 +12,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 ---
 
 ## 🚧 In flight (open PRs / gated work)
+- [[Assessment creator v4 backend (US 25863)]] — **prod release [#2660](https://github.com/taller-projects/echo-backend/pull/2660) OPEN 2026-11-16** (qa → main, frozen `deploy/prod_2026-11-16`): hold prod approvals until FE #3646 + #3655 are on FE main and qa is at `gwmlolm5b3pr`.
 - [[Assessment creator v4 backend (US 25863)]] — [#2659](https://github.com/taller-projects/echo-backend/pull/2659) MERGED dev 2026-11-16; release #2657 carries it with #2628 + #2617 (head `gwmlolm5b3pr`).
 - [[Assessment creator v4 backend (US 25863)]] — **release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) → qa OPEN 2026-11-16**: whole dev (64 picks), without #2656; ships with FE #3655 + #3646 (live only). qa → main next, only with both FE PRs on FE main.
 - [[Proposal export team order flake (PR 2647)]] — [#2647](https://github.com/taller-projects/echo-backend/pull/2647) → dev **OPEN 2026-11-13**: the proposal payload sends the team in role creation order (`sorted(project.roles, key=(created_at, id))`); fixes the RFQ cover flake on dev build 33290.
@@ -133,6 +134,7 @@ Personal vault: one note per delivered feature/bugfix (echo-backend + echo-front
 - Open Jobs residuals (feature itself **SHIPPED**, US Closed): confirm Data-team notification + Pedro-review reply went out, post-deploy wipe sanity check, `ApplicationRepository` vector-value refactor → [[Open Jobs 1-5 matching (US 23640)]]
 
 ## 📌 Recent activity
+- 2026-11-16 — #2657 merged to qa; opened prod release [#2660](https://github.com/taller-projects/echo-backend/pull/2660) (qa → main). FE #3646/#3655 not yet on FE qa/main. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — [#2659](https://github.com/taller-projects/echo-backend/pull/2659) merged dev; release [#2657](https://github.com/taller-projects/echo-backend/pull/2657) now = all of dev (`7033c2b5`, head `76c4d279`) incl. #2656, #2628, #2617, #2659; alembic head `gwmlolm5b3pr`. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — dev double head (#2656 `yn991dz3lqeq` + #2628 `y1u9gqarus0d` on `p3ig9t1pf2mg`) → opened [#2659](https://github.com/taller-projects/echo-backend/pull/2659) merge migration `gwmlolm5b3pr`; release #2657 to take #2628 + #2617 + #2659. → [[Assessment creator v4 backend (US 25863)]]
 - 2026-11-16 — **#2656 MERGED** (`2899aa35`, US 25868 Closed) and added to the qa release #2657 (`0f19179b`); challenge_type now decides which challenges an assessment keeps (`8bc249d2`). → [[Assessment creator v4 backend (US 25863)]]
