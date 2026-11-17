@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: shipped-prod
 env: both
-delivered:
+delivered: 2026-11-11
 tags: [follow-up, customer-metrics, permissions, tests]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2572"
@@ -32,8 +32,8 @@ One ticket + one PR for the review follow-ups of Feature 25635 (user asked 2026-
 - `ruff format` on tests reformats untouched files (CI formats only app/): restore and re-apply import-only changes.
 
 ## Pending
-- [ ] CI, reviews (Leo, Pedro, Gisel), squash-merge → US 25850 Closed.
-- [ ] qa / main with the next release.
+- [x] CI green, APPROVED, merged to dev 2026-11-11 19:59Z as a merge commit (`d4f8fd20`); [US 25850](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25850) Closed 2026-11-17 (it had stayed In revision).
+- [x] qa / main 2026-11-11: cherry-picked (`-m 1`) into release [#2599](https://github.com/taller-projects/echo-backend/pull/2599) (dev → qa) and [#2600](https://github.com/taller-projects/echo-backend/pull/2600) (qa → main).
 
 ## Related
 - [[Customer metrics M2 follow-up - close_reason required on the user role PATCH (US 25744)]] · [[Customer metrics M3 - AI suggestion snapshots (US 25639)]] · [[Customer metrics M4 - proposal versions (US 25640)]]

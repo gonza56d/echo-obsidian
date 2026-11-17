@@ -1,6 +1,6 @@
 ---
 type: delivery
-status: merged
+status: shipped-prod
 env: both
 delivered: 2026-11-11
 tags: [feature, customer-metrics, roles, follow-up]
@@ -53,11 +53,11 @@ The follow-up the PRD promised since rev 50: once the FE close-reason picker (M5
 - [x] CI green on `d43e64f7`; Gisel APPROVED r2 2026-11-10; merged 2026-11-11 (`91a0cc8e`) after #3604 (on dev 2026-11-05, on FE main too).
 - [x] US 25744 Closed 2026-11-11 (comment with the merge).
 - [x] FE check at merge: `RoleStatusInput` is the only FE path that changes a role's step; it opens the picker for Closed/Archived unless the saved stage is Filled, and sends `close_reason: "filled"` itself for Filled → Closed/Archived (stored as sent). `ROLE_CLOSE_STAGES` = Closed + Archived on both sides. Only the public role PATCH uses `RoleChangeSource.USER`.
-- [ ] PRD (rev 93 → 94): changelog row + M2 checklist item 2 reworded from "becomes required in a follow-up" to as-built (#2499).
-- [ ] Product (Paloma) to confirm ATS-sync closes of Filled roles store `filled` (tech decision, Gisel's question).
+- [x] PRD updated 2026-11-17 (doc rev 96): M2 checklist item, API contract block and open question 9 reworded to as built; changelog row added.
+- [ ] Product (Paloma) to confirm ATS-sync closes of Filled roles store `filled` (tech decision, Gisel's question). 2026-11-17: question drafted for the user to send; also asks whether a sync close of a non-Filled role may stay with no reason (it does today).
 - [ ] Follow-up ticket (Gisel, optional): move the `_routes_built` warm-up into the shared `clock` / app fixture.
 - [ ] Follow-up (Gisel, out of scope): `RoleService._resolve_step_for_step_id` reads `RoleWorkflowStep` via `db_session.get` instead of `RoleWorkflowService`.
-- [ ] qa / main promotion with the next release.
+- [x] qa / main 2026-11-11 via release [#2599](https://github.com/taller-projects/echo-backend/pull/2599) / [#2600](https://github.com/taller-projects/echo-backend/pull/2600) (cherry-pick).
 
 ## Related
 - [[Customer metrics M2 - domain history (US 25638)]] · [[Customer metrics M5 backend - frontend event catalog tests (US 25641)]] · [[Customer metrics M7 - metrics read endpoints (US 25644)]]
