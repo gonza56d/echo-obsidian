@@ -87,11 +87,12 @@ Customer metrics M7, the PRD's last and nice-to-have milestone. It adds `GET /me
 - [x] **2026-11-11 p95 on kforce-dev**: no `/metrics/*` traffic on any env in Loki (FE does not call them), so the six queries were timed on kforce-dev for a 90-day window (KForce tenant, 198k rows / 2,268 actions): server-side ~2 ms each on `ix_user_events_tenant_type_created`; ~180 ms wall per query from a laptop is pooler RTT.
 - [x] Review: Pedro APPROVED (5714640787).
 - [x] CI on `80b5dbe5` green; squash-merged to dev `83a8895a`.
-- [ ] Endpoint p95 on kforce-dev after deploy (Pedro nit 1).
+- [x] Endpoint p95 on kforce-dev after deploy (Pedro nit 1): ~2 ms per query, checked 2026-11-11.
+- [ ] **Client-facing dashboard (FE, outside Feature 25635)**: no FE consumer of `GET /metrics/*` yet. Tracked in [CR 25871](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25871) (Battle Tested direct-placement dashboard: open roles, potential fees, submittals, closed fees YTD; New, owner Paloma; needs [CR 25870](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25870) salary range + fee % first). The FE is moving to generative UI; Flor (2026-11-17): which dashboards to build is not defined yet, it depends on each client.
 - [ ] PRD: `event_data` / `user_id` exposure note (Pedro question).
 - [x] PRD: M7 checklist, API contract, changelog row (rev 90, 2026-10-30).
 - [x] US 25644 description updated to the as-built contract and Closed (rev 6, comment 29226999).
-- [ ] qa / main promotion.
+- [x] qa / main: on main since the 2026-11-03 release.
 
 ## Related
 - [[Customer metrics M4 - proposal versions (US 25640)]] · [[Customer metrics M3 - AI suggestion snapshots (US 25639)]] · [[Customer metrics M1 - user_events v2 and durable write path (US 25637)]]
