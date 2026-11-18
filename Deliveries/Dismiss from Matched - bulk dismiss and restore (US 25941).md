@@ -27,6 +27,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 
 ## PRs
 - [#2669](https://github.com/taller-projects/echo-backend/pull/2669) → dev, OPEN 2026-11-18, branch `25942/application_dismiss_read_side`. PR 1: schema and read side. Inert on its own: nothing dismisses yet.
+  - Self-review round 1 (2026-11-18, pr-review skill, full mode): CHANGES REQUESTED, 2 blockers (`Talent.current_application_id` left unfiltered against the ticket; the ticket's pre-merge EXPLAIN gate deferred while the new column had no planner stats). Both fixed and pushed in `c6f7ba0b`, on top of a dev merge `0606653c`. Full suite 7998 passed. Not posted to GitHub.
 - PR 2 (Task 25943): not started.
 
 ## How
@@ -36,6 +37,9 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - The expand exclusion (`_talent_ids_on_role`) is deliberately not filtered: it is what keeps a dismissed candidate from coming back.
 - Rematch: `talent_ids_to_reevaluate` returns None while the role has no dismissed application (role-wide `evaluate_batch`, as before) and the standing candidates once it has one.
 - `ApplicationResponse` gains `dismissed_at`, `dismissed_by` (`id`, `full_name`, `profile_picture_key`) and `dismissed_reason`.
+- `Talent.current_application_id` also skips dismissed rows (review blocker 1). It orders by `last_status_update DESC NULLS LAST`; step moves never set that column, so a step-backed application and a dismissed match tie at NULL.
+- The migration ends with `ANALYZE application` (review blocker 2) and now sits on `uyc4kphy0brp`: #2667 merged to dev first.
+- `Talent.is_deletable` gained `correlate_except(Application)`. This is a pre-existing bug fix the blocker-1 test needed: without it, any `GET /talents` with an `application__*` date filter answered 500.
 
 ## FE contract
 - `GET /applications` and `/applications/counts`: new `dismissed=true`. Omitted is today's behaviour.
@@ -47,7 +51,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - Reason: optional free text, max 500 characters. Paloma's open question (fixed list?) can change it without a schema change.
 - Two PRs so nothing leaks between them: read side first (inert), then the write paths.
 - `dismissed` defaults to None on the filter, not False: `TalentFilter.uses_only_profile_fields` reads any non-None field of the nested `ApplicationFilter` as "a filter is set" and would leave the fast path on every talent list.
-- Not filtered: `Talent.current_application_id` (not observable, a dismissed match has no status or step date) and `Role.applied_talents` (no reader).
+- Not filtered: `Role.applied_talents` (no reader). `Talent.current_application_id` was first left out as "not observable". The self-review showed it is observable through `application__last_step_update__*`, so it is now filtered.
 
 ## Gotchas
 - `application` has ~200k rows on Taller prod and **none on KForce** (migration `iler6qompzab` says so), despite the PRD's warning about KForce volume.
@@ -55,11 +59,17 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - In a worktree session, any Bash command whose text contains "git" (a GitHub URL in a heredoc counts) is refused as too complex. Put the text in a script file inside the worktree and run that.
 - Docker's disk filled up while another agent ran suites (49 MB free): Postgres containers failed with "port mapping not available", not with a disk error. The underlying error only shows in `docker logs` of a hand-started container.
 - The migration was exercised by hand against a throwaway Postgres holding only `application` and `user`, not through the full alembic chain.
+- A new column has no `pg_statistic` row, so `IS NULL` falls back to 0.5% selectivity. Measured on 200k rows: an estimate of 949 against 190,273 after `ANALYZE`. ADD COLUMN does not trigger autoanalyze, so a migration that adds a column every list filters on should end with `ANALYZE`.
+- `Talent.is_deletable` was an uncorrelated `~exists()`. When the outer talent query joins `application`, SQLAlchemy correlates both tables away ("returned no FROM clauses due to auto-correlation"). It was latent: Sentry shows 0 events in 90 days, and the FE sends `application__last_status_update__*` only on tenants without a workflow.
+- Another live session held the PR's worktree (`.claude/worktrees/25942-application-dismiss-read-side`, locked). I worked in `25942-dismiss-review-blockers` (branch `25942/dismiss-review-blockers` off the PR head) and pushed `HEAD:25942/application_dismiss_read_side`. That leaves the other worktree's local branch behind the remote.
 
 ## Pending
 - Review and squash-merge of [#2669](https://github.com/taller-projects/echo-backend/pull/2669); then close Task 25942.
 - PR 2 (Task 25943): bulk-dismiss / bulk-restore, `DELETE` as dismiss, the re-add semantics, structured logs `application.bulk_dismissed` / `application.bulk_restored`.
-- `EXPLAIN` of the role list and the cap on kforce-dev before PR 2 merges (expected: no new index).
+- `EXPLAIN` of the role list, counts, cap and reporting feed on dev (a Taller DB) once #2669 is deployed, before PR 2 merges (expected: no new index). Task 25942 was amended to say so (rev 4): KForce has no `application` rows.
+- Out of scope, goes to Task 25943: `match_single_talent` (`POST /matches?talent_id`) upserts with `on_conflict="update"` onto a dismissed row, which nulls its score and re-evaluates it. Add it to the re-add decision list.
+- Self-review nits left open: composite FK `(dismissed_by_id, tenant_id)` (free while the column is all NULL), `dismissed` missing from `MATCH_LIST_FILTERS`, `ADD CONSTRAINT ... NOT VALID`, an internal-list test via the `caller` parametrize, `_when_` test names.
+- #2668 (Pedro) must re-parent onto `ljbebr6uidhl` if it merges after #2669.
 - Tell the FE (US 25052 / 25051) the `dismissed=true` filter and the new response fields once #2669 is on dev.
 - Open questions on the PRD: total cap counting dismissed (product), the action's name in the UI (FE + Paloma).
 - qa / main promotion with the next release.
