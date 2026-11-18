@@ -132,3 +132,10 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
 
 ## Related
 - [[Industry-agnostic Echo (PRD 398aedca)]]
+
+## 2026-11-18 — Pedro's reviews on #2663 / #2664 / #2658 addressed
+
+Pedro reviewed all three (COMMENTED, 15:38Z). All pushed, Pedro re-requested, none merged.
+- [#2663](https://github.com/taller-projects/echo-backend/pull/2663) (Bug 25917) `fe57deb9` (dev merge `a2ab0780`): `no_session` row → 401 on both routes; body: `expected_answer` closed only for these two routes. Bug 25917 Fix section updated to the widened rule (+ `projects.edit` / `roles.edit`, 401). Out of scope, NOT ticketed (ask user): `GET /assessments/interviews[/{id}]` ungated and returns `expected_answer`; vendor `data_scope` not applied to assessments. Reply 6987744283.
+- [#2664](https://github.com/taller-projects/echo-backend/pull/2664) (Bug 25918) `b55587f0` (dev merge `a18614d8`): `id` 1–64 chars, explicit constructor, renamed test + fresh-id assertion, locked-ids test, 422 empty/65-char rows with no creator call; 4 mutants killed. FE [Task 25952](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25952) (buildSkillContext sends `id`) under Feature 25750. Prod/kforce-prod `max(length(id))` SQL in the PR body (dev: max 36, 12,081 questions) — user to run. Reply 6987784214.
+- [#2658](https://github.com/taller-projects/echo-backend/pull/2658) (US 25910, DEV ONLY) `52e361c4` (dev merge `feac0153`): **blocker fixed** — `mglu2f30q92i` re-chained onto dev head `tdfsg8oyf8bq`, `alembic heads` single (offline `--sql` only, no throwaway DB run); test nits (assessment PATCH asserted, take-home seeded in 404/401 tests, reactivation rows, `bulk_create` docstring); Release note section (re-chain later migrations when a release branch skips this PR); manual `POST /assessments/interviews` copies nothing, same as #2651, FE never calls it; FE #3646 snapshots built from the interview + form values, guides not included (backend stores `content` as sent). Reply 6987802255.
