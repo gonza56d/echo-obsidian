@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-18
 tags: [follow-up, customer-metrics, roles, migration]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2667"
@@ -44,9 +44,20 @@ Product (Paloma, Slack 2026-11-17) asked that a role the ATS sync closes without
 - Migration smoke needs the `DB_ADMIN_ROLE` (`postgres`) created: env.py runs `SET LOCAL ROLE`.
 - The Azure ArtifactLink PATCH failed with "Relation already exists" (Boards auto-linked from AB#) and rolled back the state change in the same patch: send the state alone.
 
+## Review round 1 (Pedro, review 5946706265)
+
+Merged `origin/dev` first (`10846579`): `uyc4kphy0brp` re-chained onto `i1esl7vh6gny` (#2665, direct-hire placement fee) — both hung off `gwmlolm5b3pr`; `tests/unit/test_migrations.py` conflict = both sides appended blocks, kept both. Then `6967a111`:
+
+- A user's **new** close (public PATCH) with `filled` / `closed_in_ats` → 422 `close_reason_not_allowed`, unless it equals what the server would set (`filled` on a Filled role: FE `RoleStatusInput.isClosingFilledRole` sends it). Re-sending a closed role's stored reason is not a new close (FE `General.tsx` re-sends `serverRole.close_reason` on every save). FE checked on `dev`: picker excludes `filled` (`SelectableRoleCloseReason`), never offers `closed_in_ats` → no FE flow hits the 422. Two tests closed an Open role with `filled`; now `other`.
+- `assert_close_reason_given` → `assert_user_close_reason_valid`; `_SERVER_SET_CLOSE_REASONS`; `RoleCloseReasonNotAllowedError`.
+- Migration docstring: rollback = `alembic downgrade` before reverting the image (old image 500s on `closed_in_ats`; pipeline migrates before deploy → ~minutes of 500 on the 2 prod roles during rollout). Backfill `ORDER BY ... created_at DESC, h.id DESC`.
+- Tests: internal archive, reopen of a `closed_in_ats` role (re-sending the stored reason), FE's `filled` on a Filled role, the new 422 rows, backfill user-from-Filled. 2 mutants caught. Local role + migration + project modules 386 passed.
+- Nit 6 (kforce-prod `role_change_history` count) not re-measured: no kforce-prod pg service. Prod re-measured 11-18: 1 `filled` + 2 `closed_in_ats`, 237 closes in 22,404 history rows.
+- Out of scope: FE `RoleCloseReason` TS type lacks `closed_in_ats`.
+
 ## Pending
-- [ ] CI, reviews, squash-merge → US 25931 Closed.
-- [ ] Tell Nico (Data) about `closed_in_ats`.
+- [x] Squash-merged dev 2026-11-18 `f686c7ae` (Pedro APPROVED, CI green on `6967a111`) → [US 25931](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25931) Closed (comment 29369859).
+- [ ] Tell Data about `closed_in_ats`: it means closed through `/internal` with no reason (the ATS sync, or any API-key caller).
 - [ ] PRD changelog row + M2 item.
 - [ ] qa / main with the next release (the migration runs on every env).
 
