@@ -29,6 +29,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 ## PRs
 - [#2669](https://github.com/taller-projects/echo-backend/pull/2669) → dev, OPEN 2026-11-18, branch `25942/application_dismiss_read_side`. PR 1: schema and read side. Inert on its own: nothing dismisses yet.
   - Self-review round 1 (2026-11-18, pr-review skill, full mode): CHANGES REQUESTED, 2 blockers (`Talent.current_application_id` left unfiltered against the ticket; the ticket's pre-merge EXPLAIN gate deferred while the new column had no planner stats). Both fixed and pushed in `c6f7ba0b`, on top of a dev merge `0606653c`. Full suite 7998 passed. Not posted to GitHub.
+  - Gisel r1 (2026-11-19, CHANGES REQUESTED on `c6f7ba0b`): 1 blocker, two Alembic heads once dev (with #2668 and the merge migration `tdfsg8oyf8bq`) is merged in. Confirmed with `alembic heads` after merging dev. Fixed in `ce6de90a`: `down_revision = tdfsg8oyf8bq`; nits taken: composite FK `fk_application_dismissed_by_user_tenant` (`SET NULL (dismissed_by_id)`, NOT VALID + VALIDATE), `dismissed` moved to `ApplicationListFilter` (off `GET /talents`), `Mapped["User | None"]`, test tweaks, docs code. Reply posted, Gisel re-requested, Task 25942 commented. Full suite 8091 passed.
 - [#2676](https://github.com/taller-projects/echo-backend/pull/2676) → base `25942/application_dismiss_read_side` (stacked on #2669; moves to dev when #2669 merges), OPEN 2026-11-18, branch `25943/application_bulk_dismiss`, worktree `25943-application-bulk-dismiss`. PR 2: `POST /applications/bulk-dismiss` and `bulk-restore`, `DELETE` as dismiss, the dismissed guard and the re-add paths. Full suite local: 8014 passed.
 
 ## How
@@ -62,6 +63,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - `create_match_applications(restore_dismissed=...)`: only `match_single_talent_to_role` restores. Any other upsert skips dismissed rows through the `ON CONFLICT ... WHERE dismissed_at IS NULL` clause.
 
 ## Gotchas
+- Neither git nor CI catches a second Alembic head: the merge is clean and the suite builds the schema with `create_all`. Run `alembic heads` after every dev merge on a branch that carries a migration.
 - `POST /matches?talent_id=` (talent-wide matching) still answers 500 on dev (`Role.workflow_step_id`, strict xfail in `test_matching.py`), so the skip-dismissed branch of the upsert has no route to test it through.
 - A worktree session cannot create a second worktree (`git -C` and sibling paths are refused): ExitWorktree keep, `git worktree add` from the main checkout, then EnterWorktree with `path`.
 - `application` has ~200k rows on Taller prod and **none on KForce** (migration `iler6qompzab` says so), despite the PRD's warning about KForce volume.
@@ -75,6 +77,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 
 ## Pending
 - Review and squash-merge of [#2669](https://github.com/taller-projects/echo-backend/pull/2669); then close Task 25942.
+- #2676 must merge the new #2669 head in (FK name, `ApplicationListFilter`, docs lines both PRs touch) and answer Gisel's review there.
 - Review of [#2676](https://github.com/taller-projects/echo-backend/pull/2676) after #2669; when #2669 squash-merges, merge dev into `25943/application_bulk_dismiss` (never rebase or force-push) and check the base moved to dev. Then close Task 25943 and US 25941.
 - Tell the FE the two bulk routes and `application_dismissed` (US 25052 / 25051).
 - `EXPLAIN` of the role list, counts, cap and reporting feed on dev (a Taller DB) once #2669 is deployed, before PR 2 merges (expected: no new index). Task 25942 was amended to say so (rev 4): KForce has no `application` rows.
