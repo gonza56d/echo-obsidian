@@ -32,6 +32,10 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
   - Gisel r1 (2026-11-19, CHANGES REQUESTED on `c6f7ba0b`): 1 blocker, two Alembic heads once dev (with #2668 and the merge migration `tdfsg8oyf8bq`) is merged in. Confirmed with `alembic heads` after merging dev. Fixed in `ce6de90a`: `down_revision = tdfsg8oyf8bq`; nits taken: composite FK `fk_application_dismissed_by_user_tenant` (`SET NULL (dismissed_by_id)`, NOT VALID + VALIDATE), `dismissed` moved to `ApplicationListFilter` (off `GET /talents`), `Mapped["User | None"]`, test tweaks, docs code. Reply posted, Gisel re-requested, Task 25942 commented. Full suite 8091 passed.
 - [#2676](https://github.com/taller-projects/echo-backend/pull/2676) → base `25942/application_dismiss_read_side` (stacked on #2669; moves to dev when #2669 merges), OPEN 2026-11-18, branch `25943/application_bulk_dismiss`, worktree `25943-application-bulk-dismiss`. PR 2: `POST /applications/bulk-dismiss` and `bulk-restore`, `DELETE` as dismiss, the dismissed guard and the re-add paths. Full suite local: 8014 passed.
 
+## Review rounds (2026-11-19)
+- [#2669](https://github.com/taller-projects/echo-backend/pull/2669) **squash-MERGED dev `069e216c`** after Gisel's r2 approval on `ef7ead93`. Task 25942 Closed.
+- [#2676](https://github.com/taller-projects/echo-backend/pull/2676) retargeted to dev, dev merged in, Gisel r1 (CHANGES REQUESTED, 3 blockers) answered in `53fe9fc5`; re-review requested. Blockers, all real: (1) a dismiss committed between a move's read and write left a row in process and dismissed, fixed by an unconditional `clear_dismissal` in `update()` whenever a row leaves matching (the write is the lock); (2) `_bulk_dismissal` dropped the dismissed flag, so a match readable but not writable read as `already_dismissed`, now `not_found` and 404 on DELETE; (3) Apply to role untested, added for an external vendor on workflow and status-flow roles. Also: `/internal/matches` no longer restores, neutral bulk names, `user_id` in the logs, `ApplicationInProcessError` (code `conflict` kept for the FE). Full suite 8092 passed.
+
 ## How
 - Migration `ljbebr6uidhl`: three nullable columns with no default, `fk_application_dismissed_by_user` (`ON DELETE SET NULL`), partial index `ix_application_dismissed_by_id`, and `application_score_rank` replaced to skip dismissed rows.
 - `ApplicationFilter.filter()` adds `dismissed_at IS NULL`, or `IS NOT NULL` with `dismissed=true`. That covers `GET /applications`, `/applications/counts` and the internal list with no plumbing.
@@ -63,6 +67,8 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - `create_match_applications(restore_dismissed=...)`: only `match_single_talent_to_role` restores. Any other upsert skips dismissed rows through the `ON CONFLICT ... WHERE dismissed_at IS NULL` clause.
 
 ## Gotchas
+- Merging dev into a branch stacked on a squash-merged PR conflicts in every file the squashed PR changed after the stack was cut. `git merge | tail` hid four of seven conflicts and I committed markers (local only, repaired before pushing). Read the whole merge output and `rg '^<<<<<<<'` before committing; files the stacked PR never touched are dev's.
+- A conditional `UPDATE ... WHERE dismissed_at IS NOT NULL` takes no row lock when nothing matches, so it cannot close a race. The clearing write is unconditional for that reason.
 - `UserFactory` leaves `first_name` or `last_name` empty in about 3 of 4 builds, and `GET /applications/recruiters` drops a recruiter with no full name. A test that asserts on that list must name its users. It made the counts test fail on CI (run of `ce6de90a`, 2026-11-19) while passing locally: the seeded random stream sits at a different position there. Fixed in `ef7ead93` by naming the recruiters in `_make_recruiter`.
 - Neither git nor CI catches a second Alembic head: the merge is clean and the suite builds the schema with `create_all`. Run `alembic heads` after every dev merge on a branch that carries a migration.
 - `POST /matches?talent_id=` (talent-wide matching) still answers 500 on dev (`Role.workflow_step_id`, strict xfail in `test_matching.py`), so the skip-dismissed branch of the upsert has no route to test it through.
@@ -77,6 +83,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - Another live session held the PR's worktree (`.claude/worktrees/25942-application-dismiss-read-side`, locked). I worked in `25942-dismiss-review-blockers` (branch `25942/dismiss-review-blockers` off the PR head) and pushed `HEAD:25942/application_dismiss_read_side`. That leaves the other worktree's local branch behind the remote.
 
 ## Pending
+- [#2676](https://github.com/taller-projects/echo-backend/pull/2676): Gisel's re-review; **Pedro's sign-off on the two deviations** (routes under `/applications`, `application_dismissed`); `EXPLAIN` on dev once `ljbebr6uidhl` is applied there (not yet on 2026-11-19); check Grafana alerts for `application_deleted_in_matching`.
 - Review and squash-merge of [#2669](https://github.com/taller-projects/echo-backend/pull/2669); then close Task 25942.
 - #2676 must merge the new #2669 head in (FK name, `ApplicationListFilter`, docs lines both PRs touch) and answer Gisel's review there.
 - Review of [#2676](https://github.com/taller-projects/echo-backend/pull/2676) after #2669; when #2669 squash-merges, merge dev into `25943/application_bulk_dismiss` (never rebase or force-push) and check the base moved to dev. Then close Task 25943 and US 25941.
