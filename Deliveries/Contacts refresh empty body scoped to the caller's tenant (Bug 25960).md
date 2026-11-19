@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-19
 tags: [contacts, multitenancy, internal-api, kforce]
 prs:
   - https://github.com/taller-projects/echo-backend/pull/2684
@@ -21,12 +21,12 @@ prd:
 
 ## Azure
 
-- [Bug 25960](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25960): In revision (comment 29380136 with the caller findings and decisions).
+- [Bug 25960](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25960): **Closed** 2026-11-19 (comment 29380136 with the caller findings and decisions; closing comment with the description correction and the follow-up).
 - Follow-up of [Bug 25951](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25951) (Closed), which scoped the id list in [#2648](https://github.com/taller-projects/echo-backend/pull/2648); raised by Pedro's review of that PR.
 
 ## PRs
 
-- [#2684](https://github.com/taller-projects/echo-backend/pull/2684) to dev, branch `25960/refresh_empty_body_tenant_scope`, commit `4c4534d3`, worktree `.claude/worktrees/25960-refresh-tenant-scope`. Reviewers Leo, Pedro, Gisel.
+- [#2684](https://github.com/taller-projects/echo-backend/pull/2684) to dev, branch `25960/refresh_empty_body_tenant_scope`, **MERGED dev `f61530f9`** 2026-11-19 (squash; Leo approved on `4c4534d3`, his nits in `ccebcd26`, CI green 18m37s), worktree `.claude/worktrees/25960-refresh-tenant-scope`. Reviewers Leo, Pedro, Gisel.
 
 ## How
 
@@ -46,14 +46,17 @@ prd:
 
 ## Gotchas
 
+- Leo's review (APPROVED, nits only, all taken in `ccebcd26`): return type on the helper, one guard form (walrus) in the CRM match with the reason the open-jobs filter exists, stale "whole table" wording in `refresh_relationship_metrics` and the rollout step of `docs/contact-groups.md`, precondition assert before the request.
+
 - The CRM match needs BOTH filters removed to leak when the other tenant's verdict is `unknown`: the open-jobs filter alone leaves the verdict `unknown`. The test seeds a stale `mismatch` so removing the pairs filter alone is caught.
 - The access log's `content_length` is what tells an empty-body call from an id batch (an empty JSON list is 2 bytes; one uuid is 40).
 - `docs/` is gitignored: a tracked file there still commits, but `git add docs/...` together with other paths prints the ignore error.
 
 ## Pending
 
-- CI + review of [#2684](https://github.com/taller-projects/echo-backend/pull/2684); merge, then close [Bug 25960](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25960).
-- The contact-groups recovery runbook now needs one call per tenant (documented).
+- Promotion to qa / main with the next release.
+- Not ticketed (Leo's review, out of scope): on kforce-prod KForce is practically the only tenant, so `[]` is still three UPDATEs over about 1M rows in one synchronous request. Nobody sends it; if needed, route the empty case through chunked `CONTACT_ATTRIBUTES_REFRESH_BULK` jobs.
+- The contact-groups recovery call with `[]` does not schedule the deferred follow-up refreshes (an empty list never did); the runbook does not say so.
 
 ## Related
 
