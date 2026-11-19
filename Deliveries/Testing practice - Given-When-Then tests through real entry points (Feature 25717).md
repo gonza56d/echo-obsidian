@@ -504,3 +504,9 @@ User: "go ahead with group 55, then items 2 and 3 together" (2 = `tests/system/t
 - **#2683 `5ea3b51e`:** outbox unchanged after the refused step move; position rows filter on own key (each FK mutant now fails only its row); 3 renames to `_when_`; GET /roles sub-header. 577 passed; mutants unchanged.
 - **Gotcha:** in the JD-write-fails test the role row DOES end with a job description: the enhancement (2nd Team Builder call) writes it afterwards; only the 201 body shows the generated JD never landed.
 - **Open, for the team:** accept the 3 own-code boundary patches + test_db_session_cleanup as infra file in the PRD (Mock boundary, "strict"); `AiSuggestionRepository._tenant_query` `tenant_id is None` fallback is dead → ticket or delete; post-merge PRD rows (M2, M6, M7, Enforcement question, mock target 0, DoD `coverage:` line); test_application_supersession.py:90 noqa reason. Both PRs touch test_roles.py → second to merge needs a dev merge (no force push).
+
+## 2026-11-19 (night) — #2683 MERGED, #2685 conflict fixed
+
+- [#2683](https://github.com/taller-projects/echo-backend/pull/2683) squash-merged by the user as `83ace3e7` (includes round 1 `5ea3b51e`).
+- [#2685](https://github.com/taller-projects/echo-backend/pull/2685) went CONFLICTING on `tests/unit/test_roles.py` (both appended after the same POST /projects/{id}/roles test). Merged `origin/dev` in (no rebase / force push): kept dev's `test_post_project_role_is_400_referenced_item_when_the_project_is_not_the_tenants` first, then the standalone-role section. Merge commit `a7256a9b`. Merged tree: check_test_mocks 0 offenders; full suite 8,162 passed, 1 skipped, 22 xfailed.
+- Task 25726 still closes when #2685 merges; PRD Wave groups row 55 not yet marked merged.
