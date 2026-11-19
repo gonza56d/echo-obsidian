@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged-dev
 env: both
-delivered:
+delivered: 2026-11-19
 tags: [feature, applications, matching, navitec, bulk-actions]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2669"
@@ -83,17 +83,14 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - Another live session held the PR's worktree (`.claude/worktrees/25942-application-dismiss-read-side`, locked). I worked in `25942-dismiss-review-blockers` (branch `25942/dismiss-review-blockers` off the PR head) and pushed `HEAD:25942/application_dismiss_read_side`. That leaves the other worktree's local branch behind the remote.
 
 ## Pending
-- [#2676](https://github.com/taller-projects/echo-backend/pull/2676): Gisel's re-review; **Pedro's sign-off on the two deviations** (routes under `/applications`, `application_dismissed`); `EXPLAIN` on dev once `ljbebr6uidhl` is applied there (not yet on 2026-11-19); check Grafana alerts for `application_deleted_in_matching`.
-- Review and squash-merge of [#2669](https://github.com/taller-projects/echo-backend/pull/2669); then close Task 25942.
-- #2676 must merge the new #2669 head in (FK name, `ApplicationListFilter`, docs lines both PRs touch) and answer Gisel's review there.
-- Review of [#2676](https://github.com/taller-projects/echo-backend/pull/2676) after #2669; when #2669 squash-merges, merge dev into `25943/application_bulk_dismiss` (never rebase or force-push) and check the base moved to dev. Then close Task 25943 and US 25941.
-- Tell the FE the two bulk routes and `application_dismissed` (US 25052 / 25051).
-- `EXPLAIN` of the role list, counts, cap and reporting feed on dev (a Taller DB) once #2669 is deployed, before PR 2 merges (expected: no new index). Task 25942 was amended to say so (rev 4): KForce has no `application` rows.
-- Out of scope, goes to Task 25943: `match_single_talent` (`POST /matches?talent_id`) upserts with `on_conflict="update"` onto a dismissed row, which nulls its score and re-evaluates it. Add it to the re-add decision list.
-- Self-review nits left open: composite FK `(dismissed_by_id, tenant_id)` (free while the column is all NULL), `dismissed` missing from `MATCH_LIST_FILTERS`, `ADD CONSTRAINT ... NOT VALID`, an internal-list test via the `caller` parametrize, `_when_` test names.
-- #2668 (Pedro) must re-parent onto `ljbebr6uidhl` if it merges after #2669.
-- Tell the FE (US 25052 / 25051) the `dismissed=true` filter and the new response fields once #2669 is on dev.
-- Open questions on the PRD: total cap counting dismissed (product), the action's name in the UI (FE + Paloma).
+- **Backend of M1 is complete on dev (2026-11-19):** [#2669](https://github.com/taller-projects/echo-backend/pull/2669) squash `069e216c`, [#2676](https://github.com/taller-projects/echo-backend/pull/2676) squash `3e156165` (Gisel approved r2). Tasks 25942, 25943 and US 25941 Closed.
+- Merged without Pedro's sign-off on the two deviations (routes under `/applications`, `application_dismissed`): the user decided it was not needed. Gisel's approval named it as a condition.
+- Done before the merge: `EXPLAIN` on dev (cap and counts on `uq_application_tenant_role_talent_current`, about 1 ms on a 920-application role; reporting count 76 ms); no Grafana alert rule or dashboard (60) reads `application_deleted_in_matching`.
+- FE contract written into the description of US 25965 (Leo's new story, remove from Matched + add to process), US 25051 and US 25052, and into the PRD's Anexo Backend (changelog row 2026-11-19). 25965 overlaps 25051 (both cover bulk Add to process over `PATCH /applications/bulk-stage`).
+- FE still to build: bulk Dismiss / Restore, the "Dismissed" filter, bulk Add to process. No FE PR yet.
+- Open questions on the PRD: total cap counting dismissed (product), the action's name in the UI (FE + Paloma), whether the reason stays optional free text (Paloma).
+- Pre-existing bug, not filed: `POST /matches?talent_id=` answers 500 (`Role.workflow_step_id`).
+- Follow-up outside the PRD: bulk owner / source = Leo's US 25964 (bulk-custody, CR 25767).
 - qa / main promotion with the next release.
 
 ## Related
