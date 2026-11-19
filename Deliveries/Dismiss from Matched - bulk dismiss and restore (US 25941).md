@@ -63,6 +63,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
 - `create_match_applications(restore_dismissed=...)`: only `match_single_talent_to_role` restores. Any other upsert skips dismissed rows through the `ON CONFLICT ... WHERE dismissed_at IS NULL` clause.
 
 ## Gotchas
+- `UserFactory` leaves `first_name` or `last_name` empty in about 3 of 4 builds, and `GET /applications/recruiters` drops a recruiter with no full name. A test that asserts on that list must name its users. It made the counts test fail on CI (run of `ce6de90a`, 2026-11-19) while passing locally: the seeded random stream sits at a different position there. Fixed in `ef7ead93` by naming the recruiters in `_make_recruiter`.
 - Neither git nor CI catches a second Alembic head: the merge is clean and the suite builds the schema with `create_all`. Run `alembic heads` after every dev merge on a branch that carries a migration.
 - `POST /matches?talent_id=` (talent-wide matching) still answers 500 on dev (`Role.workflow_step_id`, strict xfail in `test_matching.py`), so the skip-dismissed branch of the upsert has no route to test it through.
 - A worktree session cannot create a second worktree (`git -C` and sibling paths are refused): ExitWorktree keep, `git worktree add` from the main checkout, then EnterWorktree with `path`.
