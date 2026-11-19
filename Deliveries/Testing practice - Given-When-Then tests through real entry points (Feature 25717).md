@@ -510,3 +510,10 @@ User: "go ahead with group 55, then items 2 and 3 together" (2 = `tests/system/t
 - [#2683](https://github.com/taller-projects/echo-backend/pull/2683) squash-merged by the user as `83ace3e7` (includes round 1 `5ea3b51e`).
 - [#2685](https://github.com/taller-projects/echo-backend/pull/2685) went CONFLICTING on `tests/unit/test_roles.py` (both appended after the same POST /projects/{id}/roles test). Merged `origin/dev` in (no rebase / force push): kept dev's `test_post_project_role_is_400_referenced_item_when_the_project_is_not_the_tenants` first, then the standalone-role section. Merge commit `a7256a9b`. Merged tree: check_test_mocks 0 offenders; full suite 8,162 passed, 1 skipped, 22 xfailed.
 - Task 25726 still closes when #2685 merges; PRD Wave groups row 55 not yet marked merged.
+
+## 2026-11-19 (night) — M7 part 1 MERGED: [#2685](https://github.com/taller-projects/echo-backend/pull/2685) as `339c085d`
+
+- Pedro APPROVED on head `a7256a9b` (the dev merge); CI green; squash-merged by me on the user's instruction.
+- Tickets: [Task 25726](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25726) **Closed** (wave 2 done: #2683 + #2685); [US 25723](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25723) commented, stays In development (only open child: Task 25940); [US 25724](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25724) commented, In development (left: route-to-test script, re-measure targets, close PRD).
+- PRD (rev 134): Wave groups row 55 → merged 83ace3e7 + round 1; M6 row "Waves done 2026-11-19"; M7 row part 1 merged + round 1; M2 row, Enforcement question and mock-file target (Met: 0) no longer describe a live exemption list; DoD coverage line aligned with CLAUDE.md (manual, no `coverage:` line). Gotcha: a find/replace `as:"text"` that starts on a code chip makes the whole replacement code → re-sent the block as markdown with ifHash/ifRev.
+- Still open for the team: own-code patches in tests/boundaries + infra file in the PRD's Mock boundary; dead `_tenant_query` fallback; test_application_supersession.py:90 noqa reason.
