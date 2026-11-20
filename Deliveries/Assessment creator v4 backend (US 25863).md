@@ -1,8 +1,8 @@
 ---
 type: delivery
-status: in-review
+status: merged
 env: both
-delivered:
+delivered: 2026-11-20
 tags: [feature, assessment, assessment-creator, code-challenge]
 prs:
   - "https://github.com/taller-projects/echo-backend/pull/2614"
@@ -153,3 +153,14 @@ Pedro reviewed all three (COMMENTED, 15:38Z). All pushed, Pedro re-requested, no
 - Worktree `r1119-2658`, branch `25910/take_home_r2_1119`, pushed with `HEAD:25910/take-home-on-interview` (`r1118-2658` belongs to another session, read-only).
 - Docs: PR body (migration bullet + r2 section), reply 7021259638, Pedro re-requested, US 25910 comment 29383531. Checked and left untouched, nothing in them names the migration parent: US 25910 description / acceptance criteria, FE #3646 (merged, already reads `take_home_challenge` / `take_home_challenge_guide`), the PRD (no row for #2658).
 - **Pending:** third re-chain of this migration; dev keeps moving, so run `alembic heads` right before the merge. Feature 25748 is Closed (Nico) while US 25910 is still In revision. The `[DEV ONLY]` title and "not for qa/prod" warning still stand though their premise (FE #3646 + creator in prod since 2026-11-16) is met: user to decide.
+
+## 2026-11-20 — #2658 merged dev, DEV ONLY lifted
+
+- Leo APPROVED [#2658](https://github.com/taller-projects/echo-backend/pull/2658) on `8d3d4687` (13:51Z; asked on Slack #echo-backend). Squash-merged by the user's request: **`5f0f91cc` on dev** (REST merge with `sha` guard; branch auto-deleted). Before it, dev had moved only by #2686 (custody files, no overlap). `git merge-tree` was clean. `alembic heads` on that tree = `mglu2f30q92i` only (archive + `.env` copy, `PYTHONPATH` = main checkout). The squash tree equals the checked tree.
+- **DEV ONLY lifted.** Its premise was echo-frontend #3646 plus the creator v4 in prod. That has been true since 2026-11-16: #2651 and #2656 reached main with #2660, the same day. FE main already has `SUPPORTED_CHALLENGE_TYPES = [LIVE, TAKE_HOME, BOTH]` (US 25801 #3678 / #3690 on FE qa + main). `LiveChallenge.tsx` reads `challenge_guide.take_home_challenge` / `take_home_challenge_guide`, so prod shows no take-home on the interview until #2658 is released. Title `[DEV ONLY]` dropped. The PR body's warning was replaced by a NOTE, and its "Release note (DEV ONLY)" section by a "Release" section. The squash title carries no tag.
+- Azure: [US 25910](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25910) **Closed**, with a "Shipped" block in its description giving the exact `challenge_guide` contract (comment 29389585). FE [US 25801](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25801) (Meli, Ready to Test) comment 29389586: testable on dev with a new interview.
+- PRD (Pedro's doc, rev 11):
+  - row P ("¿Cuándo sale el creator a prod?") → resolved, 2026-11-16 (#2660);
+  - under "Fuera de alcance", an update with a table: US 25868 / #2656 in prod, US 25910 / #2658 on dev, goes out with the next release.
+- **Pending:** #2658 has to go into the next qa/prod release (migration `mglu2f30q92i` after `fo1cz1m23oa9`, which is #2681's: that release must carry #2681 too). Still open: [Bug 25969](https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25969).
+
