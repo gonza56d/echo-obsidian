@@ -8,6 +8,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2669"
   - "https://github.com/taller-projects/echo-backend/pull/2676"
   - "https://github.com/taller-projects/echo-backend/pull/2692"
+  - "https://github.com/taller-projects/echo-backend/pull/2694"
 fe_prs: []
 tickets:
   - "https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25711"
@@ -33,6 +34,7 @@ Navitec asked for bulk actions on a role's Candidates tab ([CR 25711](https://de
   - Gisel r1 (2026-11-19, CHANGES REQUESTED on `c6f7ba0b`): 1 blocker, two Alembic heads once dev (with #2668 and the merge migration `tdfsg8oyf8bq`) is merged in. Confirmed with `alembic heads` after merging dev. Fixed in `ce6de90a`: `down_revision = tdfsg8oyf8bq`; nits taken: composite FK `fk_application_dismissed_by_user_tenant` (`SET NULL (dismissed_by_id)`, NOT VALID + VALIDATE), `dismissed` moved to `ApplicationListFilter` (off `GET /talents`), `Mapped["User | None"]`, test tweaks, docs code. Reply posted, Gisel re-requested, Task 25942 commented. Full suite 8091 passed.
 - [#2676](https://github.com/taller-projects/echo-backend/pull/2676) → base `25942/application_dismiss_read_side` (stacked on #2669; moves to dev when #2669 merges), OPEN 2026-11-18, branch `25943/application_bulk_dismiss`, worktree `25943-application-bulk-dismiss`. PR 2: `POST /applications/bulk-dismiss` and `bulk-restore`, `DELETE` as dismiss, the dismissed guard and the re-add paths. Full suite local: 8014 passed.
 - [#2692](https://github.com/taller-projects/echo-backend/pull/2692) — release dev → qa 2026-11-20 (`deploy/qa_2026-11-20`, OPEN): carries #2669 + #2676; migration `ljbebr6uidhl` reaches qa.
+- [#2694](https://github.com/taller-projects/echo-backend/pull/2694) — release qa → main 2026-11-20 (`deploy/prod_2026-11-20` = qa `8b40d8dd`, OPEN; prod/kforce-prod approvals pending).
 
 ## Review rounds (2026-11-19)
 - [#2669](https://github.com/taller-projects/echo-backend/pull/2669) **squash-MERGED dev `069e216c`** after Gisel's r2 approval on `ef7ead93`. Task 25942 Closed.
