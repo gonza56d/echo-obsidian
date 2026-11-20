@@ -16,6 +16,7 @@ prs:
   - "https://github.com/taller-projects/echo-backend/pull/2659"
   - "https://github.com/taller-projects/echo-backend/pull/2663"
   - "https://github.com/taller-projects/echo-backend/pull/2664"
+  - "https://github.com/taller-projects/echo-backend/pull/2692"
 fe_prs:
   - "https://github.com/taller-projects/echo-frontend/pull/3646"
 tickets:
@@ -75,6 +76,7 @@ Pedro handed over (2026-11-11) the backend side of the assessment creator's new 
   - Review r1 (Gisel, 2026-11-16, on `38c9bad2`): **APPROVED with 6 nits**. Fixed in `0b6a1d4f`: cross-tenant + unknown-id 404 rows; RLS case (`enforced_rls` now takes models by indirect parametrization, default talent + application) where the assigned interviewer with interviews.view and no projects.view gets 200 and another member 404; explicit `live_challenge_guide` kwarg on `create_if_absent` / `bulk_create`; `deferred=True` on the column (tests read it with column selects: a detached row cannot load it); `patch` + `slots` rows on the no-guide reads. Not taken: filling a NULL guide on reactivation (could pair a newer guide with an older brief). Reply issuecomment-6919360211. `role` and `assessment` have no RLS, so `interview_guidelines` reaches the interviewer.
   - **#2651 MERGED dev 2026-11-16 as DEV ONLY** (`6d913d99a`, squash; dev had not moved since `7a839628`, `alembic heads` on dev = `ky558n59k578`). US 25869 Closed. Release only with #2614 + #2637 after the creator v4 is in prod.
   - Gotcha: `ruff check --fix tests/conftest.py` reorders its imports (sdks/process); CI lints only `app/`, so never run ruff on tests/conftest.py.
+- [#2692](https://github.com/taller-projects/echo-backend/pull/2692) — release dev → qa 2026-11-20 (`deploy/qa_2026-11-20`, OPEN): carries #2658 (`mglu2f30q92i`, after #2681's `fo1cz1m23oa9`), #2663, #2664.
 
 ## How
 - Migration `8zvgynrm4wa8`: `assessment.live_challenge_guide TEXT NULL`.

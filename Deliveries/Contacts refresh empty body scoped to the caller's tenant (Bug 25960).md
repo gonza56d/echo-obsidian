@@ -6,6 +6,7 @@ delivered: 2026-11-19
 tags: [contacts, multitenancy, internal-api, kforce]
 prs:
   - https://github.com/taller-projects/echo-backend/pull/2684
+  - https://github.com/taller-projects/echo-backend/pull/2692
 fe_prs: []
 tickets:
   - https://dev.azure.com/TallerInternTools/Echo%20Core/_workitems/edit/25960
@@ -27,6 +28,7 @@ prd:
 ## PRs
 
 - [#2684](https://github.com/taller-projects/echo-backend/pull/2684) to dev, branch `25960/refresh_empty_body_tenant_scope`, **MERGED dev `f61530f9`** 2026-11-19 (squash; Leo approved on `4c4534d3`, his nits in `ccebcd26`, CI green 18m37s), worktree `.claude/worktrees/25960-refresh-tenant-scope`. Reviewers Leo, Pedro, Gisel.
+- [#2692](https://github.com/taller-projects/echo-backend/pull/2692) — release dev → qa 2026-11-20 (`deploy/qa_2026-11-20`, OPEN): carries #2648 + #2684.
 
 ## How
 
